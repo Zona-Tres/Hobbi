@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Particles from './particles'
 import Highlighter, { HighlighterItem } from './highlighter'
 
-import FeatureImg01 from '@/public/images/feature-image-01.png'
+import FeatureImg01 from '../public/images/feature-image-01.png'
 import FeatureImg02 from '@/public/images/feature-image-02.png'
 import FeatureImg03 from '@/public/images/feature-image-03.png'
 

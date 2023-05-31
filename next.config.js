@@ -9,12 +9,6 @@ const EnvPlugin = new webpack.EnvironmentPlugin({
   DFX_NETWORK: "local"
 })
 
-const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
-}
-
 module.exports = {
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Plugin
@@ -23,7 +17,6 @@ module.exports = {
     // Important: return the modified config
     return config
   },
-  output: "export",
   experimental: {
     appDir: true,
   },
