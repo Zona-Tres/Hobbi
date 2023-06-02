@@ -47,11 +47,11 @@
 
 /* Custom Swiper styles */
 .swiper-button-disabled {
-    @apply opacity-50 cursor-default pointer-events-none;
+    @apply opacity-80 cursor-default pointer-events-none;
 }
 
 .testimonials-carousel .swiper-slide {
-    @apply opacity-80;
+    @apply opacity-90;
 }
 
 .testimonials-carousel .swiper-slide.swiper-slide-active {

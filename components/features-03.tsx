@@ -25,8 +25,8 @@ export default function Features03() {
 
           { /* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 bg-clip-text text-transparent bg-gradient-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">More than a login box</h2>
-            <p className="text-lg text-slate-400">There are many variations available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don&apos;t look even slightly believable.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-gradient-to-r from-purple-800/80 via-slate-700 to-slate-900/80 pb-4">More than a login box</h2>
+            <p className="text-lg text-slate-800">There are many variations available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don&apos;t look even slightly believable.</p>
           </div>
 
           <div className="max-w-3xl mx-auto">

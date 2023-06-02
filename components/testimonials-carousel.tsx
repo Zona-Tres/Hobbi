@@ -54,10 +54,10 @@ function TestimonialsCarousel() {
           { /* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
             <div>
-              <div className="inline-flex font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-purple-200 pb-3">The security first platform</div>
+              <div className="inline-flex font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900 pb-3">The security first platform</div>
             </div>
-            <h2 className="h2 bg-clip-text text-transparent bg-gradient-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Spot issues faster</h2>
-            <p className="text-lg text-slate-400">All the lorem ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-gradient-to-r from-purple-800/80 via-slate-700 to-slate-900/80 pb-4">Spot issues faster</h2>
+            <p className="text-lg text-slate-800">All the lorem ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet.</p>
           </div>
 
           { /* Carousel built with Swiper.js [https://swiperjs.com/] */}
@@ -77,7 +77,7 @@ function TestimonialsCarousel() {
                     <div className="flex flex-col p-6 h-full">
                       <Image className="mb-3" src={CarouselImg01} width={56} height={56} alt="Icon 01" />
                       <div className="grow">
-                        <div className="font-bold text-lg mb-1">Anonymous User</div>
+                        <div className="text-slate-200 font-bold text-lg mb-1">Anonymous User</div>
                         <div className="text-slate-400 mb-3">Incorporate rich user profiling, and facilitate more transactions.</div>
                       </div>
                       <div className="text-right">
@@ -97,7 +97,7 @@ function TestimonialsCarousel() {
                     <div className="flex flex-col p-6 h-full">
                       <Image className="mb-3" src={CarouselImg02} width={56} height={56} alt="Icon 01" />
                       <div className="grow">
-                        <div className="font-bold text-lg mb-1">Bot Detection</div>
+                        <div className="text-slate-200 font-bold text-lg mb-1">Bot Detection</div>
                         <div className="text-slate-400 mb-3">Incorporate rich user profiling, and facilitate more transactions.</div>
                       </div>
                       <div className="text-right">
@@ -117,7 +117,7 @@ function TestimonialsCarousel() {
                     <div className="flex flex-col p-6 h-full">
                       <Image className="mb-3" src={CarouselImg03} width={56} height={56} alt="Icon 01" />
                       <div className="grow">
-                        <div className="font-bold text-lg mb-1">Social integrations</div>
+                        <div className="text-slate-200 font-bold text-lg mb-1">Social integrations</div>
                         <div className="text-slate-400 mb-3">Incorporate rich user profiling, and facilitate more transactions.</div>
                       </div>
                       <div className="text-right">
@@ -137,7 +137,7 @@ function TestimonialsCarousel() {
                     <div className="flex flex-col p-6 h-full">
                       <Image className="mb-3" src={CarouselImg04} width={56} height={56} alt="Icon 01" />
                       <div className="grow">
-                        <div className="font-bold text-lg mb-1">Progressive Profiling</div>
+                        <div className="text-slate-200 font-bold text-lg mb-1">Progressive Profiling</div>
                         <div className="text-slate-400 mb-3">Incorporate rich user profiling, and facilitate more transactions.</div>
                       </div>
                       <div className="text-right">
@@ -157,7 +157,7 @@ function TestimonialsCarousel() {
                     <div className="flex flex-col p-6 h-full">
                       <Image className="mb-3" src={CarouselImg05} width={56} height={56} alt="Icon 05" />
                       <div className="grow">
-                        <div className="font-bold text-lg mb-1">Secure Access</div>
+                        <div className="text-slate-200 font-bold text-lg mb-1">Secure Access</div>
                         <div className="text-slate-400 mb-3">Incorporate rich user profiling, and facilitate more transactions.</div>
                       </div>
                       <div className="text-right">
