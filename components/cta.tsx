@@ -1,35 +1,26 @@
+import Image from 'next/image'
+import Illustration from '@/public/images/cta-illustration.svg'
+
 export default function Cta() {
   return (
     <section>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="relative px-8 py-12 md:py-20 rounded-[3rem] overflow-hidden">
-          { /* Radial gradient */}
-          <div className="absolute flex items-center justify-center top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-1/3 aspect-square" aria-hidden="true">
-            <div className="absolute inset-0 translate-z-0 bg-purple-500 rounded-full blur-[120px] opacity-70" />
-            <div className="absolute w-1/4 h-1/4 translate-z-0 bg-purple-400 rounded-full blur-[40px]" />
+        {/* CTA box */}
+        <div className="relative bg-gradient-to-tr from-blue-600 to-purple-500 rounded py-10 px-8 md:py-16 md:px-12 overflow-hidden" data-aos="zoom-out">
+          {/* Bg illustration */}
+          <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 mt-8 -z-10" aria-hidden="true">
+            <Image src={Illustration} className="max-w-none" alt="Illustration" />
           </div>
-          { /* Blurred shape */}
-          <div className="absolute bottom-0 translate-y-1/2 left-0 blur-2xl opacity-50 pointer-events-none -z-10" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="434" height="427">
-              <defs>
-                <linearGradient id="bs5-a" x1="19.609%" x2="50%" y1="14.544%" y2="100%">
-                  <stop offset="0%" stopColor="#A855F7" />
-                  <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path fill="url(#bs5-a)" fillRule="evenodd" d="m0 0 461 369-284 58z" transform="matrix(1 0 0 -1 0 427)" />
-            </svg>
-          </div>
-          { /* Content */}
-          <div className="max-w-3xl mx-auto text-center">
-            <div>
-              <div className="inline-flex font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900 pb-3">The security first platform</div>
+          <div className="flex flex-col lg:flex-row justify-between items-center">
+            {/* CTA content */}
+            <div className="mb-6 lg:mr-16 lg:mb-0 text-center lg:text-left">
+              <h3 className="text-4xl font-bold font-uncut-sans mb-2">Get started with Neon</h3>
+              <p className="text-blue-200">It only takes a few minutes to get started with Neon. Understand your users, start free, today.</p>
             </div>
-            <h2 className="h2 bg-clip-text text-transparent bg-gradient-to-r from-purple-800/80 via-slate-800 to-slate-900/80 pb-4">Take control of your business</h2>
-            <p className="text-lg text-slate-700 mb-8">All the lorem ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet.</p>
-            <div>
-              <a className="btn text-slate-50 bg-slate-900 hover:bg-slate-700 transition duration-150 ease-in-out group" href="#0">
-                Get Started <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
+            {/* CTA button */}
+            <div className="shrink-0">
+              <a className="btn-sm text-white bg-gradient-to-t from-blue-600 to-blue-400 hover:to-blue-500 w-full group shadow-lg" href="#0">
+                Start Free Trial <span className="tracking-normal text-blue-200 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
               </a>
             </div>
           </div>

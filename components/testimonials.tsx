@@ -1,141 +1,140 @@
-'use client'
+import Image from 'next/image'
+import TestimonialsImage01 from '@/public/images/testimonial-01.jpg'
+import TestimonialsImage02 from '@/public/images/testimonial-02.jpg'
+import TestimonialsImage03 from '@/public/images/testimonial-03.jpg'
+import TestimonialsImage04 from '@/public/images/testimonial-04.jpg'
+import TestimonialsImage05 from '@/public/images/testimonial-05.jpg'
+import TestimonialsImage06 from '@/public/images/testimonial-06.jpg'
+import TestimonialsImage07 from '@/public/images/testimonial-07.jpg'
+import TestimonialsImage08 from '@/public/images/testimonial-08.jpg'
+import TestimonialsImage09 from '@/public/images/testimonial-09.jpg'
 
-import { useState, useRef, useEffect } from 'react'
-import Image, { StaticImageData } from 'next/image'
-import { Transition } from '@headlessui/react'
-import Particles from './particles'
-
-import TestimonialImg01 from '@/public/images/testimonial-01.jpg'
-import TestimonialImg02 from '@/public/images/testimonial-02.jpg'
-import TestimonialImg03 from '@/public/images/testimonial-03.jpg'
-
-function Testimonials() {
-
-  const [active, setActive] = useState<number>(0)
-  const [autorotate, setAutorotate] = useState<boolean>(true)
-  const [autorotateTiming] = useState<number>(7000)
-
-  interface Item {
-    img: StaticImageData
-    quote: string
-    name: string
-    role: string
-  }
-
-  const items: Item[] = [
-    {
-      img: TestimonialImg01,
-      quote: "The ability to capture responses is a game-changer. If a user gets tired of the sign up and leaves, that data is still persisted. Additionally, it's great to be able to select between formats.ture responses is a game-changer.",
-      name: 'Jessie J',
-      role: 'Ltd Head of Product'
-    },
-    {
-      img: TestimonialImg02,
-      quote: "I have been using this product for a few weeks now and I am blown away by the results. My skin looks visibly brighter and smoother, and I have received so many compliments on my complexion.",
-      name: 'Mark Luk',
-      role: 'Spark Founder & CEO'
-    },
-    {
-      img: TestimonialImg03,
-      quote: "As a busy professional, I don't have a lot of time to devote to working out. But with this fitness program, I have seen amazing results in just a few short weeks. The workouts are efficient and effective.",
-      name: 'Jeff Kahl',
-      role: 'Appy Product Lead'
-    }
-  ]
-
-  const testimonials = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!autorotate) return
-    const interval = setInterval(() => {
-      setActive(active + 1 === items.length ? 0 : active => active + 1)
-    }, autorotateTiming)
-    return () => clearInterval(interval)
-  }, [active, autorotate])
-
-  const heightFix = () => {
-    if (testimonials.current && testimonials.current.parentElement) testimonials.current.parentElement.style.height = `${testimonials.current.clientHeight}px`
-  }
-
-  useEffect(() => {
-    heightFix()
-  }, [])  
-
+export default function Testimonials() {
   return (
-    <section>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <div className="relative pb-12 md:pb-20">
-
-          { /* Particles animation */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 -z-10 w-80 h-80 -mt-6">
-            <Particles className="absolute inset-0 -z-10" quantity={10} staticity={40} /> 
+    <section className="relative">
+      {/* Bg gradient: top */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-gray-800 to-gray-900 opacity-60 h-[10rem] pointer-events-none -z-10" aria-hidden="true" />
+      {/* Bg gradient: bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-transparent h-[15rem] pointer-events-none z-10" aria-hidden="true" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="pt-12 md:pt-20">
+          {/* Section header */}
+          <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
+            <h2 className="h2 font-uncut-sans">Sound too good? Hear what our customers have to say</h2>
           </div>
-
-          { /* Carousel */}
-          <div className="text-center">
-            { /* Testimonial image */}
-            <div className="relative h-32 [mask-image:_linear-gradient(0deg,transparent,theme(colors.white)_40%,theme(colors.white))]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[480px] -z-10 pointer-events-none before:rounded-full rounded-full before:absolute before:inset-0 before:bg-gradient-to-b before:from-slate-400/20 before:to-transparent before:to-20% after:rounded-full after:absolute after:inset-0 after:bg-purple-300 after:m-px before:-z-20 after:-z-20">
-
-                {items.map((item, index) => (
-                  <Transition
-                    key={index}
-                    show={active === index}
-                    className="absolute inset-0 h-full -z-10"
-                    enter="transition ease-[cubic-bezier(0.68,-0.3,0.32,1)] duration-700 order-first"
-                    enterFrom="opacity-0 -rotate-[60deg]"
-                    enterTo="opacity-100 rotate-0"
-                    leave="transition ease-[cubic-bezier(0.68,-0.3,0.32,1)] duration-700"
-                    leaveFrom="opacity-100 rotate-0"
-                    leaveTo="opacity-0 rotate-[60deg]"
-                    beforeEnter={() => heightFix()}
-                  >
-                    <Image className="relative top-11 left-1/2 -translate-x-1/2 rounded-full" src={item.img} width={56} height={56} alt={item.name} />
-                  </Transition>
-                ))}
-
+          {/* Testimonials container */}
+          <div className="max-w-sm mx-auto sm:max-w-none grid gap-12 sm:grid-cols-2 md:grid-cols-3 sm:gap-x-6 sm:gap-y-8 items-start" data-aos-id-testimonials>
+            {/* 1st Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage01} width={48} height={48} alt="Testimonial 01" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Compared to other offerings, Neon always has a head start and introduces bleeding edge features first.</p>
               </div>
-            </div>
-            { /* Text */}
-            <div className="mb-10 transition-all duration-150 delay-300 ease-in-out">
-              <div className="relative flex flex-col" ref={testimonials}>
-
-                {items.map((item, index) => (
-                  <Transition
-                    key={index}
-                    show={active === index}
-                    enter="transition ease-in-out duration-500 delay-200 order-first"
-                    enterFrom="opacity-0 -translate-x-4"
-                    enterTo="opacity-100 translate-x-0"
-                    leave="transition ease-out duration-300 delay-300 absolute"
-                    leaveFrom="opacity-100 translate-x-0"
-                    leaveTo="opacity-0 translate-x-4"
-                    beforeEnter={() => heightFix()}
-                  >
-                    <div className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-800/80 via-slate-700 to-slate-900/90">{item.quote}</div>
-                  </Transition>
-                ))}
-
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Mark Luiss</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Apprenda</a>
+              </footer>
+            </article>
+            {/* 2nd Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="100">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage02} width={48} height={48} alt="Testimonial 02" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Neon has made a huge impact on compliance, while helping us become more transparent.</p>
               </div>
-            </div>
-            { /* Buttons */}
-            <div className="flex flex-wrap justify-center -m-1.5">
-
-              {items.map((item, index) => (
-                <button className={`btn-sm m-1.5 text-xs py-1.5 text-slate-300 transition duration-150 ease-in-out [background:linear-gradient(theme(colors.slate.900),_theme(colors.slate.900))_padding-box,_conic-gradient(theme(colors.slate.400),_theme(colors.slate.700)_25%,_theme(colors.slate.700)_75%,_theme(colors.slate.400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none ${active === index ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`} key={index} onClick={() => { setActive(index); setAutorotate(false); }}>
-                    <span className="relative">
-                        <span className="text-slate-50">{item.name}</span> <span className="text-slate-600">-</span> <span>{item.role}</span>
-                    </span>
-                </button>
-              ))}
-
-            </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Patrick Mills</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">AppDonkey</a>
+              </footer>
+            </article>
+            {/* 3rd Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="200">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage03} width={48} height={48} alt="Testimonial 03" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">GitHub provides tools that are, in a sense, invisible. You don't have to waste time trying to get them to work.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">David Collison</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">BrainTwo</a>
+              </footer>
+            </article>
+            {/* 4th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="300">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage04} width={48} height={48} alt="Testimonial 04" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Neon is the tool devs. The more you can make work feel native for a developer, the more cool their experience.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Licia McFarland</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Paytable</a>
+              </footer>
+            </article>
+            {/* 5th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="400">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage05} width={48} height={48} alt="Testimonial 05" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Neon comes into play during the entire software life cycle. It's the de facto tool for anything related to our software.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Rossana Alecu</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Bolt Money</a>
+              </footer>
+            </article>
+            {/* 6th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="500">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage06} width={48} height={48} alt="Testimonial 06" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">I have no tech skills and with Neon I can actually make good looking apps with ease.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Max Corsano</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">MixTech</a>
+              </footer>
+            </article>
+            {/* 7th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="600">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage07} width={48} height={48} alt="Testimonial 07" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">It's not just easier to get in touch with developers, it's also easier to bring in other team members.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Anna Pratt</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Cloud Inc</a>
+              </footer>
+            </article>
+            {/* 8th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="700">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage08} width={48} height={48} alt="Testimonial 08" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Tools like Neon Advanced Security help keep our team lean. It makes us much more efficient.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Veerle Larson</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Prinso</a>
+              </footer>
+            </article>
+            {/* 9th Testimonial */}
+            <article className="h-full flex flex-col bg-gray-800 p-6" data-aos="fade" data-aos-anchor="[data-aos-id-testimonials]" data-aos-delay="800">
+              <header className="mb-4">
+                <Image className="rounded-full shrink-0" src={TestimonialsImage09} width={48} height={48} alt="Testimonial 09" />
+              </header>
+              <div className="grow mb-3">
+                <p className="text-gray-400">Neon enables speed and scale. We can work on bigger projects and finish them faster.</p>
+              </div>
+              <footer className="text-sm text-gray-400">
+                <span className="text-gray-300">Ana Kennedy</span> - <a className="font-medium text-blue-500 hover:text-blue-400 transition duration-150 ease-in-out" href="#0">Syntax Inc</a>
+              </footer>
+            </article>
           </div>
-
         </div>
       </div>
     </section>
   )
 }
-
-export default Testimonials;

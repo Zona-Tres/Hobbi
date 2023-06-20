@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 
 import AOS from 'aos'
 import 'aos/dist/aos.css'
@@ -8,7 +8,7 @@ import 'aos/dist/aos.css'
 import Header from '@/components/ui/header'
 import Footer from '@/components/ui/footer'
 
-function DefaultLayout({
+export default function DefaultLayout({
   children,
 }: {
   children: React.ReactNode
@@ -18,7 +18,7 @@ function DefaultLayout({
     AOS.init({
       once: true,
       disable: 'phone',
-      duration: 1000,
+      duration: 500,
       easing: 'ease-out-cubic',
     })
   })
@@ -37,5 +37,3 @@ function DefaultLayout({
     </>
   )
 }
-
-export default DefaultLayout;
