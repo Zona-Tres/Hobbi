@@ -14,7 +14,7 @@ export default function Cta() {
           <div className="flex flex-col lg:flex-row justify-between items-center">
             {/* CTA content */}
             <div className="mb-6 lg:mr-16 lg:mb-0 text-center lg:text-left">
-              <h3 className="text-4xl font-bold font-uncut-sans mb-2">Get started with Neon</h3>
+              <h3 className="text-4xl font-bold font-uncut-sans mb-2">Se de los primeros en probar Hobbi</h3>
               <p className="text-blue-200">It only takes a few minutes to get started with Neon. Understand your users, start free, today.</p>
             </div>
             {/* CTA button */}

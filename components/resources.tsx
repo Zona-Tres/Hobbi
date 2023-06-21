@@ -12,7 +12,7 @@ export default function Resources() {
         <div className="py-12 md:py-20">
           {/* Section header */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 font-uncut-sans">Resources to help you get the most out of Neon</h2>
+            <h2 className="h2 font-uncut-sans">Funcionalidades</h2>
           </div>
           {/* Content */}
           <div>

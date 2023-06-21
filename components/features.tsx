@@ -8,7 +8,7 @@ export default function Features() {
         <div className="py-12 md:py-20">
           {/* Section header */}
           <div className="text-center pb-12 md:pb-20">
-            <h2 className="h2 font-uncut-sans" data-aos="zoom-out">Focus on solving bigger problems</h2>
+            <h2 className="h2 font-uncut-sans" data-aos="zoom-out">¿Qué es Hobbi?</h2>
           </div>
           <div className="pb-16" data-aos="zoom-out">
             <Image src={FeaturesImage} alt="Features" />

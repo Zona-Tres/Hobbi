@@ -19,9 +19,8 @@ export default function Home() {
       <PressLogos />
       <Features />
       <Features02 />
-      <Pricing />
-      <Testimonials />
       <Resources />
+      <Pricing />
       <Cta />
     </>
   )
