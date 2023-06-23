@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Hobbi | Home',
-  description: 'Page description',
+  description: 'Hobbi es una plataforma social web3 con la visión de tener un espacio para compartir y conectar siendo propietarios de nuestra información en internet.',
 }
 
 import Hero from '@/components/hero'

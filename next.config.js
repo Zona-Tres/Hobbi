@@ -17,7 +17,6 @@ module.exports = {
     // Important: return the modified config
     return config
   },
-  experimental: {
-    appDir: true,
-  },
+  images: { unoptimized: true },
+  output: "export"
 }
