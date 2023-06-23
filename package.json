@@ -1,0 +1,57 @@
+{
+  "name": "nextjs_ic_template",
+  "version": "0.4.0",
+  "author": "Henry Chan",
+  "description": "Next.js Internet Computer Starter Template",
+  "keywords": [
+    "nextjs",
+    "internet computer",
+    "icp",
+    "starter",
+    "dfinity"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "npx serve@latest out",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "export": "next build",
+    "sync:hello": "DFX_NETWORK=local && rsync -avr .dfx/$(echo ${DFX_NETWORK:-'**'})/canisters/hello --exclude='idl/' --exclude='*.wasm' --delete ui/declarations",
+    "sync:image": "DFX_NETWORK=local && rsync -avr .dfx/$(echo ${DFX_NETWORK:-'**'})/canisters/image --exclude='idl/' --exclude='*.wasm' --delete ui/declarations"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.3",
+    "@types/aos": "^3.0.4",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.38.0",
+    "eslint-config-next": "^13.3",
+    "eslint-plugin-react": "^7.32",
+    "eslint-plugin-react-hooks": "^4.6",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1"
+  },
+  "dependencies": {
+    "@dfinity/agent": "^0.15",
+    "@dfinity/candid": "^0.15",
+    "@dfinity/principal": "^0.15",
+    "@headlessui/react": "^1.7.13",
+    "@types/node": "^18.15.11",
+    "@types/react": "^18.0.34",
+    "@types/react-dom": "18.0.11",
+    "aos": "^3.0.0-beta.6",
+    "assert": "^2.0.0",
+    "buffer": "^6.0.3",
+    "compressorjs": "^1.2.1",
+    "events": "^3.3.0",
+    "next": "^13.3.5-canary.4",
+    "react": "^18.2",
+    "react-dom": "^18.2",
+    "react-dropzone": "^14.2",
+    "sharp": "^0.32.1",
+    "stream-browserify": "^3.0.0",
+    "swiper": "^8.4.7",
+    "typescript": "^5.0.4",
+    "util": "^0.12.5"
+  }
+}
