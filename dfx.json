@@ -6,6 +6,9 @@
     "image": {
       "main": "backend/service/Image.mo"
     },
+    "nft": {
+      "main": "backend/service/nft/src/Main.mo"
+    },
     "hello_assets": {
       "dependencies": ["hello"],
       "frontend": {
