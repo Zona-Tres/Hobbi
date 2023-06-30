@@ -168,4 +168,36 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
       id = transactionId;
     });
   };
+
+  public shared({ caller }) func addToCounter(token_id: Types.TokenId) : async Types.TxReceipt {
+    let item = List.find(nfts, func(token: Types.Nft) : Bool { token.id == token_id });
+    switch (item) {
+      case null {
+        return #Err(#InvalidTokenId);
+      };
+      case (?token) {
+        if (
+          caller != token.owner and
+          not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
+        ) {
+          return #Err(#Unauthorized);
+        } else {
+          nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
+            if (item.id == token.id) {
+              let update : Types.Nft = {
+                owner = token.owner;
+                id = item.id;
+                metadata = token.metadata;
+              };
+              return update;
+            } else {
+              return item;
+            };
+          });
+          transactionId += 1;
+          return #Ok(transactionId);   
+        };
+      };
+    };
+  };
 }
