@@ -9,6 +9,7 @@ import Option "mo:base/Option";
 import Bool "mo:base/Bool";
 import Principal "mo:base/Principal";
 import Types "./Types";
+import Debug "mo:base/Debug";
 
 shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibleToken) = Self {
   stable var transactionId: Types.TransactionId = 0;
@@ -176,18 +177,32 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
         return #Err(#InvalidTokenId);
       };
       case (?token) {
-        if (
-          caller != token.owner and
-          not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        ) {
-          return #Err(#Unauthorized);
-        } else {
+        // if (
+        //   caller != token.owner and
+        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
+        // ) {
+        //   return #Err(#Unauthorized);
+        // } else {
           nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
             if (item.id == token.id) {
+              let updatedVal = switch (token.metadata[0].key_val_data[0].val) {
+                case (#Nat8Content(n)) #Nat8Content(n + 1);
+                case _ token.metadata[0].key_val_data[0].val;
+              };
+              
+              let updatedMetadata: Types.MetadataDesc = [{
+                data = token.metadata[0].data;
+                purpose = token.metadata[0].purpose;
+                key_val_data = [{
+                  key = token.metadata[0].key_val_data[0].key;
+                  val = updatedVal;
+                }]
+              }];
+              
               let update : Types.Nft = {
                 owner = token.owner;
                 id = item.id;
-                metadata = token.metadata;
+                metadata = updatedMetadata;
               };
               return update;
             } else {
@@ -196,7 +211,7 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
           });
           transactionId += 1;
           return #Ok(transactionId);   
-        };
+        //};
       };
     };
   };
