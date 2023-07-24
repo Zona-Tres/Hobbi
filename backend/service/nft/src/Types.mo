@@ -84,6 +84,7 @@ module {
     #Nat16Content: Nat16;
     #Nat32Content: Nat32;
     #Nat64Content: Nat64;
+    #TextArray: [Text];
   };
 
   public type MintReceipt = Result<MintReceiptPart, ApiError>;
