@@ -6,6 +6,9 @@
     "image": {
       "main": "backend/service/Image.mo"
     },
+    "post": {
+      "main": "backend/service/Post.mo"
+    },
     "nft": {
       "main": "backend/service/nft/src/Main.mo"
     },

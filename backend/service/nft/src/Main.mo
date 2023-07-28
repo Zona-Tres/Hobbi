@@ -171,120 +171,19 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
     });
   };
 
-  public shared({ caller }) func addToCounter(token_id: Types.TokenId) : async Types.TxReceipt {
+  public shared({ caller }) func update_value(token_id: Types.TokenId, key: Text, new_value: Types.MetadataVal) : async Types.TxReceipt {
     let item = List.find(nfts, func(token: Types.Nft) : Bool { token.id == token_id });
     switch (item) {
       case null {
         return #Err(#InvalidTokenId);
       };
       case (?token) {
-        // if (
-        //   caller != token.owner and
-        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        // ) {
-        //   return #Err(#Unauthorized);
-        // } else {
-          nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
-            if (item.id == token.id) {
-              let updatedVal = switch (token.metadata[0].key_val_data[0].val) {
-                case (#Nat8Content(n)) #Nat8Content(n + 1);
-                case _ token.metadata[0].key_val_data[0].val;
-              };
-              
-              let updatedMetadata: Types.MetadataDesc = [{
-                data = token.metadata[0].data;
-                purpose = token.metadata[0].purpose;
-                key_val_data = [{
-                  key = token.metadata[0].key_val_data[0].key;
-                  val = updatedVal;
-                }]
-              }];
-              
-              let update : Types.Nft = {
-                owner = token.owner;
-                id = item.id;
-                metadata = updatedMetadata;
-              };
-              return update;
-            } else {
-              return item;
-            };
-          });
-          transactionId += 1;
-          return #Ok(transactionId);   
-        //};
-      };
-    };
-  };
-
-  public shared({ caller }) func updateValue(token_id: Types.TokenId, new_user: Text) : async Types.TxReceipt {
-    let item = List.find(nfts, func(token: Types.Nft) : Bool { token.id == token_id });
-    switch (item) {
-      case null {
-        return #Err(#InvalidTokenId);
-      };
-      case (?token) {
-        // if (
-        //   caller != token.owner and
-        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        // ) {
-        //   return #Err(#Unauthorized);
-        // } else {
-          nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
-            if (item.id == token.id) {
-              let updatedVal = switch (token.metadata[0].key_val_data[0].val) {
-                case (#TextContent(old_user)) #TextContent(new_user);
-                case _ token.metadata[0].key_val_data[0].val;
-              };
-              
-              let updatedMetadata: Types.MetadataDesc = [{
-                data = token.metadata[0].data;
-                purpose = token.metadata[0].purpose;
-                key_val_data = [{
-                  key = token.metadata[0].key_val_data[0].key;
-                  val = updatedVal;
-                }, {
-                  key = token.metadata[0].key_val_data[1].key;
-                  val = token.metadata[0].key_val_data[1].val;
-                }, {
-                  key = token.metadata[0].key_val_data[2].key;
-                  val = token.metadata[0].key_val_data[2].val;
-                }, {
-                  key = token.metadata[0].key_val_data[3].key;
-                  val = token.metadata[0].key_val_data[3].val;
-                }]
-              }];
-              
-              let update : Types.Nft = {
-                owner = token.owner;
-                id = item.id;
-                metadata = updatedMetadata;
-              };
-              return update;
-            } else {
-              return item;
-            };
-          });
-          transactionId += 1;
-          return #Ok(transactionId);   
-        //};
-      };
-    };
-  };
-
-  public shared({ caller }) func checkKey(token_id: Types.TokenId, key: Text, new_value: Types.MetadataVal) : async Types.TxReceipt {
-    let item = List.find(nfts, func(token: Types.Nft) : Bool { token.id == token_id });
-    switch (item) {
-      case null {
-        return #Err(#InvalidTokenId);
-      };
-      case (?token) {
-        // if (
-        //   caller != token.owner and
-        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        // ) {
-        //   return #Err(#Unauthorized);
-        // } else {
+        if (
+          caller != token.owner and
+          not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
+        ) {
+          return #Err(#Unauthorized);
+        } else {
           nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
             if (item.id == token.id) {
               let updatedKeyVals = Buffer.Buffer<Types.MetadataKeyVal>(5);
@@ -315,14 +214,9 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
           });
           transactionId += 1;
           return #Ok(transactionId);   
-        //};
+        };
       };
     };
-  };
-
-  public func checkValue(value: Types.MetadataVal) : async Types.MetadataVal{
-    Debug.print("All good");
-    return value;
   };
 }
 
