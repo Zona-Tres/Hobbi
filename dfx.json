@@ -10,7 +10,10 @@
       "main": "backend/service/Post.mo"
     },
     "nft": {
-      "main": "backend/service/nft/src/Main.mo"
+      "main": "backend/service/Nft.mo"
+    },
+    "outcall": {
+      "main": "backend/service/Outcall.mo"
     },
     "hello_assets": {
       "dependencies": ["hello"],
@@ -19,6 +22,12 @@
       },
       "source": ["out"],
       "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "mops sources"
     }
   },
   "dfx": "0.14.0",
