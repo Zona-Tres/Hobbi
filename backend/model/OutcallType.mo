@@ -5,6 +5,17 @@ module Types {
     public type Timestamp = Nat64;
     public type Rate = Text;
 
+    public type Service = {
+        //Netflix, Hulu, Disney...
+        #Tv;
+
+        //Spotify, Amazon Music, Apple Music...
+        #Music;
+
+        //Kindle, Audible...
+        #Book;
+    };
+
     public type TimeRange = {
         start : Timestamp;
         end : Timestamp;

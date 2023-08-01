@@ -1,8 +1,5 @@
 {
   "canisters": {
-    "hello": {
-      "main": "backend/service/Hello.mo"
-    },
     "image": {
       "main": "backend/service/Image.mo"
     },

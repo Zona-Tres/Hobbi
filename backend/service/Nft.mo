@@ -218,4 +218,3 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
     };
   };
 }
-

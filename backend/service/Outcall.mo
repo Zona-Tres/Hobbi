@@ -8,35 +8,32 @@ import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 
 actor {
-  type User = Principal;
-  type BookList = HashMap.HashMap<Text, Text>;
+  var metadata_list = HashMap.HashMap<Principal, Text>(0, Principal.equal, Principal.hash);
 
-  var favoritebook = HashMap.HashMap<Principal, Text>(0, Principal.equal, Principal.hash);
-
-  public shared(msg) func getUser() : async Principal {
-    let currentUser = msg.caller;
-    return currentUser;
-  };
-
-  public shared(msg) func addBook(url: Text) : async Text {
-    let book: Text = await proxy(url);
+  public shared(msg) func addServiceMetadata(info_id: Text, service_type: Types.Service) : async Text {
+    let metadata: Text = await proxy(info_id, service_type);
     let owner: Principal = msg.caller;
 
-    favoritebook.put(owner, book);
-    Debug.print("Your favorite book has been saved! " # Principal.toText(owner) # ". Thanks!");
+    metadata_list.put(owner, metadata);
 
-    return book;
+    return metadata;
   };
 
-  public func getBook(account : Principal): async ?Text {
-    return favoritebook.get(account);
+  public func getMetadata(account : Principal): async ?Text {
+    return metadata_list.get(account);
   };
 
-  public func proxy(url : Text) : async Text {
+  public func proxy(info_id: Text, service_type: Types.Service) : async Text {
 
     let transform_context : Types.TransformContext = {
       function = transform;
       context = Blob.fromArray([]);
+    };
+
+    let url = switch(service_type) {
+      case (#Tv) "Placeholder, need to handle API KEY";
+      case (#Music) "Placeholder, need to handle API KEY";
+      case (#Book) "https://openlibrary.org/works/" # info_id # ".json";
     };
 
     // Construct canister request
