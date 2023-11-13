@@ -1,3 +1,14 @@
+@import 'css/theme.css';
+@import 'css/utility-patterns.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Additional Tailwind directives: https://tailwindcss.com/docs/functions-and-directives/#responsive */
+@layer utilities {
+    .rtl {
+        direction: rtl;
+    }
+}
