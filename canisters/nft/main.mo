@@ -62,12 +62,13 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
         return #Err(#InvalidTokenId);
       };
       case (?token) {
-        if (
-          caller != token.owner and
-          not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        ) {
-          return #Err(#Unauthorized);
-        } else if (Principal.notEqual(from, token.owner)) {
+        // if (
+        //   caller != token.owner and
+        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
+        // ) {
+        //   return #Err(#Unauthorized);
+        // } else 
+        if (Principal.notEqual(from, token.owner)) {
           return #Err(#Other);
         } else {
           nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
@@ -149,9 +150,9 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
   };
 
   public shared({ caller }) func mintDip721(to: Principal, metadata: Types.MetadataDesc) : async Types.MintReceipt {
-    if (not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })) {
-      return #Err(#Unauthorized);
-    };
+    // if (not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })) {
+    //   return #Err(#Unauthorized);
+    // };
 
     let newId = Nat64.fromNat(List.size(nfts));
     let nft : Types.Nft = {
@@ -177,12 +178,12 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
         return #Err(#InvalidTokenId);
       };
       case (?token) {
-        if (
-          caller != token.owner and
-          not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
-        ) {
-          return #Err(#Unauthorized);
-        } else {
+        // if (
+        //   caller != token.owner and
+        //   not List.some(custodians, func (custodian : Principal) : Bool { custodian == caller })
+        // ) {
+        //   return #Err(#Unauthorized);
+        // } else {
           nfts := List.map(nfts, func (item : Types.Nft) : Types.Nft {
             if (item.id == token.id) {
               let updatedKeyVals = Buffer.Buffer<Types.MetadataKeyVal>(5);
@@ -213,7 +214,7 @@ shared actor class Dip721NFT(custodian: Principal, init : Types.Dip721NonFungibl
           });
           transactionId += 1;
           return #Ok(transactionId);   
-        };
+        // };
       };
     };
   };

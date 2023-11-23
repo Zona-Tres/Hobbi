@@ -35,7 +35,7 @@ const client = createClient({
     nft,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=bkyz2-fmaaa-aaaaa-qaaaq-cai" })
+    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai" })
   ],
   globalProviderConfig: {
     dev: true,
