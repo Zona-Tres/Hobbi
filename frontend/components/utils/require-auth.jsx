@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import { useLocation, Navigate, Outlet } from "react-router-dom";
 import { useCanister, useConnect } from "@connect2ic/react"
+import { Principal } from '@dfinity/principal';
 
 export default function RequireAuth(){
   const location = useLocation()
@@ -13,10 +14,12 @@ export default function RequireAuth(){
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        const response = await nft.getTokenIdsForUserDip721(principal)
-        console.log(response);
+        const response = await nft.getTokenIdsForUserDip721(Principal.fromText(principal))
 
-        setHasProfile(response.data.hasProfile)
+        if(response.length > 0) {
+          setHasProfile(true)
+          localStorage.setItem("hobbi_has_profile", true)
+        }
       } catch (error) {
         console.error('Error checking profile:', error)
       } finally {
@@ -24,7 +27,8 @@ export default function RequireAuth(){
       }
     };
 
-    if(isConnected) {
+    if(isConnected && !localStorage.getItem("hobbi_has_profile")) {
+      console.log("checking..")
       checkProfile()
     } else {
       setLoading(false)
@@ -36,8 +40,8 @@ export default function RequireAuth(){
     return <div>Loading...</div>
   }
 
-  return isConnected ? (hasProfile ? 
+  return isConnected ? (hasProfile ?
     <Outlet />
-  : <Navigate to="/create-profile" state={{ from: location }} replace />) 
+  : <Navigate to="/create-profile" state={{ from: location }} replace />)
   : <Navigate to="/connect" state={{ from: location }} replace />
 }

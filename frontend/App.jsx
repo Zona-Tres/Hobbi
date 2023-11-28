@@ -20,11 +20,11 @@ function App() {
     <Routes>
       <Route exact path="/" element={<Home />} />
       <Route path="/connect" element={<Connect2Hobbi />} />
-      <Route path="/create-profile" element={<CreateProfile />} />
       
+        <Route path="/create-profile" element={<CreateProfile />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       {/* Protected Routes */}
       <Route element={<RequireAuth />} >
-        <Route path="/dashboard" element={<Dashboard />} />
       </Route>
     </Routes>
   )
@@ -35,7 +35,7 @@ const client = createClient({
     nft,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai" })
+    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=bkyz2-fmaaa-aaaaa-qaaaq-cai" })
   ],
   globalProviderConfig: {
     dev: true,

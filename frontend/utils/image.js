@@ -1,7 +1,7 @@
 import Compressor from "compressorjs"
 
 const DefauttMaxWidth = 768
-export const ImageMaxWidth = 2048
+export const ImageMaxWidth = 768
 export const ORIENTATION_TO_ANGLE = {
   '3': 180,
   '6': 90,
