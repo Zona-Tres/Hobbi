@@ -10,30 +10,89 @@ import Types "./model";
 actor {
   var metadata_list = HashMap.HashMap<Principal, Text>(0, Principal.equal, Principal.hash);
 
-  public shared(msg) func addServiceMetadata(info_id: Text, service_type: Types.Service) : async Text {
-    let metadata: Text = await proxy(info_id, service_type);
-    let owner: Principal = msg.caller;
+  public func searchBook(queryString : [Text]): async Text {
+    var url = "https://openlibrary.org/search.json?q=";
+    
+    for (word in queryString.vals()) {
+      url := url # word #"%20";
+    };
+    url := Text.trimEnd(url, #char '0');
+    url := Text.trimEnd(url, #char '2');
+    url := Text.trimEnd(url, #char '%');
 
-    metadata_list.put(owner, metadata);
+    url := url # "&_spellcheck_count=0&limit=10&fields=key,cover_i,title,subtitle,author_name,name&mode=everything";
 
-    return metadata;
+    let response: Types.CanisterHttpResponsePayload = await proxy(url);
+    let decodedResponse : Text = await decodeResponse(response.body);
+
+    return decodedResponse;
   };
+
+  public func decodeResponse(body : [Nat8]) : async Text {
+    let text_decoded: ?Text = Text.decodeUtf8(Blob.fromArray(body));
+
+    let checked_text : Text = switch text_decoded {
+      case null "";
+      case (?Text) Text;
+    };
+
+    checked_text;
+  };
+
+  // public shared(msg) func addServiceMetadata(info_id: Text, service_type: Types.Service) : async Text {
+  //   let metadata: Text = await proxy(info_id, service_type);
+  //   let owner: Principal = msg.caller;
+
+  //   metadata_list.put(owner, metadata);
+
+  //   return metadata;
+  // };
 
   public func getMetadata(account : Principal): async ?Text {
     return metadata_list.get(account);
   };
 
-  public func proxy(info_id: Text, service_type: Types.Service) : async Text {
+  // public func proxy(info_id: Text, service_type: Types.Service) : async Text {
+
+  //   let transform_context : Types.TransformContext = {
+  //     function = transform;
+  //     context = Blob.fromArray([]);
+  //   };
+
+  //   let url = switch(service_type) {
+  //     case (#Tv) "Placeholder, need to handle API KEY";
+  //     case (#Music) "Placeholder, need to handle API KEY";
+  //     case (#Book) "https://openlibrary.org/works/" # info_id # ".json";
+  //   };
+
+  //   // Construct canister request
+  //   let request : Types.CanisterHttpRequestArgs = {
+  //     url = url;
+  //     max_response_bytes = null;
+  //     headers = [];
+  //     body = null;
+  //     method = #get;
+  //     transform = ?transform_context;
+  //   };
+
+  //   Cycles.add(220_000_000_000);
+  //   let ic : Types.IC = actor ("aaaaa-aa");
+  //   let response : Types.CanisterHttpResponsePayload = await ic.http_request(request);
+    
+  //   let text_decoded: ?Text = Text.decodeUtf8(Blob.fromArray(response.body));
+
+  //   let textOrNot : Text = switch text_decoded {
+  //     case null "";
+  //     case (?Text) Text;
+  //   };
+
+  //   textOrNot;
+  // };
+  public func proxy(url : Text) : async Types.CanisterHttpResponsePayload {
 
     let transform_context : Types.TransformContext = {
       function = transform;
       context = Blob.fromArray([]);
-    };
-
-    let url = switch(service_type) {
-      case (#Tv) "Placeholder, need to handle API KEY";
-      case (#Music) "Placeholder, need to handle API KEY";
-      case (#Book) "https://openlibrary.org/works/" # info_id # ".json";
     };
 
     // Construct canister request
@@ -49,15 +108,7 @@ actor {
     Cycles.add(220_000_000_000);
     let ic : Types.IC = actor ("aaaaa-aa");
     let response : Types.CanisterHttpResponsePayload = await ic.http_request(request);
-    
-    let text_decoded: ?Text = Text.decodeUtf8(Blob.fromArray(response.body));
-
-    let textOrNot : Text = switch text_decoded {
-      case null "";
-      case (?Text) Text;
-    };
-
-    textOrNot;
+    return response;
   };
 
   public query func transform(raw : Types.TransformArgs) : async Types.CanisterHttpResponsePayload {

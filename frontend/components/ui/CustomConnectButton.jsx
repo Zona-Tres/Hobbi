@@ -8,7 +8,7 @@ export default function CustomConnectButton() {
 	return(
 		<>
 			<ConnectButton onConnect={() => {
-				navigate("/create-profile")
+				navigate("/dashboard")
 			}} 
 			onDisconnect={() => {
 				navigate("/")

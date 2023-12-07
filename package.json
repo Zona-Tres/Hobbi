@@ -16,6 +16,7 @@
     "aos": "^2.3.4",
     "compressorjs": "^1.2.1",
     "get-orientation": "^1.1.2",
+    "nanoid": "^5.0.4",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-dropzone": "^14.2.3",

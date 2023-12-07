@@ -7,7 +7,7 @@ export default function RequireAuth(){
   const location = useLocation()
 
   const [loading, setLoading] = useState(true)
-  const [hasProfile, setHasProfile] = useState(false)
+  const [hasProfile, setHasProfile] = useState(localStorage.getItem("hobbi_has_profile"))
   const { isConnected, principal } = useConnect()
   const [nft] = useCanister("nft")
 
@@ -23,16 +23,15 @@ export default function RequireAuth(){
       } catch (error) {
         console.error('Error checking profile:', error)
       } finally {
+        console.log('finished...')
         setLoading(false)
       }
     };
 
-    if(isConnected && !localStorage.getItem("hobbi_has_profile")) {
+    if(isConnected && !hasProfile) {
       console.log("checking..")
       checkProfile()
-    } else {
-      setLoading(false)
-    }
+    } else {setLoading(false)}
 
   }, []);
 

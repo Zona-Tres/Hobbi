@@ -8,6 +8,14 @@
       "main": "canisters/nft/main.mo",
       "type": "motoko"
     },
+    "outcall": {
+      "main": "canisters/outcall/main.mo",
+      "type": "motoko"
+    },
+    "post": {
+      "main": "canisters/post/main.mo",
+      "type": "motoko"
+    },
     "internet_identity": {
       "type": "custom",
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",

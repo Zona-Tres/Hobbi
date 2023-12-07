@@ -1,9 +1,8 @@
 import React from "react";
 import Illustration from '/images/glow-bottom.svg'
-import CustomConnectButton from "../components/ui/CustomConnectButton"
 import Logo from "../components/ui/Logo";
 
-export default function Connect2Hobbi() {
+export default function NotFound() {
 	return(
 		<div className="flex flex-col w-full overflow-hidden relative">
 			{/* Background Image */}
@@ -18,11 +17,8 @@ export default function Connect2Hobbi() {
 			</div>
 			<div className="relative min-h-screen flex items-center justify-center flex-col">
 				<div className="flex flex-col items-center justify-center space-y-4">
-					<h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 pb-4">Conéctate para continuar</h1>
-					<p className="font-light text-xl">Utilizando <strong className="text-purple-800">Internet Identity</strong> puedes acceder a esta y a todas las aplicaciones en el ecosistema de ICP.</p>
-				</div>
-				<div className="relative w-full flex items-center justify-center mt-10">
-					<CustomConnectButton />
+					<h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 pb-4">404</h1>
+					<p className="font-light text-xl">La página o perfil que estás intentando acceder no existe</p>
 				</div>
 			</div>
 			</section>
