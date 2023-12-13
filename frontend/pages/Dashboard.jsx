@@ -5,40 +5,51 @@ import { arrayBufferToImgSrc } from "../utils/image";
 
 import Illustration from '/images/glow-top.svg'
 import Logo from "../components/ui/Logo";
+import LogoImg from '../../public/logo.png'
 import Particles from "../components/Particles";
 import SearchAndPost from "../components/SearchAndPost";
 import PostList from "../components/PostList";
 import CustomConnectButton from "../components/ui/CustomConnectButton";
+import { useNavigate, useParams } from "react-router-dom";
+import { Seo } from "../components/utils/seo";
 
 export default function Dashboard() {
+	// Navigation
+	const { id } = useParams()
+	const navigate = useNavigate()
+
+	// Canister
 	const [nft] = useCanister("nft")
 	const [post] = useCanister("post")
 	const {principal} = useConnect()
+	
+	// Component's state
 	const firstLoad = useRef(true)
-
 	const [nftMetadata, setNftMetadata] = useState({})
 	const [loading, setLoading] = useState(false)
-
 	const [postList, setPostList] = useState([])
 
 	useEffect(() => {
 		setLoading(true)
 		const checkProfile = async () => {
 			try {
-				nft.getTokenIdsForUserDip721(Principal.fromText(principal)).then((vec) => {
+				console.log(id)
+				nft.getTokenIdsForUserDip721(Principal.fromText(id)).then((vec) => {
 					const arr = Array.from(vec)
+
+					if (arr.length == 0 ) navigate('/error')
 					return nft.getMetadataDip721(arr[0])
 				})
 				.then((metadata) => {
-					console.log(metadata.Ok[0])
 					setNftMetadata(metadata.Ok[0])
 				})
 
-				post.getUserPosts(principal).then((vec) => {
+				post.getUserPosts(id).then((vec) => {
 					setPostList(vec)
 				})
 			} catch (error) {
-				console.error('Error checking profile:', error)
+				console.error('Error checking profile', error)
+				navigate('/error')
 			} finally {
 				setLoading(false)
 			}
@@ -52,7 +63,27 @@ export default function Dashboard() {
 
 	return(
 		<>
-		{Object.keys(nftMetadata).length == 0 ? <div>Loading...</div> : 
+		<Seo
+			title={`Hobbi.me | ${`Cargando perfil`}`}
+			description={"Reinventa la forma de socializar y se el dueño de tú información en internet."}
+			type={"webapp"}
+			name={"Hobbi"}
+			rel={"https://hobbi.me/profile"}
+		/>
+		{Object.keys(nftMetadata).length == 0 ? <div className="flex items-center justify-center w-full min-h-screen space-x-4">
+			<img src={LogoImg} width={40} height={40} className="animate-spin"/>
+			<p className="font-bold text-slate-900 text-2xl">Cargando...</p>
+		</div> 
+		
+		: 
+		<>
+		<Seo
+        title={`Hobbi.me | ${nftMetadata.key_val_data[0].val.TextContent}`}
+        description={"Reinventa la forma de socializar y se el dueño de tú información en internet."}
+        type={"webapp"}
+        name={"Hobbi"}
+        rel={"https://hobbi.me/profile"}
+      />
 		<div className="flex flex-col min-h-screen w-full overflow-hidden relative">
 			{/* Background Image */}
 			<div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -83,12 +114,14 @@ export default function Dashboard() {
 
 					{/* Right side */}
 					<div className="w-full space-y-4">
-						<SearchAndPost setPostList={setPostList}/>
+						{principal == id && <SearchAndPost setPostList={setPostList}/>}						
 						<PostList postList={postList} user={nftMetadata.key_val_data[0].val.TextContent}/>
 					</div>
 				</div>
 			</section>
-		</div>}
+		</div>
+		</>
+		}
 		</>
 	)
 }

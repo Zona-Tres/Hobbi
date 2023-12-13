@@ -15,6 +15,7 @@ import Particles from '../components/Particles'
 import Illustration from '/images/glow-bottom.svg'
 import Header from "../components/ui/Header"
 import { useNavigate } from "react-router-dom"
+import { Seo } from "../components/utils/seo"
 
 function CreateProfile() {
     const [nft, {loading}] = useCanister("nft")
@@ -98,7 +99,7 @@ function CreateProfile() {
       try {
         await nft.mintDip721(minter, nftMetadata).then((result) => {
           if(result.Ok) {
-            navigate('/dashboard')
+            navigate(`/profile/${principal}`)
           } else {
             
           } 
@@ -121,6 +122,14 @@ function CreateProfile() {
     }
 
     return(
+      <>
+      <Seo
+        title={"Hobbi.me | Crear perfil"}
+        description={"Reinventa la forma de socializar y se el dueño de tú información en internet."}
+        type={"webapp"}
+        name={"Hobbi"}
+        rel={"https://hobbi.me/create-profile"}
+      />
       <div className="flex flex-col min-h-screen w-full overflow-hidden">
       <Header />
       <section className="relative grow">
@@ -229,6 +238,7 @@ function CreateProfile() {
         </div>
         </section>
       </div>
+      </>
 		)
 }
 

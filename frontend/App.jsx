@@ -18,17 +18,19 @@ import ErrorBoundary from "./pages/ErrorBoundary"
 import CreateProfile from "./pages/CreateProfile"
 import Connect2Hobbi from "./pages/Connect"
 import RequireAuth from "./components/utils/require-auth"
+import { HelmetProvider } from "react-helmet-async"
+import { SeoMarkup } from "./components/utils/seo-markup"
 
 function App() {
   return (
     <Routes>
       <Route exact path="/" element={<Home />} />
       <Route path="/connect" element={<Connect2Hobbi />} />
+      <Route path="/profile/:id" element={<Dashboard />} />
       
       {/* Protected Routes */}
       <Route element={<RequireAuth />} >
         <Route path="/create-profile" element={<CreateProfile />} />
-        <Route path="/dashboard" element={<Dashboard />} />
       </Route>
 
       {/* Error routes */}
@@ -37,6 +39,7 @@ function App() {
   )
 }
 
+const helmetContext = {}
 const client = createClient({
   canisters: {
     nft,
@@ -44,7 +47,7 @@ const client = createClient({
     post,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai" })
+    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai" })
   ],
   globalProviderConfig: {
     dev: true,
@@ -53,8 +56,11 @@ const client = createClient({
 
 export default () => (
   <ErrorBoundary>
-    <Connect2ICProvider client={client}>
-      <App />
-    </Connect2ICProvider>
+    <HelmetProvider context={helmetContext}>
+      <SeoMarkup />
+      <Connect2ICProvider client={client}>
+        <App />
+      </Connect2ICProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 )

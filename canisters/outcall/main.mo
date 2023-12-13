@@ -10,6 +10,42 @@ import Types "./model";
 actor {
   var metadata_list = HashMap.HashMap<Principal, Text>(0, Principal.equal, Principal.hash);
 
+  public func searchTv(queryString : [Text]): async Text { 
+    var url = "https://api.themoviedb.org/3/search/multi?query=";
+
+    for (word in queryString.vals()) {
+      url := url # word #"%20";
+    };
+    url := Text.trimEnd(url, #char '0');
+    url := Text.trimEnd(url, #char '2');
+    url := Text.trimEnd(url, #char '%');
+
+    url := url # "&include_adult=false&language=en-US&page=1";
+
+    let response: Types.CanisterHttpResponsePayload = await proxyAuth(url);
+    let decodedResponse : Text = await decodeResponse(response.body);
+
+    return decodedResponse;
+  };
+
+  public func searchGame(queryString : [Text]): async Text {
+    var url = "https://rawg.io/api/search?search=";
+
+    for (word in queryString.vals()) {
+      url := url # word #"%20";
+    };
+    url := Text.trimEnd(url, #char '0');
+    url := Text.trimEnd(url, #char '2');
+    url := Text.trimEnd(url, #char '%');
+
+    url := url # "&page_size=10&page=1&key=c542e67aec3a4340908f9de9e86038af";
+
+    let response: Types.CanisterHttpResponsePayload = await proxy(url);
+    let decodedResponse : Text = await decodeResponse(response.body);
+
+    return decodedResponse;
+  };
+
   public func searchBook(queryString : [Text]): async Text {
     var url = "https://openlibrary.org/search.json?q=";
     
@@ -39,55 +75,10 @@ actor {
     checked_text;
   };
 
-  // public shared(msg) func addServiceMetadata(info_id: Text, service_type: Types.Service) : async Text {
-  //   let metadata: Text = await proxy(info_id, service_type);
-  //   let owner: Principal = msg.caller;
-
-  //   metadata_list.put(owner, metadata);
-
-  //   return metadata;
-  // };
-
   public func getMetadata(account : Principal): async ?Text {
     return metadata_list.get(account);
   };
 
-  // public func proxy(info_id: Text, service_type: Types.Service) : async Text {
-
-  //   let transform_context : Types.TransformContext = {
-  //     function = transform;
-  //     context = Blob.fromArray([]);
-  //   };
-
-  //   let url = switch(service_type) {
-  //     case (#Tv) "Placeholder, need to handle API KEY";
-  //     case (#Music) "Placeholder, need to handle API KEY";
-  //     case (#Book) "https://openlibrary.org/works/" # info_id # ".json";
-  //   };
-
-  //   // Construct canister request
-  //   let request : Types.CanisterHttpRequestArgs = {
-  //     url = url;
-  //     max_response_bytes = null;
-  //     headers = [];
-  //     body = null;
-  //     method = #get;
-  //     transform = ?transform_context;
-  //   };
-
-  //   Cycles.add(220_000_000_000);
-  //   let ic : Types.IC = actor ("aaaaa-aa");
-  //   let response : Types.CanisterHttpResponsePayload = await ic.http_request(request);
-    
-  //   let text_decoded: ?Text = Text.decodeUtf8(Blob.fromArray(response.body));
-
-  //   let textOrNot : Text = switch text_decoded {
-  //     case null "";
-  //     case (?Text) Text;
-  //   };
-
-  //   textOrNot;
-  // };
   public func proxy(url : Text) : async Types.CanisterHttpResponsePayload {
 
     let transform_context : Types.TransformContext = {
@@ -100,6 +91,34 @@ actor {
       url = url;
       max_response_bytes = null;
       headers = [];
+      body = null;
+      method = #get;
+      transform = ?transform_context;
+    };
+
+    Cycles.add(220_000_000_000);
+    let ic : Types.IC = actor ("aaaaa-aa");
+    let response : Types.CanisterHttpResponsePayload = await ic.http_request(request);
+    return response;
+  };
+
+  public func proxyAuth(url : Text) : async Types.CanisterHttpResponsePayload {
+
+    let transform_context : Types.TransformContext = {
+      function = transform;
+      context = Blob.fromArray([]);
+    };
+
+    // Construct canister request
+    let request : Types.CanisterHttpRequestArgs = {
+      url = url;
+      max_response_bytes = null;
+      headers = [
+        {
+          name = "Authorization";
+          value = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwN2M3MjJiZTYwODM1MTMyNmNkNzgyMGM4ZTRhNjU1MSIsInN1YiI6IjY1NzEzYjkyZGZlMzFkMDBlMGRhNDkxZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.6TkvC97Gbfl8tzXA3Krv44GzHkE8BkovbGKaY_jcVIA";
+        },
+      ];
       body = null;
       method = #get;
       transform = ?transform_context;

@@ -2,9 +2,18 @@ import React from "react";
 import Illustration from '/images/glow-bottom.svg'
 import CustomConnectButton from "../components/ui/CustomConnectButton"
 import Logo from "../components/ui/Logo";
+import { Seo } from "../components/utils/seo";
 
 export default function Connect2Hobbi() {
 	return(
+		<>
+		<Seo
+			title={`Hobbi.me | Conecta para continuar`}
+			description={"Reinventa la forma de socializar y se el dueño de tú información en internet."}
+			type={"webapp"}
+			name={"Hobbi"}
+			rel={"https://hobbi.me/connect"}
+		/>
 		<div className="flex flex-col w-full overflow-hidden relative">
 			{/* Background Image */}
 			<section className="flex-grow">
@@ -27,5 +36,6 @@ export default function Connect2Hobbi() {
 			</div>
 			</section>
 		</div>
+		</>
 	)
 }

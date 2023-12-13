@@ -2,22 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/frontend/assets/favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="/public//logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link type="text/css" rel="stylesheet" href="/frontend/index.css" />
-  <title>Vite App</title>
+  <title>Hobbi, la plataforma social Web3</title>
+  <meta name="description" content="Reinventa la forma de socializar y se el dueño de tú información en internet." />
 </head>
 <body>
-<div id="root"></div>
-<script type="module">
-  /**
-   * @dfinity/agent requires this. Can be removed once it's fixed
-   */
-  import { Buffer } from "buffer"
+  <noscript>Reinventa la forma de socializar y se el dueño de tú información en internet.</noscript>
+  <div id="root"></div>
+  <script type="module">
+    /**
+     * @dfinity/agent requires this. Can be removed once it's fixed
+     */
+    import { Buffer } from "buffer"
 
-  window.global = window
-  window.Buffer = Buffer
-</script>
-<script type="module" src="/frontend/main.jsx"></script>
-</body>
+    window.global = window
+    window.Buffer = Buffer
+  </script>
+  <script type="module" src="/frontend/main.jsx"></script>
+  </body>
 </html>

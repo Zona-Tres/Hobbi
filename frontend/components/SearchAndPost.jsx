@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import { nanoid } from 'nanoid'
 import SearchDialog from './SearchDialog';
 import { PiTelevisionSimpleFill } from "react-icons/pi";
-import { FaBookOpen, FaMusic, FaGamepad, FaRegTimesCircle } from "react-icons/fa";
+import { FaBookOpen, FaGamepad, FaRegTimesCircle } from "react-icons/fa";
 import { useCanister, useConnect } from '@connect2ic/react';
 
 const BUTTON_CLASS = "btn-sm w-full px-4 py-2 text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(theme(colors.slate.900),_theme(colors.slate.900))_padding-box,_conic-gradient(theme(colors.slate.400),_theme(colors.slate.700)_25%,_theme(colors.slate.700)_75%,_theme(colors.slate.400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none hover:scale-110"
@@ -20,8 +20,8 @@ function SearchAndPost(params) {
   const [textAreaValue, setTextAreaValue] = useState("")
 
   const handleButtonClick = (selected) => {
-    setIsOpened(true)
     setMediaType(selected)
+    setIsOpened(true)
   }
 
   const handlePost = async () => {
@@ -44,8 +44,8 @@ function SearchAndPost(params) {
 
     const postMetadata = {
       title: media.title,
-      autor: media.author_name ? media.author_name[0] : "Uknown",
-      image_url: `https://covers.openlibrary.org/b/id/${media.cover_i}-S.jpg`,
+      autor: media.sub ? media.sub : "Uknown",
+      image_url: media.image,
       progress: prog,
       media_type: mType,
     }
@@ -90,17 +90,17 @@ function SearchAndPost(params) {
         </span>
       </div>
       <div className="border-b border-slate-400" />
-      <SearchDialog isOpened={isOpened} onClose={() => setIsOpened(false)} setMedia={setMedia}/>
+      <SearchDialog isOpened={isOpened} onClose={() => setIsOpened(false)} setMedia={setMedia} mediaType={mediaType}/>
       {media ?
       <div className='flex flex-col w-full space-y-2'>
         <div className='w-full space-y-2'>
           <p className='font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900'>Selected media:</p>
           <div className='flex flex-row items-center justify-between bg-purple-300 rounded-lg py-2 px-4'>
             <div className='flex flex-row items-center space-x-2'>
-              {media.cover_i ? <img src={`https://covers.openlibrary.org/b/id/${media.cover_i}-S.jpg`}/> : <div className='bg-slate-500 h-14 w-9 flex items-center justify-center text-slate-200'><FaBookOpen /></div>}
+              {media.image ? <img width={40} src={media.image}/> : <div className='bg-slate-500 h-14 w-9 flex items-center justify-center text-slate-200'></div>}
               <div className='flex flex-col space-y-1'>
                 <p className='font-medium tracking-tight text-sm'>{media.title}</p>
-                <p className='tracking-tight text-xs'>{media.author_name ? media.author_name[0] : "Uknown"}</p>
+                <p className='tracking-tight text-xs'>{media.sub}</p>
               </div>
             </div>
             <button className='hover:scale-110' onClick={() => setMedia(null)}>
@@ -136,10 +136,7 @@ function SearchAndPost(params) {
         <div className='flex flex-row space-x-4 w-full'>
           <button className={BUTTON_CLASS} onClick={() => handleButtonClick(1)}><FaBookOpen className='inline mr-2'/>Libro</button>
           <button className={BUTTON_CLASS} onClick={() => handleButtonClick(2)}><PiTelevisionSimpleFill className='inline mr-2'/>TV</button>
-        </div>
-        <div className='flex flex-row space-x-4 w-full'>
-          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(3)}><FaMusic className='inline mr-2'/>Música</button>
-          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(4)}><FaGamepad className='inline mr-2'/>Videojuego</button>
+          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(3)}><FaGamepad className='inline mr-2'/>Videojuego</button>
         </div>
       </div>}
     </div>

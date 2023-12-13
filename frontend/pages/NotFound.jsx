@@ -1,9 +1,18 @@
 import React from "react";
 import Illustration from '/images/glow-bottom.svg'
 import Logo from "../components/ui/Logo";
+import { Seo } from "../components/utils/seo";
 
 export default function NotFound() {
 	return(
+		<>
+		<Seo
+			title={`Hobbi.me | No encontrado`}
+			description={"Reinventa la forma de socializar y se el dueño de tú información en internet."}
+			type={"webapp"}
+			name={"Hobbi"}
+			rel={"https://hobbi.me/error"}
+		/>
 		<div className="flex flex-col w-full overflow-hidden relative">
 			{/* Background Image */}
 			<section className="flex-grow">
@@ -23,5 +32,6 @@ export default function NotFound() {
 			</div>
 			</section>
 		</div>
+		</>
 	)
 }

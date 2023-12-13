@@ -5,9 +5,7 @@ import { Principal } from '@dfinity/principal';
 
 export default function RequireAuth(){
   const location = useLocation()
-
-  const [loading, setLoading] = useState(true)
-  const [hasProfile, setHasProfile] = useState(localStorage.getItem("hobbi_has_profile"))
+  const [hasProfile, setHasProfile] = useState(localStorage.getItem("hobbi_has_profile") ? true : false )
   const { isConnected, principal } = useConnect()
   const [nft] = useCanister("nft")
 
@@ -15,32 +13,21 @@ export default function RequireAuth(){
     const checkProfile = async () => {
       try {
         const response = await nft.getTokenIdsForUserDip721(Principal.fromText(principal))
-
         if(response.length > 0) {
-          setHasProfile(true)
           localStorage.setItem("hobbi_has_profile", true)
+          setHasProfile(true)
         }
       } catch (error) {
         console.error('Error checking profile:', error)
-      } finally {
-        console.log('finished...')
-        setLoading(false)
-      }
+      } 
     };
 
-    if(isConnected && !hasProfile) {
-      console.log("checking..")
-      checkProfile()
-    } else {setLoading(false)}
+    if(isConnected) checkProfile()
+  }, [])
 
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>
+  if (!isConnected) {
+    return <Navigate to="/connect" />
   }
 
-  return isConnected ? (hasProfile ?
-    <Outlet />
-  : <Navigate to="/create-profile" state={{ from: location }} replace />)
-  : <Navigate to="/connect" state={{ from: location }} replace />
+  return hasProfile ? <Navigate to={`/profile/${principal}`} replace/> : <Outlet />
 }

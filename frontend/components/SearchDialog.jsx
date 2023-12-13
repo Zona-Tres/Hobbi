@@ -1,4 +1,5 @@
 import { useCanister } from '@connect2ic/react';
+import { nanoid } from 'nanoid';
 import React, { useRef, useState, useEffect } from 'react';
 import { FaBookOpen, FaSearch } from 'react-icons/fa';
 
@@ -16,7 +17,7 @@ const isClickInsideRectangle = (e, element) => {
 function SearchDialog(params) {
   const ref = useRef(null)
   const [outcall] = useCanister("outcall")
-  const { isOpened, onClose, setMedia } = params
+  const { isOpened, onClose, setMedia, mediaType } = params
 
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResult, setSearchResult] = useState([])
@@ -37,13 +38,64 @@ function SearchDialog(params) {
 		e.preventDefault()
     setLoading(true)
 		try {
-			const list = await outcall.searchBook(searchQuery.trim().split(' '))
-			const parsedList = JSON.parse(list)
+
+      switch(mediaType) {
+        case 1: {
+          const list = await outcall.searchBook(searchQuery.trim().split(' '))
+          const parsedList = JSON.parse(list)
+
+          if(parsedList.docs.length > 0) {
+            const simplifiedList = parsedList.docs.map((element) => {
+              const simpElement = {
+                title: element.title || "Unknown",
+                sub: element.author_name[0] || "Unknown",
+                image: `https://covers.openlibrary.org/b/id/${element.cover_i}-M.jpg` || null
+              }
+              return simpElement
+            })
+            setSearchResult(simplifiedList)
+          }
+          break
+        }
+        case 2: {
+          const list = await outcall.searchTv(searchQuery.trim().split(' '))
+          const parsedList = JSON.parse(list)
+
+          if(parsedList.results.length > 0) {
+            const simplifiedList = parsedList.results.map((element) => {
+              const simpElement = {
+                title: element.title || element.name || "Unknown",
+                sub: element.release_date || element.first_air_date || "TBR",
+                image: element.poster_path ? `https://image.tmdb.org/t/p/w500${element.poster_path}` : `https://image.tmdb.org/t/p/w500${element.backdrop_path}` || null
+              }
+              return simpElement
+            })
+            setSearchResult(simplifiedList)
+          }
+          break
+        }
+        case 3: {
+          const list = await outcall.searchGame(searchQuery.trim().split(' '))
+          const parsedList = JSON.parse(list)
+
+          if(parsedList.results.length > 0) {
+            const simplifiedList = parsedList.results.map((element) => {
+              const simpElement = {
+                title: element.name || "Unknown",
+                sub: element.released || "TBR",
+                image: element.background_image || null
+              }
+              return simpElement
+            })
+            setSearchResult(simplifiedList)
+          }
+          break
+        } 
+      }
       
-      if(parsedList.docs.length == 0) {
+      if(searchResult.length == 0) {
         setMessage("Your search did not bring any results :( Try refining it!")
       }
-      setSearchResult(parsedList.docs)
 		} catch (e) {
 			console.error(e)
       setMessage("There was an error. Try again later!")
@@ -54,6 +106,7 @@ function SearchDialog(params) {
 
   const handleSelectMedia = (element) => {
     setMedia(element)
+    setSearchResult([])
     onClose()
   }
 
@@ -86,11 +139,11 @@ function SearchDialog(params) {
         <div className='space-y-1'>
         {searchResult.map((element, index) => {
           return(
-            <div onClick={() => handleSelectMedia(element)} className='flex flex-row space-x-2 items-center cursor-pointer hover:bg-purple-300 hover:scale-105' key={element.key}>
-              {element.cover_i ? <img src={`https://covers.openlibrary.org/b/id/${element.cover_i}-S.jpg`}/> : <div className='bg-slate-500 h-14 w-9 flex items-center justify-center text-slate-200'><FaBookOpen /></div>}
+            <div onClick={() => handleSelectMedia(element)} className='flex flex-row space-x-2 items-center cursor-pointer hover:bg-purple-300 hover:scale-105' key={nanoid()}>
+              {element.image ? <img width={30} src={element.image}/> : <div className='bg-slate-500 h-14 w-9 flex items-center justify-center text-slate-200'/>}
               <div className='flex flex-col space-y-1'>
                 <p className='font-medium tracking-tight text-sm'>{element.title}</p>
-                <p className='tracking-tight text-xs'>{element.author_name ? element.author_name[0] : "Uknown"}</p>
+                <p className='tracking-tight text-xs'>{element.sub}</p>
               </div>
             </div>
           )
