@@ -5,7 +5,7 @@ import { arrayBufferToImgSrc } from "../utils/image";
 
 import Illustration from '/images/glow-top.svg'
 import Logo from "../components/ui/Logo";
-import LogoImg from '../../public/logo.png'
+import LogoImg from '/logo.png'
 import Particles from "../components/Particles";
 import SearchAndPost from "../components/SearchAndPost";
 import PostList from "../components/PostList";
