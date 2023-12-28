@@ -176,16 +176,22 @@ export async function getCroppedImg(
     pixelCrop.width,
     pixelCrop.height
   )
+  
+  // As a blob
+  // return new Promise((resolve, reject) => {
+  //   croppedCanvas.toBlob((file) => {
+  //     resolve(URL.createObjectURL(file))
+  //   }, 'image/jpeg')
+  // })
 
   // As Base64 string
-  // return croppedCanvas.toDataURL('image/jpeg');
+  // return croppedCanvas.toDataURL('image/jpeg')
 
-  // As a blob
-  return new Promise((resolve, reject) => {
-    croppedCanvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file))
-    }, 'image/jpeg')
-  })
+  // As Uint8Array
+  const dataUrl = croppedCanvas.toDataURL('image/jpeg')
+  const base64Data = dataUrl.split(',')[1]
+  const uint8Array = new Uint8Array(atob(base64Data).split('').map(char => char.charCodeAt(0)))
+  return Array.from(uint8Array)
 }
 
 export function urlToUint8Array(url) {

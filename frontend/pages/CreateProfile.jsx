@@ -9,7 +9,7 @@ import { FaUser, FaBookOpen, FaImage, FaCropAlt, FaExchangeAlt } from "react-ico
 import { getOrientation } from 'get-orientation/browser'
 import { 
   ORIENTATION_TO_ANGLE, ImageMaxWidth, resizeImage, getRotatedImage, 
-  readFileToUrl, getCroppedImg, urlToUint8Array } from "../utils/image"
+  readFileToUrl, getCroppedImg, urlToUint8Array, arrayBufferToImgSrc } from "../utils/image"
 
 import Particles from '../components/Particles'
 import Illustration from '/images/glow-bottom.svg'
@@ -80,11 +80,10 @@ function CreateProfile() {
       e.preventDefault()
       setIsLoading(true)
 
-      const fileArray = await urlToUint8Array(croppedImage)
       const minter = Principal.fromText(principal)
       const nftMetadata = [
         {
-          data: Array.from(fileArray),
+          data: croppedImage,
           purpose: {Rendered: null},
           key_val_data:
           [
@@ -212,7 +211,7 @@ function CreateProfile() {
                   <label htmlFor="picture" className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900">Upload an avatar</label>
                 </span>
                 <div className="flex flex-col items-center justify-center space-y-2">
-                  <img src={croppedImage} width={250} className="mb-2"/>
+                  <img src={arrayBufferToImgSrc(croppedImage)} width={250} className="mb-2"/>
                   <a {...getRootProps({ className: "dropzone" })} className="btn-sm cursor-pointer w-full text-slate-50 bg-slate-900 hover:bg-slate-700 transition duration-150 ease-in-out">
                     <span className="flex items-center justify-start">
                       <FaExchangeAlt className="inline mr-2"/>

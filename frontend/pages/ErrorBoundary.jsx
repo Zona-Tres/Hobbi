@@ -53,7 +53,7 @@ export default function ErrorBoundary({children}) {
         <div className="relative min-h-screen flex items-center justify-center flex-col">
           <div className="flex flex-col items-center justify-center space-y-4">
             <h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 pb-4">Algo salió mal {':('}</h1>
-            <p className="font-light text-xl">Utilizando <strong className="text-purple-800">Por favor, contáctanos!</strong></p>
+            <p className="font-light text-xl"><strong className="text-purple-800">{errorInfo}</strong></p>
           </div>
         </div>
         </section>
