@@ -47,10 +47,10 @@ const client = createClient({
     post,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai" })
+    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" })
   ],
   globalProviderConfig: {
-    dev: true,
+    dev: false,
   },
 })
 
