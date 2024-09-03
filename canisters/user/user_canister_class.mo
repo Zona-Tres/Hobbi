@@ -1,4 +1,5 @@
 import Types "types";
+import Rand "mo:random/Rand";
 import Principal "mo:base/Principal";
 
 actor class User (owner: Principal, name: Text, avatar: ?Blob) = this {
@@ -10,9 +11,13 @@ actor class User (owner: Principal, name: Text, avatar: ?Blob) = this {
     // stable var name: Text = name;
     // stable var avatar: ?Blob = avatar;
 
+    let rand = Rand.Rand();
+
     stable var email: ?Text = null;
-    stable var verified = false; // Para verificacion de email mediante el envio de código
+    stable var verified = false; // Para verificacion de email mediante el envio de un código
     stable var postLiked: [PostID] = [];
+
+    private var code = 0;
 
     public shared query ({caller}) func getMyInfo():async  PrivateInfoUser { //Se llama desde el front para cargar los datos en el dashboard
         assert (caller == owner);
@@ -25,9 +30,25 @@ actor class User (owner: Principal, name: Text, avatar: ?Blob) = this {
             verified;
         };
     };
-    public query func getInfo(): async PublicInfoUser {{name; avatar; verified}}; 
+    public query func getInfo(): async PublicInfoUser {{name; avatar; verified}};
 
+    public shared ({caller}) func getCode(): async {#Err: Text; #Ok: Text}{
+        assert (caller == owner);
+        switch email{
+            case null {return #Err("Email not provided")};
+            case (?email){
+                rand.setRange(100000, 999999);
+                code := await rand.next();
+                //TODO Enviar email con el codigo
+                #Ok("Se ha enviado un email con el codigo de verificacion a " # email);
+            };
+        }  
+    };
 
-
+    public shared ({caller}) func verifyCode(_code: Nat): async Bool {
+        assert (caller == owner);
+        if(_code == code) {verified := true };
+        verified
+    };
 
 }
