@@ -32,6 +32,7 @@ module {
     };
     public type PublicInfoUser = {
         name : Text;
+        bio: Text;
         avatar : ?Blob;
         verified: Bool;
     };
@@ -40,7 +41,6 @@ module {
         canisterID : Principal;
         owner : Principal;
         email : ?Text;
-        postLiked : [PostID];
     };
 
     
