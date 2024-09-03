@@ -1,7 +1,7 @@
 import React from "react"
 
 import { createClient } from "@connect2ic/core"
-import { InternetIdentity } from "@connect2ic/core/providers/internet-identity"
+import { InternetIdentity, NFID } from "@connect2ic/core/providers"
 import { Connect2ICProvider } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 
@@ -47,7 +47,8 @@ const client = createClient({
     post,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" })
+    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
+    new NFID(),
   ],
   globalProviderConfig: {
     dev: false,
