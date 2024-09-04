@@ -30,14 +30,14 @@ module {
         message : Text;
         metadata : PostMetadata
     };
-    public type PublicInfoUser = {
+    public type PublicDataUser = {
         name : Text;
         bio: Text;
         avatar : ?Blob;
         verified: Bool;
     };
 
-    public type PrivateInfoUser = PublicInfoUser and {
+    public type FullDataUser = PublicDataUser and {
         canisterID : Principal;
         owner : Principal;
         email : ?Text;
