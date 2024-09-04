@@ -2,8 +2,9 @@ import Types "types";
 import Rand "mo:random/Rand";
 import Set "mo:map/Set";
 import Map "mo:map/Map";
-import {nhash} "mo:map/Map";
+import {nhash; phash} "mo:map/Map";
 import Principal "mo:base/Principal";
+import Time "mo:base/Time";
  
 
 shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text, _avatar: ?Blob) = this {
@@ -12,6 +13,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     type PublicDataUser = Types.PublicDataUser;
     type PostID = Types.PostID;
     type Post = Types.Post;
+    type PostDataInit = Types.PostDataInit;
+    type Comment = Types.Comment;
+    type Access = Types.Access;
 
     stable let _deployer = caller; // para validar llamadas desde el canister factory
 
@@ -26,6 +30,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
 
     // Datos relacionados a la actividad del usuario
     stable let posts = Map.new<PostID, Post>();
+    stable let followers = Set.new<Principal>();
     stable let postLiked = Set.new<PostID>();
 
     ////// Variables y objetos auxiliares
@@ -53,7 +58,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     };
     public query func getPublicInfo(): async PublicDataUser {{name; bio; avatar; verified}};
 
-  ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////
+  ////////////////////////// Verificaciones opcionales de usuario /////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
 
     public shared ({caller}) func sendEmailCode(): async {#Err: Text; #Ok: Text}{
@@ -79,7 +84,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
         verified
     };
 
-  ///////////////////////////////////// Seters ////////////////////////////////////////////////////
+  ////////////////////////////////////// Seters ///////////////////////////////////////////////////
 
     public shared ({ caller }) func loadAvatar(_avatar: Blob): async (){
         onlyOwner(caller);
@@ -101,7 +106,83 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
         dataUser();
     };
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////// CRUD Post //////////////////////////////////////////////////
+
+    public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
+        onlyOwner(caller);
+        let date = Time.now();
+        let metadata = { init with date; progress = #Started };
+        let newPost: Post = {
+            metadata;
+            comments = [];
+            id = nextPostID;
+            likes = 0;
+            disLikes = 0;
+        };
+        ignore Map.put<PostID, Post>(posts, nhash, nextPostID, newPost);
+        nextPostID += 1;
+        nextPostID - 1;     
+    };
+
+    public shared ({ caller }) func readPost(id: PostID): async {#Ok: Post; #Err: Text} {
+        let post = Map.get<PostID, Post>(posts, nhash, id);
+        switch post {
+            case null { return #Err("PostID not Found")};
+            case (?post){
+                return switch (post.metadata.access){
+                    case(#Private){
+                        if(caller == owner){ #Ok(post) } 
+                        else{ #Err("Private access") };
+                    };
+                    case(#Followers) {
+                        if(Set.has(followers, phash, caller)) { #Ok(post) } 
+                        else{ #Err("Only followers access") };
+                    };
+                    case(#Public){ #Ok(post) }
+                }  
+            }
+        }
+    };
+
+    public shared ({ caller }) func updatePost(id: PostID, updatedData: PostDataInit): async {#Ok: Post; #Err: Text} {
+        onlyOwner(caller);
+        let post = Map.get<PostID, Post>(posts, nhash, id);
+        switch post {
+            case null { #Err("Incorrect PostID")};
+            case (?post) {
+                let metadata = {post.metadata with updatedData};
+                let updatedPost = { post with metadata };
+                ignore Map.put<PostID, Post>(posts, nhash, id,updatedPost );
+                #Ok(updatedPost);
+            }
+        }
+    };
+
+    public shared ({ caller }) func modifyAccess(id: PostID, access: Access): async Bool{
+        onlyOwner(caller);
+        let post = Map.get<PostID, Post>(posts, nhash, id);
+        switch post {
+            case null { false };
+            case (?post) {
+                let metadata = {post.metadata with access};
+                let updatedPost = { post with metadata };
+                ignore Map.put<PostID, Post>(posts, nhash, id,updatedPost );
+                true;
+            }
+        }
+    };
+
+    public shared ({ caller }) func deletePost(id: PostID): async {#Ok: Post; #Err: Text} {
+        onlyOwner(caller);
+        let post = Map.remove<PostID, Post>(posts, nhash, id);
+        switch post {
+            case null { #Err("Incorrect PostID")};
+            case (?post) { #Ok(post) }
+        }
+    };
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////
 
     public shared ({caller}) func sendLike(id: PostID, userClass: Principal):async Bool {
         assert(not Set.has(postLiked, nhash, id));

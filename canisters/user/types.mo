@@ -1,4 +1,3 @@
-
 module {
 
     public type Progress = {
@@ -14,34 +13,52 @@ module {
         #Game
     };
 
-    public type PostMetadata = {
+    public type PostDataInit = {
+        access: Access;
         title : Text;
-        autor : Text;
         image_url : Text;
-        progress : Progress;
         media_type : MediaType
+    };
+    public type PostMetadata = PostDataInit and {   
+        progress : Progress;
+        date : Int;
     };
 
     public type PostID = Nat;
 
-    public type Post = {
-        id : Text;
-        date : Int;
-        message : Text;
-        metadata : PostMetadata
+    public type Access = {
+        #Public;
+        #Private;
+        #Followers
     };
+    public type UserID = Nat;
+
+    public type Comment = {
+        msg: Text;
+        autor: UserID; // ID del usuario en el backend principal
+        date: Int;
+        subComments: [Comment];
+    };
+
+    public type Post = {  
+        id : Nat; 
+        metadata : PostMetadata;
+        likes: Nat;
+        disLikes: Nat;
+        comments: [Comment];
+    };
+
     public type PublicDataUser = {
         name : Text;
-        bio: Text;
+        bio : Text;
         avatar : ?Blob;
-        verified: Bool;
+        verified : Bool
     };
 
     public type FullDataUser = PublicDataUser and {
         canisterID : Principal;
         owner : Principal;
-        email : ?Text;
+        email : ?Text
     };
 
-    
 }
