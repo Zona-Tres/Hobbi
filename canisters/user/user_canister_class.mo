@@ -5,6 +5,8 @@ import Map "mo:map/Map";
 import {nhash; phash} "mo:map/Map";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
+import Array "mo:base/Array";
+import Prim "mo:⛔";
  
 
 shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text, _avatar: ?Blob) = this {
@@ -31,7 +33,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     stable let posts = Map.new<PostID, Post>();
     stable let followers = Set.new<Principal>();
     stable let followeds = Set.new<Principal>(); 
-    stable let postLiked = Set.new<PostID>();
+    stable let postReacteds = Map.new<PostID, Types.Reaction>();
 
   /////////////////////////// Variables y objetos auxiliares ///////////////////////////////////////
 
@@ -117,8 +119,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
             metadata;
             comments = [];
             id = nextPostID;
-            likes = 0;
-            disLikes = 0;
+            likes = [];
+            disLikes = [];
         };
         ignore Map.put<PostID, Post>(posts, nhash, nextPostID, newPost);
         nextPostID += 1;
@@ -185,25 +187,58 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
 
   //////////////////////// Intercomunicacion con otros usuarios ////////////////////////////////////
 
-    public shared ({caller}) func sendLike(id: PostID, userClass: Principal):async Bool {
-        assert(not Set.has(postLiked, nhash, id));
+    public shared ({caller}) func sendReaction(id: PostID, userClass: Principal, r: Types.Reaction):async Bool {
+        ignore Map.put<PostID, Types.Reaction>(postReacteds, nhash, id, r);
         // Registrar el like en el canister del otro usuario
         let remoteUserCanister = actor(Principal.toText(userClass)): actor{
-            receiveLike: shared PostID -> async Bool;
+            receiveReaction: shared (PostID,Types.Reaction )-> async Bool;
         };
-        let response = await remoteUserCanister.receiveLike(id);
-        ignore Set.put(postLiked, nhash, id);
+        let response = await remoteUserCanister.receiveReaction(id, r);
         response;
     };
 
-    public shared ({caller}) func receiveLike(id: PostID):async Bool {
+    public shared ({caller}) func receiveReaction(id: PostID, r: Types.Reaction):async Bool {
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post{
             case null { return false};
             case (?post){
-                let likes = post.likes +1;
-                ignore Map.put<PostID, Post>(posts, nhash, id, {post with likes});
-                return true;
+                switch r{
+                    case(#Like){
+                        for(p in post.likes.vals()){ if(p == caller){ return false } }; //evitar varios likes del mismo caller
+                        let likes = Prim.Array_tabulate<Principal>(
+                            post.likes.size() + 1,
+                            func i {
+                                if(i < post.likes.size()){ post.likes[i] }
+                                else {caller}
+                            }
+                        );
+                        let disLikes = Array.filter<Principal>(post.disLikes, func x = x == caller);
+                        ignore Map.put<PostID, Post>( posts, nhash, id, {post with  likes; disLikes } );
+                        return true;
+                    };
+                    case(#Dislike) {
+                        for(p in post.disLikes.vals()){ if(p == caller){ return false } }; //evitar varios likes del mismo caller
+                        let disLikes = Prim.Array_tabulate<Principal>(
+                            post.likes.size() + 1,
+                            func i {
+                                if(i < post.likes.size()){ post.likes[i] }
+                                else {caller}
+                            }
+                        );
+                        let likes = Array.filter<Principal>(post.disLikes, func x = x == caller);
+                        ignore Map.put<PostID, Post>( posts, nhash, id, {post with  likes; disLikes });
+                        return true;
+                    };
+                    case (#Custom(_algo)){ 
+                        //Hacer algo con _algo
+                        return true
+                    }
+                }
+                
+                
+                
+
+                
             }
         }      
     };

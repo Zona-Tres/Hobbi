@@ -43,9 +43,15 @@ module {
     public type Post = {  
         id : Nat; 
         metadata : PostMetadata;
-        likes: Nat;
-        disLikes: Nat;
+        likes: [Principal];
+        disLikes: [Principal];
         comments: [Comment];
+    };
+
+    public type Reaction = {
+        #Like;
+        #Dislike;
+        #Custom: Text //Emogi
     };
 
     public type PublicDataUser = {
