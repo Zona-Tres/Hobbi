@@ -20,7 +20,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     stable let DEPLOYER = caller; // para validar llamadas desde el canister factory
     stable let OWNER = _owner;
 
-  //////////////////////// Datos relacionados al usuario usuario ///////////////////////////////////
+  ///////////////////////// Datos relacionados al usuario usuario //////////////////////////////////
     stable var name: Text = _name;
     stable var bio: Text = _bio;
     stable var avatar: ?Blob = _avatar;
@@ -39,7 +39,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     stable var nextPostID = 0;
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
 
-  //////////////////////////////// Funciones privadas //////////////////////////////////////////////
+  ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
     func onlyOwner(p: Principal): () { assert( p == OWNER) };
     func dataUser(): FullDataUser {
         {   name;
@@ -107,7 +107,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
         dataUser();
     };
 
-  //////////////////////////////////// CRUD Post ///////////////////////////////////////////////////
+  ///////////////////////////////////// CRUD Post //////////////////////////////////////////////////
 
     public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
         onlyOwner(caller);
@@ -197,12 +197,15 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
     };
 
     public shared ({caller}) func receiveLike(id: PostID):async Bool {
-        
-        false;
+        let post = Map.get<PostID, Post>(posts, nhash, id);
+        switch post{
+            case null { return false};
+            case (?post){
+                let likes = post.likes +1;
+                ignore Map.put<PostID, Post>(posts, nhash, id, {post with likes});
+                return true;
+            }
+        }      
     };
-
-
-
-
 
 }
