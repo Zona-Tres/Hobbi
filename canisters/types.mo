@@ -9,7 +9,7 @@ module {
         #NewReaction: Nat; //Nueva reacción a un postID
         #NewComment: Nat;  //
     };
-    
+
     public type Reaction = {
         #Like;
         #Dislike;
@@ -19,7 +19,7 @@ module {
     public type Event = {
         #Pub: Nat;
         #Sub: Principal;
-        #React: Reaction;
+        #React: {reaction: Reaction; postId: Nat; user: Principal};
     };
 
     public type UserInfo = {
