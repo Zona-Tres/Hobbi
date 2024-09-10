@@ -6,7 +6,7 @@ import Principal "mo:base/Principal";
 
 actor {
 
-    let users = Map.new<Principal, User.User>(); //PrincipalID =>  CanisterID of User actorClass
+    let users = Map.new<Principal, User.User>(); //PrincipalID =>  User actorClass
 
     func isUser(p: Principal): Bool{
         Map.has<Principal, User.User>(users, phash, p);
