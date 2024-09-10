@@ -48,11 +48,6 @@ module {
         comments: [Comment];
     };
 
-    public type Reaction = {
-        #Like;
-        #Dislike;
-        #Custom: Text //Emogi
-    };
 
     public type PublicDataUser = {
         name : Text;
@@ -61,6 +56,7 @@ module {
         verified : Bool
     };
 
+    
     public type FullDataUser = PublicDataUser and {
         canisterID : Principal;
         owner : Principal;

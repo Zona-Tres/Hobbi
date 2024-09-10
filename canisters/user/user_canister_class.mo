@@ -1,4 +1,5 @@
 import Types "types";
+import GlobalTypes "../types";
 import Rand "mo:random/Rand";
 import Set "mo:map/Set";
 import Map "mo:map/Map";
@@ -18,7 +19,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     type PostDataInit = Types.PostDataInit;
     type Comment = Types.Comment;
     type Access = Types.Access;
-
+    type Notification = GlobalTypes.Notification;
+    type Event = GlobalTypes.Event;
+    type Reaction = GlobalTypes.Reaction;
     stable let DEPLOYER = caller; // para validar llamadas desde el canister factory
     stable let OWNER = _owner;
 
@@ -33,7 +36,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     stable let posts = Map.new<PostID, Post>();
     stable let followers = Set.new<Principal>();
     stable let followeds = Set.new<Principal>(); 
-    stable let postReacteds = Map.new<PostID, Types.Reaction>();
+    stable let postReacteds = Map.new<PostID, Reaction>();
 
   /////////////////////////// Variables y objetos auxiliares ///////////////////////////////////////
 
@@ -185,19 +188,28 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
 
-  //////////////////////// Intercomunicacion con otros usuarios ////////////////////////////////////
+  /////////////////////// Intercomunicacion con el canister principal //////////////////////////////
 
-    public shared ({caller}) func sendReaction(id: PostID, userClass: Principal, r: Types.Reaction):async Bool {
-        ignore Map.put<PostID, Types.Reaction>(postReacteds, nhash, id, r);
+    func emit(event: Event): async Bool {
+        let remoteMainCanister = actor(Principal.toText(DEPLOYER)): actor{
+            putEvent: shared Event -> async Bool
+        };
+        await remoteMainCanister.putEvent(event);
+    };
+
+  ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
+
+    public shared ({caller}) func sendReaction(id: PostID, userClass: Principal, r: Reaction):async Bool {
+        ignore Map.put<PostID, Reaction>(postReacteds, nhash, id, r);
         // Registrar el like en el canister del otro usuario
         let remoteUserCanister = actor(Principal.toText(userClass)): actor{
-            receiveReaction: shared (PostID,Types.Reaction )-> async Bool;
+            receiveReaction: shared (PostID, Reaction )-> async Bool;
         };
         let response = await remoteUserCanister.receiveReaction(id, r);
         response;
     };
 
-    public shared ({caller}) func receiveReaction(id: PostID, r: Types.Reaction):async Bool {
+    public shared ({caller}) func receiveReaction(id: PostID, r: Reaction):async Bool {
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post{
             case null { return false};
