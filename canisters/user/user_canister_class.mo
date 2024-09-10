@@ -9,7 +9,7 @@ import Array "mo:base/Array";
 import Prim "mo:⛔";
  
 
-shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text, _avatar: ?Blob) = this {
+shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?Text,  _bio: Text, _avatar: ?Blob) = this {
 
     type FullDataUser = Types.FullDataUser;
     type PublicDataUser = Types.PublicDataUser;
@@ -24,9 +24,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
 
   ///////////////////////// Datos relacionados al usuario usuario //////////////////////////////////
     stable var name: Text = _name;
+    stable var email: ?Text = _email;
     stable var bio: Text = _bio;
     stable var avatar: ?Blob = _avatar;
-    stable var email: ?Text = null;
     stable var verified = false; // Para verificacion de email mediante el envio de un código
 
   //////////////////// Datos relacionados a la actividad del usuario ///////////////////////////////
@@ -161,7 +161,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
         }
     };
 
-    public shared ({ caller }) func modifyAccess(id: PostID, access: Access): async Bool{
+    public shared ({ caller }) func modifyPostAccess(id: PostID, access: Access): async Bool{
         onlyOwner(caller);
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post {
@@ -234,9 +234,6 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _bio: Text
                         return true
                     }
                 }
-                
-                
-                
 
                 
             }

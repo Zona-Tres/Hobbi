@@ -1,5 +1,9 @@
 {
   "canisters": {
+    "hobbi": {
+      "main": "canisters/hobbi.mo",
+      "type": "motoko"
+    },
     "nft": {
       "main": "canisters/nft/main.mo",
       "type": "motoko"
