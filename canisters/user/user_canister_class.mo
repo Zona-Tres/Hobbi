@@ -199,6 +199,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
+    /// Esta función conecta con el canister del usuario publicador para enviarle la reaccion a su post,
+    /// y conecta con el canister hobbi principal para emitir el evento relacionado ///
 
     public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
         ignore Map.put<PostID, Reaction>(postReacteds, nhash, postId, r);

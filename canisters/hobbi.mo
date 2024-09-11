@@ -5,6 +5,7 @@ import { phash } "mo:map/Map";
 import User "./user/user_canister_class";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
+import Buffer "mo:base/Buffer";
 import Types "types"
 
 actor {
@@ -16,10 +17,11 @@ actor {
     };
 
     type Event = Types.Event;
+    type UserClassCanisterId = Principal;
 
     stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
-    let events = Map.new<Principal, [var ?Event]>();
+    let events = Map.new<UserClassCanisterId, [var ?Event]>();   
 
 
     func isUserActorClass(p: Principal): Bool {
@@ -51,6 +53,24 @@ actor {
         }   
     };
 
+    public query func getEventsOf(user: UserClassCanisterId): async [Event]{
+        let eventList = Map.get<UserClassCanisterId, [var ?Event]>(events, phash, user);
+        
+        switch eventList {
+            case null {return []};
+            case (?list) {
+                let tempBuffer = Buffer.fromArray<Event>([]);
+                for (e in list.vals()){
+                    switch e {
+                        case (?e) {tempBuffer.add(e)};
+                        case _{}
+                    };
+                };
+                Buffer.toArray<Event>(tempBuffer);
+            }
+        }
+    };
+
     public shared ({ caller }) func signUp(name: Text, email: ?Text, bio: Text, avatar: ?Blob, fee: Nat):async Principal {
         assert(not isUser(caller));
         Prim.cyclesAdd<system>(fee);
@@ -75,9 +95,5 @@ actor {
             }
         }
     };
-
-
-
-
 
 }
