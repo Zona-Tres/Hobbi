@@ -22,6 +22,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     type Notification = GlobalTypes.Notification;
     type Event = GlobalTypes.Event;
     type Reaction = GlobalTypes.Reaction;
+    type UserClassCanisterId = Principal;
     stable let DEPLOYER = caller; // para validar llamadas desde el canister factory
     stable let OWNER = _owner;
 
@@ -34,9 +35,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
   //////////////////// Datos relacionados a la actividad del usuario ///////////////////////////////
     stable let posts = Map.new<PostID, Post>();
-    stable let followers = Set.new<Principal>();
-    stable let followeds = Set.new<Principal>(); 
-    stable let postReacteds = Map.new<PostID, Reaction>();
+    stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id 
+    stable let followeds = Set.new<UserClassCanisterId>(); //Los seguidos se identifican por su canister id
+    // stable let postReacteds = Map.new<PostID, Reaction>();
 
   /////////////////////////// Variables y objetos auxiliares ///////////////////////////////////////
 
@@ -88,6 +89,10 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         dataUser()
     };
     public query func getPublicInfo(): async PublicDataUser {{name; bio; avatar; verified}};
+
+    public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
+        Set.toArray<UserClassCanisterId>(followeds)
+    };
 
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
@@ -203,7 +208,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     /// y conecta con el canister hobbi principal para emitir el evento relacionado ///
 
     public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
-        ignore Map.put<PostID, Reaction>(postReacteds, nhash, postId, r);
+        // ignore Map.put<PostID, Reaction>(postReacteds, nhash, postId, r);
         // Registrar el like en el canister del otro usuario
         let remoteUserCanister = actor(Principal.toText(userClass)): actor{
             receiveReaction: shared (PostID, Reaction )-> async Bool;

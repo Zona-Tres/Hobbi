@@ -19,9 +19,11 @@ actor {
     type Event = Types.Event;
     type UserClassCanisterId = Principal;
 
+    let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
-    let events = Map.new<UserClassCanisterId, [var ?Event]>();   
+    let events = Map.new<UserClassCanisterId, [var ?Event]>();
+
 
 
     func isUserActorClass(p: Principal): Bool {
@@ -30,6 +32,17 @@ actor {
 
     func isUser(p: Principal): Bool{
         Map.has<Principal, User>(users, phash, p);
+    };
+
+    public shared query ({ caller }) func getMyUserCanisterId(): async Principal{
+        assert(isUser(caller));
+        let user = Map.get<Principal, User>(users, phash, caller);
+        switch user {
+            case null { assert false; NULL_ADDRESS};
+            case (?user){
+                Principal.fromActor(user.actorClass);
+            }
+        }
     };
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
@@ -54,10 +67,9 @@ actor {
     };
 
     public query func getEventsOf(user: UserClassCanisterId): async [Event]{
-        let eventList = Map.get<UserClassCanisterId, [var ?Event]>(events, phash, user);
-        
+        let eventList = Map.get<UserClassCanisterId, [var ?Event]>(events, phash, user); 
         switch eventList {
-            case null {return []};
+            case null {[]};
             case (?list) {
                 let tempBuffer = Buffer.fromArray<Event>([]);
                 for (e in list.vals()){
@@ -72,7 +84,7 @@ actor {
     };
 
     public shared ({ caller }) func signUp(name: Text, email: ?Text, bio: Text, avatar: ?Blob, fee: Nat):async Principal {
-        assert(not isUser(caller));
+        assert(not isUser(caller));     
         Prim.cyclesAdd<system>(fee);
         let actorClass = await User.User(caller, name, email, bio, avatar);
         let newUser: User = {actorClass; name; avatar; notifications = []};
@@ -95,5 +107,6 @@ actor {
             }
         }
     };
+    
 
 }
