@@ -356,27 +356,27 @@ export default function Hero() {
             <img src={Item1} width="56px" />
             <div className="flex flex-col">
               <span className="text-2xl text-[#F7EFFF] font-bold">
-                Usuarios mas activos
+                @White Warrior
               </span>
               <span className="text-xl text-[#BCBCBC] font-medium">
-                Usuarios mas activos
+                124K Followers{" "}
               </span>
             </div>
-            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium">
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
               Seguir
             </div>
           </div>
-          <div className="flex justify-between pl-6 pr-8 my-8">
+          <div className="flex justify-between pl-6 pr-8 py-8">
             <img src={Item1} width="56px" />
             <div className="flex flex-col">
               <span className="text-2xl text-[#F7EFFF] font-bold">
-                Usuarios mas activos
+                @White Warrior
               </span>
               <span className="text-xl text-[#BCBCBC] font-medium">
-                Usuarios mas activos
+                124K Followers{" "}
               </span>
             </div>
-            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium">
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
               Seguir
             </div>
           </div>
@@ -384,13 +384,13 @@ export default function Hero() {
             <img src={Item1} width="56px" />
             <div className="flex flex-col">
               <span className="text-2xl text-[#F7EFFF] font-bold">
-                Usuarios mas activos
+                @White Warrior
               </span>
               <span className="text-xl text-[#BCBCBC] font-medium">
-                Usuarios mas activos
+                124K Followers{" "}
               </span>
             </div>
-            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium">
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
               Seguir
             </div>
           </div>
@@ -399,12 +399,14 @@ export default function Hero() {
 
       <div className="flex flex-col bg-[#1C0536] p-20 h-80">
         <div className="flex justify-between">
-          <img src={ItemLogo}/>
+          <img src={ItemLogo} />
           <div className="w-[180px] h-[50px] flex rounded-md items-center justify-center bg-[#505CE6] text-sm text-[#E3EFFD] font-medium">
             Inicia o crea tu cuenta
           </div>
         </div>
-        <span className="text-sm text-[#FFFFFF] align-middle font-medium m-auto">Aviso de privacidad   |   Términos y condiciones</span>
+        <span className="text-sm text-[#FFFFFF] align-middle font-medium m-auto">
+          Aviso de privacidad | Términos y condiciones
+        </span>
       </div>
     </div>
   )
