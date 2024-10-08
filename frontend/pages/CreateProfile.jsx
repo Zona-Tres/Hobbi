@@ -94,8 +94,8 @@ function CreateProfile() {
           ]
         }
       ]
-
       try {
+        debugger
         await nft.mintDip721(minter, nftMetadata).then((result) => {
           if(result.Ok) {
             navigate(`/profile/${principal}`)

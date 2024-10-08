@@ -40,3 +40,33 @@ When searching for content to post, you will notice that the page shows you meta
 * [RAWG](https://rawg.io/apidocs)
 
 Inside the canister, you can find examples of calls to each of the APIs. Check the documentation of each one to see specific cases.
+
+npm install
+
+dfx start
+dfx generate nft
+dfx generate outcall
+dfx generate post
+dfx generate social
+
+dfx deploy outcall
+dfx deploy post
+dfx deploy social
+dfx deploy nft --argument '(
+  principal "mzmaa-q3hlw-35cz4-amqr5-uyvqn-erfwd-3gsnw-hxe2m-kal3j-tbn3e-vqe",
+  record {
+    logo = record {
+      logo_type = "NFT_logo/png";
+      data = "";
+    };
+    name = "HobbiTest";
+    symbol = "HOB";
+    maxLimit = 50;
+  }
+)'
+dfx deploy internet_identity
+
+para levantar frontend con npm run dev 
+cambiar en el archivo App 2 lineas
+dev: true,
+y providerUrl: "http://localhost:8000/?canisterId="canister internet_identity""

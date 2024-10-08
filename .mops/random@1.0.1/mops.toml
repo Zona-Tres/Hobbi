@@ -1,0 +1,14 @@
+[package]
+name = "random"
+version = "1.0.1"
+description = "Random Class implemented in Motoko language. Optimized and economical generation of random numbers."
+repository = "https://github.com/ArielRobotti/random"
+keywords = [
+  "Random",
+  "RandomClass",
+  "RandomPrincipal",
+  "ProncipalGenerate",
+  "RandString",
+  "RandRange"
+]
+license = "MIT"
