@@ -1,3 +1,4 @@
+import Set "mo:map/Set";
 module {
 
     public type Progress = {
@@ -6,7 +7,7 @@ module {
         #Finished
     };
 
-    public type MediaType = {
+    public type MediaType =  {
         #Book;
         #Tv;
         #Music;
@@ -16,7 +17,8 @@ module {
     public type PostDataInit = {
         access: Access;
         title : Text;
-        image_url : Text;
+        image : ?Blob;
+        image_url : ?Text;
         media_type : MediaType
     };
     public type PostMetadata = PostDataInit and {   
@@ -31,11 +33,12 @@ module {
         #Private;
         #Followers
     };
+
     public type UserID = Nat;
 
     public type Comment = {
         msg: Text;
-        autor: UserID; // ID del usuario en el backend principal
+        autor: Principal; // Canister ID del user actor class del comentarista
         date: Int;
         subComments: [Comment];
     };
@@ -43,11 +46,18 @@ module {
     public type Post = {  
         id : Nat; 
         metadata : PostMetadata;
-        likes: [Principal];
-        disLikes: [Principal];
+        likes: Set.Set<Principal>;
+        disLikes: Set.Set<Principal>;
         comments: [Comment];
     };
 
+    public type PostResponse = {  
+        id : Nat; 
+        metadata : PostMetadata;
+        likes: Nat;
+        disLikes: Nat;
+        comments: [Comment];
+    };
 
     public type PublicDataUser = {
         name : Text;
@@ -55,12 +65,18 @@ module {
         avatar : ?Blob;
         verified : Bool
     };
-
     
     public type FullDataUser = PublicDataUser and {
         canisterID : Principal;
         owner : Principal;
         email : ?Text
     };
+
+    public type FeedPart = {
+        title: Text;
+        photo: ?Blob;
+        autor: Principal;
+        postId: Nat;
+    }
 
 }

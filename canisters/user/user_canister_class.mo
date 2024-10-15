@@ -7,6 +7,7 @@ import {nhash; phash} "mo:map/Map";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
 import Prim "mo:⛔";
  
 
@@ -16,6 +17,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     type PublicDataUser = Types.PublicDataUser;
     type PostID = Types.PostID;
     type Post = Types.Post;
+    type PostResponse = Types.PostResponse;
     type PostDataInit = Types.PostDataInit;
     type Comment = Types.Comment;
     type Access = Types.Access;
@@ -44,6 +46,11 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     let rand = Rand.Rand();
     stable var lastPostID = 0;
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
+
+    let HOBBI_CANISTER = actor(Principal.toText(DEPLOYER)) : actor {
+        getUserCanisterId: shared (Principal) -> async ?Principal;
+        isUserActorClass: shared (Principal) -> async Bool;
+    };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
     func onlyOwner(p: Principal): () { assert( p == OWNER) };
@@ -122,41 +129,52 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
         onlyOwner(caller);
         let date = Time.now();
-        let metadata = { init with date; progress = #Started };
+        let metadata: Types.PostMetadata = { init with date; progress = #Started };
         lastPostID += 1;
         let newPost: Post = {
             metadata;
             comments = [];
             id = lastPostID;
-            likes = [];
-            disLikes = [];
+            likes = Set.new<Principal>();
+            disLikes = Set.new<Principal>();
         };
         ignore Map.put<PostID, Post>(posts, nhash, lastPostID, newPost);
-        ignore emitEvent(#Pub(lastPostID));
+        let newPostEvent = {
+            autor = caller; 
+            postId = newPost.id;
+            title = newPost.metadata.title;
+            photo = newPost.metadata.image;
+            date;
+        };
+        
+        ignore emitEvent(#NewPost(newPostEvent));
         lastPostID;     
     };
 
-    public shared ({ caller }) func readPost(id: PostID): async {#Ok: Post; #Err: Text} {
+    public shared ({ caller }) func readPost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post {
             case null { return #Err("PostID not Found")};
             case (?post){
+                let likes = (Set.toArray<Principal>(post.likes)).size();
+                let disLikes = (Set.toArray<Principal>(post.disLikes)).size();
+                let postResponse: PostResponse = {post with likes; disLikes};
                 return switch (post.metadata.access){
                     case(#Private){
-                        if(caller == OWNER){ #Ok(post) } 
+                        if(caller == OWNER){ #Ok(postResponse) } 
                         else{ #Err("Private access") };
                     };
                     case(#Followers) {
-                        if(Set.has(followers, phash, caller)) { #Ok(post) } 
+                        if(Set.has(followers, phash, caller)) { #Ok(postResponse) } 
                         else{ #Err("Only followers access") };
                     };
-                    case(#Public){ #Ok(post) }
+                    case(#Public){ #Ok(postResponse) }
                 }  
             }
         }
     };
 
-    public shared ({ caller }) func updatePost(id: PostID, updatedData: PostDataInit): async {#Ok: Post; #Err: Text} {
+    public shared ({ caller }) func updatePost(id: PostID, updatedData: PostDataInit): async {#Ok: PostResponse; #Err: Text} {
         onlyOwner(caller);
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post {
@@ -165,7 +183,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                 let metadata = {post.metadata with updatedData};
                 let updatedPost = { post with metadata };
                 ignore Map.put<PostID, Post>(posts, nhash, id,updatedPost );
-                #Ok(updatedPost);
+                #Ok({updatedPost with likes = updatedPost.likes.size(); disLikes = updatedPost.disLikes.size()});
             }
         }
     };
@@ -184,12 +202,12 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         }
     };
 
-    public shared ({ caller }) func deletePost(id: PostID): async {#Ok: Post; #Err: Text} {
+    public shared ({ caller }) func deletePost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
         onlyOwner(caller);
         let post = Map.remove<PostID, Post>(posts, nhash, id);
         switch post {
             case null { #Err("Incorrect PostID")};
-            case (?post) { #Ok(post) }
+            case (?post) { #Ok({post with likes = post.likes.size(); disLikes = post.disLikes.size()}) }
         }
     };
 
@@ -198,15 +216,35 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     func emitEvent(event: Event): async Bool {
         let remoteMainCanister = actor(Principal.toText(DEPLOYER)): actor{
-            putEvent: shared Event -> async Bool
+            putEvent: shared (Event) -> async Bool
         };
         await remoteMainCanister.putEvent(event);
     };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
+    ////////////////////////// Follow ////////////////////////////////////////////////////////////////
+    public shared ({ caller }) func followMe(): async Bool {
+        let callerActorClassId = await HOBBI_CANISTER.getUserCanisterId(caller);
+        switch callerActorClassId {
+            case null { false };
+            case (?callerActorClassId) {
+                let remoteCaller = actor(Principal.toText(callerActorClassId)): actor {
+                    followBack: shared () -> async Bool
+                };
+                ignore Set.put<Principal>(followers, phash, callerActorClassId);
+                await remoteCaller.followBack();
+            }
+        }
+    };
+
+    public shared ({ caller }) func followBack(): async Bool {
+        assert(await HOBBI_CANISTER.isUserActorClass(caller));
+        ignore Set.put<Principal>(followeds, phash, caller);
+        true
+    };
+
     /// Esta función conecta con el canister del usuario publicador para enviarle la reaccion a su post,
     /// y conecta con el canister hobbi principal para emitir el evento relacionado ///
-
     public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
         // ignore Map.put<PostID, Reaction>(postReacteds, nhash, postId, r);
         // Registrar el like en el canister del otro usuario
@@ -219,46 +257,72 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
     public shared ({caller}) func receiveReaction(id: PostID, r: Reaction):async Bool {
+
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post{
             case null { return false};
-            case (?post){
-                switch r{
-                    case(#Like){
-                        for(p in post.likes.vals()){ if(p == caller){ return false } }; //evitar varios likes del mismo caller
-                        let likes = Prim.Array_tabulate<Principal>(
-                            post.likes.size() + 1,
-                            func i {
-                                if(i < post.likes.size()){ post.likes[i] }
-                                else {caller}
-                            }
-                        );
-                        let disLikes = Array.filter<Principal>(post.disLikes, func x = x == caller);
-                        ignore Map.put<PostID, Post>( posts, nhash, id, {post with  likes; disLikes } );
+            case (?post){              
+                switch r {
+                    case (#Like) {
+                        ignore Set.put<Principal>(post.likes, phash, caller);
+                        ignore Set.remove<Principal>(post.disLikes, phash, caller);
                         return true;
                     };
-                    case(#Dislike) {
-                        for(p in post.disLikes.vals()){ if(p == caller){ return false } }; //evitar varios likes del mismo caller
-                        let disLikes = Prim.Array_tabulate<Principal>(
-                            post.likes.size() + 1,
-                            func i {
-                                if(i < post.likes.size()){ post.likes[i] }
-                                else {caller}
-                            }
-                        );
-                        let likes = Array.filter<Principal>(post.disLikes, func x = x == caller);
-                        ignore Map.put<PostID, Post>( posts, nhash, id, {post with  likes; disLikes });
+                    case (#Dislike) {
+                        ignore Set.put<Principal>(post.disLikes, phash, caller);
+                        ignore Set.remove<Principal>(post.likes, phash, caller);
                         return true;
                     };
-                    case (#Custom(_algo)){ 
-                        //Hacer algo con _algo
+                    case (#Custom(_customReact)) {
+                        //TODO Ver qué hacer con las reacciones custom
                         return true
                     }
-                }
-
+                };
                 
             }
         }      
     };
+
+    //////////////////// Crud Comments Post ///////////////////////
+    public shared ({ caller }) func commentPost(id: PostID, msg: Text):async  {#Ok; #Err: Text} {
+        
+        let userCanister = await HOBBI_CANISTER.getUserCanisterId(caller);
+        switch userCanister{
+            case null { #Err("No eres usuario")};
+            case (?userCanister){
+                let post = Map.get<PostID, Post>(posts, nhash, id);
+                switch post {
+                    case null { #Err("Post no encontrado")};
+                    case (?post) {
+                        let date = Time.now();
+                        let comment: Comment = {
+                            date;
+                            msg;
+                            autor = userCanister;
+                            subComments: [Comment] = [];
+                        };
+                        let commentsBuffer = Buffer.fromArray<Comment>(post.comments);
+                        commentsBuffer.add(comment);
+                        #Ok()
+                    }
+                }
+            }
+        }
+        
+    };
+
+    public shared ({ caller }) func updateComment() {
+        //TODO Establecer un identificador de comentarios
+    };
+
+    public shared ({ caller }) func deleteComment() {
+        //TODO
+    };
+
+    /////////////////////////////////////////////////////////////////////
+
+    // public shared query ({ caller }) func getFood(): async [Types.FeedPart] {
+
+    // }
 
 }

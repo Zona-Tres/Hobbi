@@ -1,10 +1,21 @@
 
 
 module {
+    public type SignUpData = {
+        name: Text;
+        bio: Text;
+        email: ?Text;
+        avatar: ?Blob;
+    };
 
-    
     public type Notification = {
-        #NewPost: Principal; // Nuevo post de UserClass seguido
+        #NewPost: {
+            autor: Principal; 
+            id: Nat;
+            title: Text;
+            photo: ?Blob;
+            date: Int;
+        }; // Nuevo post de UserClass seguido
         #NewFollower: Principal; // Puede ser UserClass o User ID
         #NewReaction: Nat; //Nueva reacción a un postID
         #NewComment: Nat;  //
@@ -17,6 +28,13 @@ module {
     };
 
     public type Event = {
+        #NewPost: {
+            autor: Principal; 
+            postId: Nat;
+            title: Text;
+            photo: ?Blob;
+            date: Int;
+        };
         #Pub: Nat;
         #Sub: Principal;
         #React: {reaction: Reaction; postId: Nat; user: Principal};
@@ -25,10 +43,19 @@ module {
     public type UserInfo = {
         name: Text;
         avatar: ?Blob;
+        userCanisterId: Principal;
         notifications: [Notification];
     };
     public type SignInResult = {
         #Ok: UserInfo;
         #Err;
     };
+
+    public type FeedPart = {
+        title: Text;
+        photo: ?Blob;
+        date: Int;
+        autor: Principal;
+        postId: Nat;
+    }
 }
