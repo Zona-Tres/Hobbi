@@ -20,3 +20,25 @@ dfx canister call <canisterIdDeAlice> createPost '(record {
 
 ```
 
+
+
+//// Test ////
+dfx stop
+dfx start --clean --background
+dfx identity new deployerPrueba
+dfx identity use deployerPrueba
+dfx deploy hobbi
+dfx identity new identidadDePrueba1
+dfx identity use identidadDePrueba1
+actorClassPrueba1=$(dfx canister call hobbi signUp '(record {name="identidadDePrueba1"; email=opt "identidadDePrueba1@gmail.com"; bio="Biografía de identidadDePrueba1"; avatar=null})')
+
+dfx canister call $actorClassPrueba1 createPost '(record {
+        access = variant{Public};
+        title ="Mi primer Posteo en Hobbi. Soy Prueba1";
+        image = null;
+        image_ul = null;
+        media_type = variant {Game}
+    }
+)'
+
+

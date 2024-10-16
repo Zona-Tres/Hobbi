@@ -140,7 +140,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         };
         ignore Map.put<PostID, Post>(posts, nhash, lastPostID, newPost);
         let newPostEvent = {
-            autor = caller; 
+            autor = Principal.fromActor(this); 
             postId = newPost.id;
             title = newPost.metadata.title;
             photo = newPost.metadata.image;

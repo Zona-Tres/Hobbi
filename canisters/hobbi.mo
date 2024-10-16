@@ -147,7 +147,10 @@ actor {
                     for(event in getEventsFromUser(followed).vals()){
                         switch event {
                             case(#NewPost(post)){
-                               feedBuffer.add(post);
+                                feedBuffer.add(post);
+                                if (feedBuffer.size() >= 5){
+                                    return Buffer.toArray(feedBuffer);
+                                }
                             };
                             case _ {
                                 //TODO Establecer acciones para otros tipos de evento, por ejemplo cuando hay un nuevo seguidor
