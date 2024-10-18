@@ -168,7 +168,10 @@ actor {
                     for(event in getEventsFromUser(followed).vals()){
                         switch event {
                             case(#NewPost(post)){
-                                feedBuffer.add(post);
+                                if(post.access != #Private){
+                                    feedBuffer.add(post);   
+                                };
+                                
                                 if (feedBuffer.size() >= 5){
                                     return Buffer.toArray(feedBuffer);
                                 }
@@ -184,7 +187,9 @@ actor {
                         for(event in eventList.vals()){
                             switch event {
                                 case(#NewPost(post)){
-                                    feedBuffer.add(post);
+                                    if(post.access != #Private){
+                                        feedBuffer.add(post);   
+                                    };
                                     if (feedBuffer.size() >=5){
                                         return Buffer.toArray(feedBuffer);
                                     }

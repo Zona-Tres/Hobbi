@@ -145,6 +145,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         let newPostEvent = {
             autor = Principal.fromActor(this); 
             postId = newPost.id;
+            access = init.access; 
             title = newPost.metadata.title;
             photoPreview = newPost.metadata.imagePreview;
             date;

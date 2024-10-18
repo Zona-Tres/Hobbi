@@ -27,8 +27,14 @@ module {
         #Custom: Text //Emogi
     };
 
+    public type Access = {
+        #Public;
+        #Private;
+        #Followers
+    };
     public type Event = {
         #NewPost: {
+            access: Access;
             autor: Principal; 
             postId: Nat;
             title: Text;
