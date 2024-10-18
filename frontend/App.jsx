@@ -9,6 +9,7 @@ import "@connect2ic/core/style.css"
 import * as nft from "../src/declarations/nft"
 import * as outcall from "../src/declarations/outcall"
 import * as post from "../src/declarations/post"
+import * as hobbi from "../src/declarations/hobbi"
 import { Route, Routes } from "react-router-dom"
 
 import Home from "./pages/Home"
@@ -45,9 +46,11 @@ const client = createClient({
     nft,
     outcall,
     post,
+    hobbi
   },
   providers: [
-    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
+    // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
+    new InternetIdentity({ providerUrl: "http://localhost:8000/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai" }),
     new NFID(),
   ],
   globalProviderConfig: {

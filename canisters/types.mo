@@ -58,6 +58,8 @@ module {
     };
 
     public type FeedPart = {
+        // TODO like/dislikes
+        // HashTag libre [Text]
         title: Text;
         photoPreview: ?Blob;
         date: Int;

@@ -38,9 +38,13 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
   //////////////////// Datos relacionados a la actividad del usuario ///////////////////////////////
     stable let posts = Map.new<PostID, Post>();
-    stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id 
+    stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id
     stable let followeds = Set.new<UserClassCanisterId>(); //Los seguidos se identifican por su canister id
+    stable let blockedUsers = Set.new<Principal>();
+    stable let hiddenUsers = Set.new<Principal>();
+
     // stable let postReacteds = Map.new<PostID, Reaction>();
+
 
   /////////////////////////// Variables y objetos auxiliares ///////////////////////////////////////
 
@@ -97,12 +101,53 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         onlyOwner(caller);
         dataUser()
     };
-    public query func getPublicInfo(): async PublicDataUser {{name; bio; avatar; verified}};
+
+    public shared query ({ caller }) func getPublicInfo(): async {#Ok: PublicDataUser; #Err: Text} {
+        if(Set.has<Principal>(blockedUsers, phash, caller)){
+            return #Err("Caller without access")
+        };
+        #Ok{name; bio; avatar; verified}
+    
+    };
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
         assert(caller == OWNER or caller == DEPLOYER);
         Set.toArray<UserClassCanisterId>(followeds)
     };
+
+  //////////////////////// Blocking and unblocking users, hiding user //////////////////////////////
+
+    public shared ({ caller }) func blockUser( u: Principal): async {#Ok; #Err: Text} {
+        onlyOwner(caller);
+        let userToBlock = await HOBBI_CANISTER.getUserCanisterId(u);
+        switch userToBlock{
+            case null {return #Err("The principal provided is not associated with any registered user")};
+            case (?userToBlock){
+                let userToBlockActorClass = actor(Principal.toText(userToBlock)) : actor {
+                    removeMe: shared (Principal) -> async {#Ok; #Err: Text};
+                };
+                ignore Set.remove<Principal>(followeds, phash, u);
+                ignore Set.remove<Principal>(followers, phash, u);
+                ignore Set.put<Principal>(blockedUsers, phash, u);
+                await userToBlockActorClass.removeMe(caller);
+            }
+        };   
+    };
+
+    public shared ({ caller }) func removeMe(callerCanisterOwner: Principal): async {#Ok; #Err: Text}{
+        if(?caller != (await HOBBI_CANISTER.getUserCanisterId(callerCanisterOwner))){
+            return #Err("The caller is not a UserActorClass");
+        };
+        ignore Set.remove<Principal>(followeds, phash, callerCanisterOwner);
+        ignore Set.remove<Principal>(followers, phash, callerCanisterOwner);
+        #Ok
+    };
+
+    public shared ({ caller }) func unBlockUser( u: Principal) {
+        onlyOwner(caller);
+        ignore Set.remove<Principal>(blockedUsers, phash, u);
+    };
+
 
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
@@ -157,6 +202,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     public shared ({ caller }) func readPost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
         let post = Map.get<PostID, Post>(posts, nhash, id);
+        if(Set.has<Principal>(blockedUsers, phash, caller)){
+            return #Err("Caller without access")
+        };
         switch post {
             case null { return #Err("PostID not Found")};
             case (?post){

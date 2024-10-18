@@ -25,6 +25,7 @@ actor {
     stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
     stable let events = Map.new<UserClassCanisterId, [Event]>();
+    stable let rankingHashTag = Map.new<Text, Nat>();
 
 
     public query func isUserActorClass(p: Principal):async Bool {
@@ -203,6 +204,11 @@ actor {
             };
         };
 
+    };
+
+    public shared ({caller }) func getPostByHashTag(h: Text):async [Types.FeedPart]{
+        //TODO
+        []
     };
     
 
