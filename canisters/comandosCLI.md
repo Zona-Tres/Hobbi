@@ -13,7 +13,7 @@ dfx canister call <canisterIdDeAlice> createPost '(record {
             access = variant{Public};
             title ="Mi primer Posteo en Hobbi";
             image = null;
-            image_ul = null;
+            image_url = null;
             media_type = variant {Game}
         }
     )'

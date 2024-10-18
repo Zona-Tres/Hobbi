@@ -9,7 +9,8 @@ import Time "mo:base/Time";
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Prim "mo:⛔";
- 
+import { print } "mo:base/Debug";
+  
 
 shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?Text,  _bio: Text, _avatar: ?Blob) = this {
 
@@ -50,6 +51,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     let HOBBI_CANISTER = actor(Principal.toText(DEPLOYER)) : actor {
         getUserCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
+        removeEvent: shared (Int) -> async ();
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -207,7 +209,10 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         let post = Map.remove<PostID, Post>(posts, nhash, id);
         switch post {
             case null { #Err("Incorrect PostID")};
-            case (?post) { #Ok({post with likes = post.likes.size(); disLikes = post.disLikes.size()}) }
+            case (?post) {
+                print("Post encontrado");
+                await HOBBI_CANISTER.removeEvent(post.metadata.date);
+                #Ok({post with likes = post.likes.size(); disLikes = post.disLikes.size()}) }
         }
     };
 

@@ -6,7 +6,8 @@ import User "./user/user_canister_class";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
-import Types "types"
+import Types "types";
+import { print } "mo:base/Debug";
 
 actor {
     type User = {
@@ -23,7 +24,7 @@ actor {
     let feeUserCanisterDeploy = 13846202380;
     stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
-    let events = Map.new<UserClassCanisterId, [var ?Event]>();
+    stable let events = Map.new<UserClassCanisterId, [Event]>();
 
 
     public query func isUserActorClass(p: Principal):async Bool {
@@ -47,41 +48,61 @@ actor {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        let myEvents = Map.get<UserClassCanisterId, [var ?Event]>(events, phash, caller);
+        let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         switch myEvents {
             case null {
-                let eventsList = Prim.Array_init<?Event>(20, null);
-                eventsList[0] := ?event;
-                ignore Map.put<UserClassCanisterId, [var ?Event]>(events, phash, caller, eventsList);
+                let eventsList: [Event] = [event];
+                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, eventsList);
                 true;
             };
             case (?eventsList) {
-                var i = 0;
-                while(i < 19) {
-                    eventsList[i] := eventsList[i + 1];
-                    i += 1;
+                var updteEventList: [Event] = []; 
+                if(eventsList.size() == 20){
+                    updteEventList := Prim.Array_tabulate<Event>(
+                        20, func x = if(x == 0){event} else { eventsList[x - 1]}
+                    );
+                    
+                } else {
+                    updteEventList := Prim.Array_tabulate<Event>(
+                        eventsList.size() + 1, func x = if(x == 0){event} else { eventsList[x - 1]}
+                    );
                 };
-                eventsList[19] := ?event;
-                ignore Map.put<UserClassCanisterId, [var ?Event]>(events, phash, caller, eventsList);
-                true
+                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, updteEventList);
+                true;
+            }
+        }
+    };
+
+    public shared ({ caller }) func removeEvent(_date: Int): async () {
+        let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
+        switch myEvents {
+            case null{  };
+            case (?myEvents){
+                let eventBuffer = Buffer.fromArray<Event>([]);
+                for(e in myEvents.vals()){
+                    switch e {
+                        case (#NewPost(data)){
+                            if(data.date != _date){
+                                eventBuffer.add(#NewPost(data));
+                            } else {
+                                print("Post encontrado")
+                            }
+                        };
+                        case (event){
+                            eventBuffer.add(event);
+                        }
+                    }
+                };
+                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, Buffer.toArray(eventBuffer));
             }
         }   
     };
 
     func getEventsFromUser(user: UserClassCanisterId): [Event]{
-        let eventList = Map.get<UserClassCanisterId, [var ?Event]>(events, phash, user); 
+        let eventList = Map.get<UserClassCanisterId, [Event]>(events, phash, user); 
         switch eventList {
             case null {[]};
-            case (?list) {
-                let tempBuffer = Buffer.fromArray<Event>([]);
-                for (e in list.vals()){
-                    switch e {
-                        case (?e) {tempBuffer.add(e)};
-                        case _{}
-                    };
-                };
-                Buffer.toArray<Event>(tempBuffer);
-            }
+            case (?list) { list }
         }
     };
 
@@ -121,21 +142,21 @@ actor {
         } 
     };
 
-    public func getEvents(): async [Types.FeedPart]{
-        let eventLists = Map.vals<UserClassCanisterId, [var ?Event]>(events);
-        let tempBufferEvents = Buffer.fromArray<Types.FeedPart>([]);
-        for(eList in eventLists){
-            for (e in eList.vals()){
-                switch e {
-                    case(?#NewPost(post)){
-                        tempBufferEvents.add(post);
-                    };
-                    case _ {}
-                }
-            }
-        };
-        Buffer.toArray<Types.FeedPart>(tempBufferEvents)
-    };
+    // public func getEvents(): async [Types.FeedPart]{
+    //     let eventLists = Map.vals<UserClassCanisterId, [var ?Event]>(events);
+    //     let tempBufferEvents = Buffer.fromArray<Types.FeedPart>([]);
+    //     for(eList in eventLists){
+    //         for (e in eList.vals()){
+    //             switch e {
+    //                 case(?#NewPost(post)){
+    //                     tempBufferEvents.add(post);
+    //                 };
+    //                 case _ {}
+    //             }
+    //         }
+    //     };
+    //     Buffer.toArray<Types.FeedPart>(tempBufferEvents)
+    // };
 
     public shared ({ caller }) func getMyFeed(): async [Types.FeedPart] {
         let user = Map.get<Principal, User>(users, phash, caller);
@@ -159,10 +180,10 @@ actor {
                     }
                 };
                 if(feedBuffer.size() < 5) {
-                    for(eventList in Map.vals<UserClassCanisterId, [var ?Event]>(events)){
+                    for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
                         for(event in eventList.vals()){
                             switch event {
-                                case(?#NewPost(post)){
+                                case(#NewPost(post)){
                                     feedBuffer.add(post);
                                     if (feedBuffer.size() >=5){
                                         return Buffer.toArray(feedBuffer);
