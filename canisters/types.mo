@@ -32,7 +32,7 @@ module {
             autor: Principal; 
             postId: Nat;
             title: Text;
-            photo: ?Blob;
+            photoPreview: ?Blob;
             date: Int;
         };
         #Pub: Nat;
@@ -53,7 +53,7 @@ module {
 
     public type FeedPart = {
         title: Text;
-        photo: ?Blob;
+        photoPreview: ?Blob;
         date: Int;
         autor: Principal;
         postId: Nat;

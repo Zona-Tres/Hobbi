@@ -19,6 +19,7 @@ module {
         title : Text;
         body: Text; //Eventulmente puede ser en formato MD
         image : ?Blob; //Imagen preferentemente menor a 1 MB
+        imagePreview : ?Blob; //Imagen para previsualización. Reducción de la original a 64 KB aprox 
         image_url : ?Text;
         media_type : MediaType
     };

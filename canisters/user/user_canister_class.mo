@@ -100,6 +100,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     public query func getPublicInfo(): async PublicDataUser {{name; bio; avatar; verified}};
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
+        assert(caller == OWNER or caller == DEPLOYER);
         Set.toArray<UserClassCanisterId>(followeds)
     };
 
@@ -145,7 +146,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
             autor = Principal.fromActor(this); 
             postId = newPost.id;
             title = newPost.metadata.title;
-            photo = newPost.metadata.image;
+            photoPreview = newPost.metadata.imagePreview;
             date;
         };
         
@@ -167,7 +168,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                         else{ #Err("Private access") };
                     };
                     case(#Followers) {
-                        if(Set.has(followers, phash, caller)) { #Ok(postResponse) } 
+                        if(Set.has(followers, phash, caller) or caller == OWNER) { #Ok(postResponse) } 
                         else{ #Err("Only followers access") };
                     };
                     case(#Public){ #Ok(postResponse) }
@@ -236,7 +237,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                 let remoteCaller = actor(Principal.toText(callerActorClassId)): actor {
                     followBack: shared () -> async Bool
                 };
-                ignore Set.put<Principal>(followers, phash, callerActorClassId);
+                ignore Set.put<Principal>(followers, phash, caller);
                 await remoteCaller.followBack();
             }
         }
