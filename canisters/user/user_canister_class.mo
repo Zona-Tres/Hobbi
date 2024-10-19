@@ -26,7 +26,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     type Event = GlobalTypes.Event;
     type Reaction = GlobalTypes.Reaction;
     type UserClassCanisterId = Principal;
-    stable let DEPLOYER = caller; // para validar llamadas desde el canister factory
+    stable let HOBBI = caller; // para validar llamadas desde el canister factory
     stable let OWNER = _owner;
 
   ///////////////////////// Datos relacionados al usuario usuario //////////////////////////////////
@@ -53,14 +53,16 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     stable var lastPostID = 0;
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
 
-    let HOBBI_CANISTER = actor(Principal.toText(DEPLOYER)) : actor {
+    let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
         getUserCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
         removeEvent: shared (Int) -> async ();
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
-    func onlyOwner(p: Principal): () { assert( p == OWNER) };
+    func isOwner(p: Principal): Bool { p == OWNER };
+    func isHobbi(p: Principal): Bool { p == HOBBI };
+
     func dataUser(): FullDataUser {
         {   name;
             bio;
@@ -69,6 +71,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
             owner = OWNER;
             email;
             verified;
+            coverImage;
+            followers =  Set.size(followers);
+            followeds = Set.size(followeds);
         };
     };
     func isBlockedUser(p: Principal): Bool {
@@ -78,7 +83,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
 
     public shared ({caller}) func sendEmailCode(): async {#Err: Text; #Ok: Text}{
-        onlyOwner(caller);
+        assert(isOwner(caller));
         switch email{
             case null {return #Err("Email not provided")};
             case (?email){
@@ -92,7 +97,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
     public shared ({caller}) func putCodeVerifyEmail(_code: Nat): async Bool {
-        onlyOwner(caller);
+        assert(isOwner(caller));
         if(_code == verificationCodes.email and _code != 0) {
             verified := true;
         };
@@ -102,24 +107,43 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
   ////////////////////////////////////// Getters ///////////////////////////////////////////////////
     public shared query ({caller}) func getMyInfo():async  FullDataUser { //Se llama desde el front para cargar los datos en el dashboard
-        onlyOwner(caller);
+        assert(isOwner(caller));
         dataUser()
     };
 
     public shared query ({ caller }) func getPublicInfo(): async {#Ok: PublicDataUser; #Err: Text} {
         if(isBlockedUser(caller)){ return #Err("Access denied") };
-        #Ok{name; bio; avatar; verified}
+        #Ok{
+            name; 
+            bio; 
+            avatar; 
+            verified;
+            coverImage;
+            canisterID =  Principal.fromActor(this);
+            followers = Set.size(followers);
+            followeds = Set.size(followeds);
+            }
     };
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
-        assert(caller == OWNER or caller == DEPLOYER);
+        assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<UserClassCanisterId>(followeds)
+    };
+
+    public shared ({ caller }) func getFollowers(): async [Principal]{
+        assert(isOwner(caller) or isHobbi(caller));
+        Set.toArray<Principal>(followers);
+    };
+
+    public shared ({ caller }) func getHiddenUsers():async [Principal] {
+        assert(isOwner(caller) or isHobbi(caller));
+        Set.toArray<Principal>(hiddenUsers);
     };
 
   //////////////////////// Blocking and unblocking users, hiding user //////////////////////////////
 
     public shared ({ caller }) func blockUser( u: Principal): async {#Ok; #Err: Text} {
-        onlyOwner(caller);
+        assert(isOwner(caller));
         let userToBlock = await HOBBI_CANISTER.getUserCanisterId(u);
         switch userToBlock{
             case null {return #Err("The principal provided is not associated with any registered user")};
@@ -144,42 +168,45 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         #Ok
     };
 
-    public shared ({ caller }) func unBlockUser( u: Principal) {
-        onlyOwner(caller);
+    public shared ({ caller }) func unBlockUser( u: Principal): async {#Err; #Ok} {
+        if(not isOwner(caller)) {return #Err};
         ignore Set.remove<Principal>(blockedUsers, phash, u);
+        #Ok
     };
 
-    public shared ({ caller }) func hideUser( u: Principal) {
-        onlyOwner(caller);
+    public shared ({ caller }) func hideUser( u: Principal): async {#Err; #Ok} {
+        if(not isOwner(caller)) {return #Err};
         ignore Set.put<Principal>(hiddenUsers, phash, u);
+        #Ok
     };
 
-    public shared ({ caller }) func unHideUser( u: Principal) {
-        onlyOwner(caller);
+    public shared ({ caller }) func unHideUser( u: Principal): async {#Err; #Ok} {
+        if(not isOwner(caller)) {return #Err};
         ignore Set.put<Principal>(hiddenUsers, phash, u);
+        #Ok
     };
-
-
-
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
 
-    public shared ({ caller }) func loadAvatar(_avatar: Blob): async (){
-        onlyOwner(caller);
+    public shared ({ caller }) func loadAvatar(_avatar: Blob): async {#Err; #Ok} {
+        if(not isOwner(caller)) { return #Err};
         avatar := ?_avatar;
+        #Ok;
     };
 
-    public shared ({ caller }) func removeAvatar(): async (){
-        onlyOwner(caller);
+    public shared ({ caller }) func removeAvatar(): async {#Err; #Ok} {
+        if(not isOwner(caller)) { return #Err};
         avatar := null;
+        #Ok;
     };
-    public shared ({ caller }) func loadCoverImage(image: Blob): async () {
-        onlyOwner(caller);
+    public shared ({ caller }) func loadCoverImage(image: Blob): async {#Err; #Ok} {
+        if(not isOwner(caller)) { return #Err};
         coverImage := ?image;
+        #Ok
     };
 
     public shared ({ caller }) func editProfile(_name: Text, _bio: Text, _email: ?Text): async FullDataUser {
-        onlyOwner(caller);
+        assert(isOwner(caller));
         if(email != _email) { verified := false}; // Si se cambia el email se requiere nueva verificacion
         email := _email;
         bio := _bio;
@@ -191,12 +218,13 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
   ///////////////////////////////////// CRUD Post //////////////////////////////////////////////////
 
     public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
-        onlyOwner(caller);
+        assert(isOwner(caller));
         let date = Time.now();
         let metadata: Types.PostMetadata = { init with date; progress = #Started };
         lastPostID += 1;
         let newPost: Post = {
             metadata;
+            hashTags = init.hashTags;
             comments = [];
             id = lastPostID;
             likes = Set.new<Principal>();
@@ -206,7 +234,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         let newPostEvent = {
             autor = Principal.fromActor(this); 
             postId = newPost.id;
-            access = init.access; 
+            access = init.access;
+            hashTags = init.hashTags;
             title = newPost.metadata.title;
             photoPreview = newPost.metadata.imagePreview;
             date;
@@ -243,7 +272,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
     public shared ({ caller }) func updatePost(id: PostID, updatedData: PostDataInit): async {#Ok: PostResponse; #Err: Text} {
-        onlyOwner(caller);
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post {
             case null { #Err("Incorrect PostID")};
@@ -256,22 +285,22 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         }
     };
 
-    public shared ({ caller }) func modifyPostAccess(id: PostID, access: Access): async Bool{
-        onlyOwner(caller);
+    public shared ({ caller }) func modifyPostAccess(id: PostID, access: Access): async {#Ok; #Err: Text}{
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
         let post = Map.get<PostID, Post>(posts, nhash, id);
         switch post {
-            case null { false };
+            case null { #Err("Incorrect PostID") };
             case (?post) {
                 let metadata = {post.metadata with access};
                 let updatedPost = { post with metadata };
                 ignore Map.put<PostID, Post>(posts, nhash, id,updatedPost );
-                true;
+                #Ok;
             }
         }
     };
 
     public shared ({ caller }) func deletePost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
-        onlyOwner(caller);
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
         let post = Map.remove<PostID, Post>(posts, nhash, id);
         switch post {
             case null { #Err("Incorrect PostID")};
@@ -286,7 +315,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
   /////////////////////// Intercomunicacion con el canister principal //////////////////////////////
 
     func emitEvent(event: Event): async Bool {
-        let remoteMainCanister = actor(Principal.toText(DEPLOYER)): actor{
+        let remoteMainCanister = actor(Principal.toText(HOBBI)): actor{
             putEvent: shared (Event) -> async Bool
         };
         await remoteMainCanister.putEvent(event);
@@ -374,6 +403,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                         };
                         let commentsBuffer = Buffer.fromArray<Comment>(post.comments);
                         commentsBuffer.add(comment);
+                        let updateComments = Buffer.toArray<Comment>(commentsBuffer);
+                        ignore Map.put<PostID, Post>(posts, nhash, id, {post with comments = updateComments});
+
                         #Ok()
                     }
                 }

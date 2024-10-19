@@ -34,6 +34,7 @@ module {
     };
     public type Event = {
         #NewPost: {
+            hashTags: [Text];
             access: Access;
             autor: Principal; 
             postId: Nat;
@@ -58,8 +59,9 @@ module {
     };
 
     public type FeedPart = {
-        // TODO like/dislikes
-        // HashTag libre [Text]
+        // likes: Nat;
+        // disLikes: Nat;
+        hashTags: [Text];
         title: Text;
         photoPreview: ?Blob;
         date: Int;

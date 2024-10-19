@@ -161,6 +161,7 @@ actor {
 
     public shared ({ caller }) func getMyFeed(): async [Types.FeedPart] {
         let user = Map.get<Principal, User>(users, phash, caller);
+        
         switch user {
             case null { [] };
             case (?user) {

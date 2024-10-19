@@ -20,6 +20,7 @@ module {
         body: Text; //Eventulmente puede ser en formato MD
         image : ?Blob; //Imagen preferentemente menor a 1 MB
         imagePreview : ?Blob; //Imagen para previsualización. Reducción de la original a 64 KB aprox 
+        hashTags: [Text];
         image_url : ?Text;
         media_type : MediaType
     };
@@ -51,6 +52,7 @@ module {
         metadata : PostMetadata;
         likes: Set.Set<Principal>;
         disLikes: Set.Set<Principal>;
+        hashTags: [Text];
         comments: [Comment];
     };
 
@@ -66,7 +68,11 @@ module {
         name : Text;
         bio : Text;
         avatar : ?Blob;
-        verified : Bool
+        verified : Bool;
+        canisterID:  Principal;
+        coverImage: ?Blob;
+        followers: Nat;
+        followeds: Nat;
     };
     
     public type FullDataUser = PublicDataUser and {

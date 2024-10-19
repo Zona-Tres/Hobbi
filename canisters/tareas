@@ -4,9 +4,9 @@ agregar funcion getPostByHashTag
 
 getRankinHashTag
 
-edita perfil/ cargar foto postada
+edita perfil/ cargar foto portada
 
-getPagintePost
+getPaginatePosts
 
 gestionar bloqueos y ocultamientos de usuarios
 
