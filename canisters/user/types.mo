@@ -41,8 +41,9 @@ module {
     public type UserID = Nat;
 
     public type Comment = {
+        commentId: Nat;
         msg: Text;
-        autor: Principal; // Canister ID del user actor class del comentarista
+        autor: Principal; // Principal ID del usuario que comenta
         date: Int;
         subComments: [Comment];
     };

@@ -51,6 +51,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     let rand = Rand.Rand();
     stable var lastPostID = 0;
+    stable var lastCommentId = 0;
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
 
     let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
@@ -385,7 +386,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     //////////////////// Crud Comments Post ///////////////////////
     public shared ({ caller }) func commentPost(id: PostID, msg: Text):async  {#Ok; #Err: Text} {
-        
+        if(isBlockedUser(caller)){
+            return #Err("Access denied");
+        };
         let userCanister = await HOBBI_CANISTER.getUserCanisterId(caller);
         switch userCanister{
             case null { #Err("No eres usuario")};
@@ -395,10 +398,12 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                     case null { #Err("Post no encontrado")};
                     case (?post) {
                         let date = Time.now();
+                        lastCommentId += 1;
                         let comment: Comment = {
+                            commentId = lastCommentId;
                             date;
                             msg;
-                            autor = userCanister;
+                            autor = caller;
                             subComments: [Comment] = [];
                         };
                         let commentsBuffer = Buffer.fromArray<Comment>(post.comments);
@@ -414,7 +419,28 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         
     };
 
-    public shared ({ caller }) func updateComment() {
+    public shared ({ caller }) func updateComment(postId: PostID, commentId: Nat, msg: Text):async {#Ok; #Err} {
+        let post = Map.get<PostID, Post>(posts, nhash,postId);
+        switch post {
+            case null { #Err };
+            case(?post) {
+                var index = 0;
+                while(index < post.comments.size()){
+                    if(post.comments[index].commentId == commentId and post.comments[index].autor == caller){
+                        let updateComments = Prim.Array_tabulate<Comment>(
+                            post.comments.size(),
+                            func x = if(x == index){{post.comments[x] with msg}} else {post.comments[x]}
+                        );
+                        ignore Map.put<PostID, Post>(posts, nhash, postId, {post with comments = updateComments});
+                        return #Ok
+                    };
+                    index += 1;
+                };
+                #Err;
+
+            }
+        }
+
         //TODO Establecer un identificador de comentarios
     };
 
