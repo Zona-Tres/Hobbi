@@ -34,6 +34,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     stable var email: ?Text = _email;
     stable var bio: Text = _bio;
     stable var avatar: ?Blob = _avatar;
+    stable var coverImage: ?Blob = null;
     stable var verified = false; // Para verificacion de email mediante el envio de un código
 
   //////////////////// Datos relacionados a la actividad del usuario ///////////////////////////////
@@ -70,6 +71,9 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
             verified;
         };
     };
+    func isBlockedUser(p: Principal): Bool {
+        Set.has<Principal>(blockedUsers, phash, p)   
+    };
   ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
 
@@ -103,11 +107,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
 
     public shared query ({ caller }) func getPublicInfo(): async {#Ok: PublicDataUser; #Err: Text} {
-        if(Set.has<Principal>(blockedUsers, phash, caller)){
-            return #Err("Caller without access")
-        };
+        if(isBlockedUser(caller)){ return #Err("Access denied") };
         #Ok{name; bio; avatar; verified}
-    
     };
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
@@ -148,6 +149,17 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         ignore Set.remove<Principal>(blockedUsers, phash, u);
     };
 
+    public shared ({ caller }) func hideUser( u: Principal) {
+        onlyOwner(caller);
+        ignore Set.put<Principal>(hiddenUsers, phash, u);
+    };
+
+    public shared ({ caller }) func unHideUser( u: Principal) {
+        onlyOwner(caller);
+        ignore Set.put<Principal>(hiddenUsers, phash, u);
+    };
+
+
 
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
@@ -160,6 +172,10 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     public shared ({ caller }) func removeAvatar(): async (){
         onlyOwner(caller);
         avatar := null;
+    };
+    public shared ({ caller }) func loadCoverImage(image: Blob): async () {
+        onlyOwner(caller);
+        coverImage := ?image;
     };
 
     public shared ({ caller }) func editProfile(_name: Text, _bio: Text, _email: ?Text): async FullDataUser {
@@ -202,8 +218,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     public shared ({ caller }) func readPost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
         let post = Map.get<PostID, Post>(posts, nhash, id);
-        if(Set.has<Principal>(blockedUsers, phash, caller)){
-            return #Err("Caller without access")
+        if(isBlockedUser(caller)){
+            return #Err("Access denied");
         };
         switch post {
             case null { return #Err("PostID not Found")};
