@@ -8,6 +8,7 @@ import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Types "types";
 import { print } "mo:base/Debug";
+import Array "mo:base/Array";
 
 actor {
     type User = {
@@ -207,9 +208,23 @@ actor {
 
     };
 
-    public shared ({caller }) func getPostByHashTag(h: Text):async [Types.FeedPart]{
-        //TODO
-        []
+    public query func getPostByHashTag(h: Text):async [Types.FeedPart]{
+        let postPreviewBuffer = Buffer.fromArray<Types.FeedPart>([]);
+        for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
+            for(event in eventList.vals()){
+                switch event {
+                    case(#NewPost(post)){
+                        switch (Array.find<Text>(post.hashTags , func x = x == h)){
+                            case null {};
+                            case _ { postPreviewBuffer.add(post)}
+                        }
+                    };
+                    case _ { };
+                }
+            };
+
+        };
+        Buffer.toArray<Types.FeedPart>(postPreviewBuffer);
     };
     
 

@@ -1,7 +1,15 @@
 deploy canister hobbi
 ```dfx deploy hobbi```
 signUp usuario. Args: Nombre, opcional email, bio, opcional foto, provisoriamente fee
-```dfx canister call hobbi signUp '(record {name="Alice"; email=null; bio="Biografía de Alice"; avatar=null})'```
+```
+dfx canister call hobbi signUp '(record {
+    name="Usuario Flic"; 
+    email=null; 
+    bio="Biografía de Usuario Flic"; 
+    avatar=null
+})'
+
+```
 ver canisterId del ActorClass de Alice:
 ```dfx canister call hobbi getMyUserCanisterId```
 ver info de Alice
@@ -9,14 +17,17 @@ ver info de Alice
 
 cear Post
 ```
-dfx canister call <canisterIdDeAlice> createPost '(record {
-            access = variant{Public};
-            title ="Mi primer Posteo en Hobbi";
-            image = null;
-            image_url = null;
-            media_type = variant {Game}
-        }
-    )'
+dfx canister call bw4dl-smaaa-aaaaa-qaacq-cai createPost '(record {
+    access = variant{Public};
+    title ="Mi primer Posteo en Hobbi. Soy Usuario FlicB";
+    hashTags = vec {"Motoko"; "Kusanagui"};
+    body = "Cuerpo del posteo";
+    image = opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    imagePreview = opt blob "11/22/33/44";
+    image_url = null;
+    media_type = variant {Game}
+    }
+)'
 
 ```
 
