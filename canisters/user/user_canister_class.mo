@@ -42,6 +42,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id
     stable let followeds = Set.new<UserClassCanisterId>(); //Los seguidos se identifican por su canister id
     stable let blockedUsers = Set.new<Principal>();
+    stable let blockerUsers = Set.new<Principal>();
     stable let hiddenUsers = Set.new<Principal>();
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
@@ -79,6 +80,10 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     };
     func isBlockedUser(p: Principal): Bool {
         Set.has<Principal>(blockedUsers, phash, p)   
+    };
+
+    func isBlokerUser(p: Principal): Bool {
+        Set.has<Principal>(blockerUsers, phash, p);
     };
   ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
@@ -144,7 +149,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
   //////////////////////// Blocking and unblocking users, hiding user //////////////////////////////
 
     public shared ({ caller }) func blockUser( u: Principal): async {#Ok; #Err: Text} {
-        assert(isOwner(caller));
+        assert(isOwner(caller) and caller != u);
         let userToBlock = await HOBBI_CANISTER.getUserCanisterId(u);
         switch userToBlock{
             case null {return #Err("The principal provided is not associated with any registered user")};
@@ -166,13 +171,30 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         };
         ignore Set.remove<Principal>(followeds, phash, callerCanisterOwner);
         ignore Set.remove<Principal>(followers, phash, callerCanisterOwner);
+        ignore Set.put<Principal>(blockerUsers, phash, callerCanisterOwner);
         #Ok
     };
 
-    public shared ({ caller }) func unBlockUser( u: Principal): async {#Err; #Ok} {
-        if(not isOwner(caller)) {return #Err};
-        ignore Set.remove<Principal>(blockedUsers, phash, u);
+    public shared ({ caller }) func unBlockUser( callerCanisterOwner: Principal): async {#Err; #Ok} {
+        let user = await HOBBI_CANISTER.getUserCanisterId(callerCanisterOwner);
+        switch user {
+            case null { };
+            case (?remoteUser){
+                let remoteActor = actor(Principal.toText(remoteUser)) : actor {
+                    unBlockme: shared (Principal) -> async ();
+                };
+                await remoteActor.unBlockme(caller);
+            }
+        };
+        ignore Set.remove<Principal>(blockedUsers, phash, callerCanisterOwner);
         #Ok
+    };
+
+    public shared ({ caller }) func unBlockme(owner: Principal): async (){
+        if(?caller != (await HOBBI_CANISTER.getUserCanisterId(owner))){
+            return;
+        };
+        ignore Set.remove<Principal>(blockerUsers, phash, owner);
     };
 
     public shared ({ caller }) func hideUser( u: Principal): async {#Err; #Ok} {
@@ -248,7 +270,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     public shared ({ caller }) func readPost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
         let post = Map.get<PostID, Post>(posts, nhash, id);
-        if(isBlockedUser(caller)){
+        if(isBlockedUser(caller) or isBlokerUser(caller)){
             return #Err("Access denied");
         };
         switch post {
@@ -386,7 +408,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
     //////////////////// Crud Comments Post ///////////////////////
     public shared ({ caller }) func commentPost(id: PostID, msg: Text):async  {#Ok; #Err: Text} {
-        if(isBlockedUser(caller)){
+        if(isBlockedUser(caller) or isBlockedUser(caller)){
             return #Err("Access denied");
         };
         let userCanister = await HOBBI_CANISTER.getUserCanisterId(caller);
@@ -416,7 +438,6 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                 }
             }
         }
-        
     };
 
     public shared ({ caller }) func updateComment(postId: PostID, commentId: Nat, msg: Text):async {#Ok; #Err} {

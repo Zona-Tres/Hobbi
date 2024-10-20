@@ -21,7 +21,7 @@ actor {
     type UserClassCanisterId = Principal;
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
-    let feeUserCanisterDeploy = 13846202380;
+    let feeUserCanisterDeploy = 13846202568;
     stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
     stable let events = Map.new<UserClassCanisterId, [Event]>();

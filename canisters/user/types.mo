@@ -46,6 +46,8 @@ module {
         autor: Principal; // Principal ID del usuario que comenta
         date: Int;
         subComments: [Comment];
+        // likes: Nat;
+        // disLikes: Nat;
     };
 
     public type Post = {  
