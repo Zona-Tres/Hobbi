@@ -11,11 +11,17 @@ import Buffer "mo:base/Buffer";
 import Prim "mo:⛔";
 import { print } "mo:base/Debug";
   
-
-shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?Text,  _bio: Text, _avatar: ?Blob) = this {
+shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = this {
 
     type FullDataUser = Types.FullDataUser;
     type PublicDataUser = Types.PublicDataUser;
+    type EditableUserData = {
+        name: Text;
+        bio: Text; 
+        email: ?Text;
+        interests: [Text];
+    };
+
     type PostID = Types.PostID;
     type Post = Types.Post;
     type PostResponse = Types.PostResponse;
@@ -27,14 +33,15 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     type Reaction = GlobalTypes.Reaction;
     type UserClassCanisterId = Principal;
     stable let HOBBI = caller; // para validar llamadas desde el canister factory
-    stable let OWNER = _owner;
+    stable let OWNER = init.owner;
 
   ///////////////////////// Datos relacionados al usuario usuario //////////////////////////////////
-    stable var name: Text = _name;
-    stable var email: ?Text = _email;
-    stable var bio: Text = _bio;
-    stable var avatar: ?Blob = _avatar;
+    stable var name: Text = init.name;
+    stable var email: ?Text = init.email;
+    stable var bio: Text = init.bio;
+    stable var avatar: ?Blob = init.avatar;
     stable var coverImage: ?Blob = null;
+    stable var interests: [Text] = [];
     stable var verified = false; // Para verificacion de email mediante el envio de un código
 
   //////////////////// Datos relacionados a la actividad del usuario ///////////////////////////////
@@ -46,6 +53,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     stable let hiddenUsers = Set.new<Principal>();
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
+    // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
+    // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
 
   /////////////////////////// Variables y objetos auxiliares ///////////////////////////////////////
@@ -61,6 +70,11 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         removeEvent: shared (Int) -> async ();
     };
 
+    let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
+        updateFollowers: shared (Nat) -> ();
+        updateFolloweds: shared (Nat) -> ();
+    };
+
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
     func isOwner(p: Principal): Bool { p == OWNER };
     func isHobbi(p: Principal): Bool { p == HOBBI };
@@ -74,6 +88,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
             email;
             verified;
             coverImage;
+            interests;
             followers =  Set.size(followers);
             followeds = Set.size(followeds);
         };
@@ -125,6 +140,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
             avatar; 
             verified;
             coverImage;
+            interests;
             canisterID =  Principal.fromActor(this);
             followers = Set.size(followers);
             followeds = Set.size(followeds);
@@ -136,7 +152,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         Set.toArray<UserClassCanisterId>(followeds)
     };
 
-    public shared ({ caller }) func getFollowers(): async [Principal]{
+    public shared query ({ caller }) func getFollowers(): async [Principal]{
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(followers);
     };
@@ -160,6 +176,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                 ignore Set.remove<Principal>(followeds, phash, u);
                 ignore Set.remove<Principal>(followers, phash, u);
                 ignore Set.put<Principal>(blockedUsers, phash, u);
+                INDEXER_CANISTER.updateFollowers(Set.size(followers));
+                INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
                 await userToBlockActorClass.removeMe(caller);
             }
         };   
@@ -171,6 +189,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         };
         ignore Set.remove<Principal>(followeds, phash, callerCanisterOwner);
         ignore Set.remove<Principal>(followers, phash, callerCanisterOwner);
+        INDEXER_CANISTER.updateFollowers(Set.size(followers));
+        INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         ignore Set.put<Principal>(blockerUsers, phash, callerCanisterOwner);
         #Ok
     };
@@ -211,6 +231,8 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
 
+
+
     public shared ({ caller }) func loadAvatar(_avatar: Blob): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := ?_avatar;
@@ -228,15 +250,18 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
         #Ok
     };
 
-    public shared ({ caller }) func editProfile(_name: Text, _bio: Text, _email: ?Text): async FullDataUser {
+    public shared ({ caller }) func editProfile(data: EditableUserData): async FullDataUser {
+        // TODO Agragar campo intereses
         assert(isOwner(caller));
-        if(email != _email) { verified := false}; // Si se cambia el email se requiere nueva verificacion
-        email := _email;
-        bio := _bio;
-        name := _name;
+        if(email != data.email) { verified := false}; // Si se cambia el email se requiere nueva verificacion
+        email := data.email;
+        bio := data.bio;
+        name := data.name;
+        interests := data.interests;
 
         dataUser();
     };
+
 
   ///////////////////////////////////// CRUD Post //////////////////////////////////////////////////
 
@@ -355,6 +380,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
                     followBack: shared () -> async Bool
                 };
                 ignore Set.put<Principal>(followers, phash, caller);
+                INDEXER_CANISTER.updateFollowers(Set.size(followers));
                 await remoteCaller.followBack();
             }
         }
@@ -363,6 +389,7 @@ shared ({ caller }) actor class User (_owner: Principal, _name: Text, _email: ?T
     public shared ({ caller }) func followBack(): async Bool {
         assert(await HOBBI_CANISTER.isUserActorClass(caller));
         ignore Set.put<Principal>(followeds, phash, caller);
+        INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
 

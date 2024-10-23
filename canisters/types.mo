@@ -2,10 +2,18 @@
 
 module {
     public type SignUpData = {
+        // indexerUserCanister: Principal;
+        // owner: Principal;
         name: Text;
         bio: Text;
         email: ?Text;
         avatar: ?Blob;
+        thumbnail: ?Blob;
+    };
+
+    public type DeployUserCanister = SignUpData and {
+        indexerUserCanister: Principal;
+        owner: Principal;
     };
 
     public type Notification = {
@@ -52,6 +60,14 @@ module {
         avatar: ?Blob;
         userCanisterId: Principal;
         notifications: [Notification];
+    };
+
+    public type UserPreviewInfo = {
+        name: Text;
+        thumbnail: ?Blob;
+        userCanisterId: Principal;
+        followers: Nat;
+        recentPosts: Nat;
     };
     public type SignInResult = {
         #Ok: UserInfo;

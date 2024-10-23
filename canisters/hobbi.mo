@@ -1,8 +1,9 @@
 import Map "mo:map/Map";
 import Set "mo:map/Set";
 
-import { phash } "mo:map/Map";
+import { phash; thash } "mo:map/Map";
 import User "./user/user_canister_class";
+import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
@@ -11,35 +12,55 @@ import { print } "mo:base/Debug";
 import Array "mo:base/Array";
 
 actor {
-    type User = {
+    type Profile = {
         actorClass: User.User;
         name: Text;
         avatar: ?Blob;
-        notifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
+        globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
+
+    type UserPreviewInfo = Types.UserPreviewInfo;
 
     type Event = Types.Event;
     type UserClassCanisterId = Principal;
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
-    let feeUserCanisterDeploy = 13846202568;
-    stable let users = Map.new<Principal, User>();     //PrincipalID =>  User actorClass
+    let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
+    stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
+
+    //TODO enviar map de eventos a canister dedicado
     stable let events = Map.new<UserClassCanisterId, [Event]>();
+
     stable let rankingHashTag = Map.new<Text, Nat>();
 
+  // canister de indexación para guardar previsualizaciones de usuario
+    stable var indexerUserCanister: UserIndexerCanister.UserIndexerCanister = actor("aaaaa-aa");
+
+  //////////////////////////// Despliegue de canisters auxiliares ///////////////////////////////
+    type InitResponse = {
+        indexerUserCanister: Principal;
+    };
+
+    func hobbiInit(): async () {
+        print("Desplegando el canister indexer");
+        Prim.cyclesAdd<system>(200_000_000_000);
+        indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
+    };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
 
     public query func isUserActorClass(p: Principal):async Bool {
         Set.has<Principal>(usersCanister, phash, p);
     };
 
     func isUser(p: Principal): Bool{
-        Map.has<Principal, User>(users, phash, p);
+        Map.has<Principal, Profile>(users, phash, p);
     };
 
     public shared query ({ caller }) func getMyUserCanisterId(): async Principal{
         assert(isUser(caller));
-        let user = Map.get<Principal, User>(users, phash, caller);
+        let user = Map.get<Principal, Profile>(users, phash, caller);
         switch user {
             case null { assert false; NULL_ADDRESS};
             case (?user){
@@ -48,8 +69,41 @@ actor {
         }
     };
 
+    func putHashTags(event: Event) {
+        switch event {
+            case (#NewPost(post)) {
+                for(hashtag in post.hashTags.vals()){
+                    let previousValue = Map.get<Text, Nat>(rankingHashTag, thash, hashtag);
+                    let updtaeValue = switch previousValue {
+                        case null { 0 };
+                        case( ?qty ) { qty + 1 };
+                    };
+                    ignore Map.put<Text, Nat>(rankingHashTag, thash, hashtag, updtaeValue )
+                };
+            };
+            case (_) { }
+        }
+    };
+
+    func decrementHashTags(_hashTags: [Text]) {
+        for(hashTag in _hashTags.vals()){
+            let oldValue = Map.get<Text, Nat>(rankingHashTag, thash, hashTag);
+            switch oldValue{
+                case(?value){
+                    if (value == 1) {
+                        ignore Map.remove<Text, Nat>(rankingHashTag, thash, hashTag)
+                    } else {
+                        ignore Map.put<Text, Nat>(rankingHashTag, thash, hashTag, value -1)
+                    };
+                };
+                case null {};
+            }
+        }
+    };
+
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
+        putHashTags(event);
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         switch myEvents {
             case null {
@@ -85,6 +139,7 @@ actor {
                     switch e {
                         case (#NewPost(data)){
                             if(data.date != _date){
+                                decrementHashTags(data.hashTags);
                                 eventBuffer.add(#NewPost(data));
                             } else {
                                 print("Post encontrado")
@@ -109,17 +164,32 @@ actor {
     };
 
     public shared ({ caller }) func signUp(data: Types.SignUpData):async Principal {
-        assert(not isUser(caller));     
+        if(Principal.fromActor(indexerUserCanister) == NULL_ADDRESS){
+            await hobbiInit();
+        };
+        assert(not isUser(caller));    
         Prim.cyclesAdd<system>(feeUserCanisterDeploy);
-        let actorClass = await User.User(caller, data.name, data.email, data.bio, data.avatar);
-        let newUser: User = {actorClass; name = data.name; avatar = data.avatar; notifications = []};
-        ignore Map.put(users, phash, caller, newUser);
+        let actorClass = await User.User({
+            data with 
+            owner = caller; 
+            indexerUserCanister = Principal.fromActor(indexerUserCanister)
+        });
+        let newUser: Profile = {actorClass; name = data.name; avatar = data.avatar; globalNotifications = []};
+        ignore Map.put(users, phash, caller, newUser); //TODO Creo que con la implementación del indexerUser ya no es necesario
         ignore Set.put(usersCanister, phash, Principal.fromActor(actorClass));
+        let userDataPreview: UserPreviewInfo = {
+            name = data.name;
+            thumbnail = data.thumbnail;
+            userCanisterId = Principal.fromActor(actorClass);
+            followers = 0;
+            recentPosts = 0;
+        };
+        ignore await indexerUserCanister.putUser(caller, Principal.fromActor(actorClass), userDataPreview);
         Principal.fromActor(actorClass);
     };
 
     public shared ({ caller }) func signIn(): async Types.SignInResult{
-        let user = Map.get<Principal, User>(users, phash, caller);
+        let user = Map.get<Principal, Profile>(users, phash, caller);
         switch user {
             case null { #Err };
             case (?user) {
@@ -127,7 +197,7 @@ actor {
                     name = user.name; 
                     avatar = user.avatar;
                     userCanisterId = Principal.fromActor(user.actorClass);
-                    notifications = user.notifications
+                    notifications = user.globalNotifications
                     }
                 )
             }
@@ -135,7 +205,7 @@ actor {
     };
 
     public query func getUserCanisterId(u: Principal): async ?Principal {
-        let user = Map.get<Principal, User>(users, phash, u);
+        let user = Map.get<Principal, Profile>(users, phash, u);
         switch user {
             case null { null };
             case (?user) {
@@ -161,7 +231,7 @@ actor {
     // };
 
     public shared ({ caller }) func getMyFeed(): async [Types.FeedPart] {
-        let user = Map.get<Principal, User>(users, phash, caller);
+        let user = Map.get<Principal, Profile>(users, phash, caller);
         
         switch user {
             case null { [] };

@@ -3,10 +3,11 @@ deploy canister hobbi
 signUp usuario. Args: Nombre, opcional email, bio, opcional foto, provisoriamente fee
 ```
 dfx canister call hobbi signUp '(record {
-    name="Usuario Flic"; 
+    name="Usuario B"; 
     email=null; 
-    bio="Biografía de Usuario Flic"; 
-    avatar=null
+    bio="Biografía de Usuario B"; 
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/"
+    thumbnail = opt blob "11/22/33/44";
 })'
 
 ```
@@ -17,10 +18,10 @@ ver info de Alice
 
 cear Post
 ```
-dfx canister call bw4dl-smaaa-aaaaa-qaacq-cai createPost '(record {
+dfx canister call be2us-64aaa-aaaaa-qaabq-cai createPost '(record {
     access = variant{Public};
-    title ="Mi primer Posteo en Hobbi. Soy Usuario FlicB";
-    hashTags = vec {"Motoko"; "Kusanagui"};
+    title ="Mi primer Posteo en Hobbi. Soy Usuario B";
+    hashTags = vec {"Musica"; "Jazz"; "Charly Parker"};
     body = "Cuerpo del posteo";
     image = opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     imagePreview = opt blob "11/22/33/44";

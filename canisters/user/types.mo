@@ -67,7 +67,9 @@ module {
         comments: [Comment];
     };
 
+
     public type PublicDataUser = {
+        // TODO cantidad de posteos del mes.
         name : Text;
         bio : Text;
         avatar : ?Blob;
@@ -76,6 +78,7 @@ module {
         coverImage: ?Blob;
         followers: Nat;
         followeds: Nat;
+        interests: [Text];
     };
     
     public type FullDataUser = PublicDataUser and {
