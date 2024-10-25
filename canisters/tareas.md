@@ -1,14 +1,14 @@
-previsualizaciones: agregar likes y dislikes y hashtag
+previsualizaciones: agregar likes y dislikes y hashtag Listo
 
-agregar funcion getPostByHashTag
+agregar funcion getPostByHashTag Listo
 
-getRankinHashTag
+getRankinHashTag Listo
 
-edita perfil/ cargar foto portada
+edita perfil/ cargar foto portada Listo
 
-getPaginatePosts
+getPaginatePosts. 
 
-gestionar bloqueos y ocultamientos de usuarios
+gestionar bloqueos y ocultamientos de usuarios. Listo
 
 
     

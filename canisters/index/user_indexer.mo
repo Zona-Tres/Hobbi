@@ -47,6 +47,7 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
     };
 
     public query func getFollowersPreview(usersCIDs: [CanisterId]): async [UserPreviewInfo] {
+        // TODO devolver una paginacion: 20 previsualizaciones mas un booleano que indique si hay mas
         let bufferPreviews = Buffer.fromArray<UserPreviewInfo>([]);
         for(usersCID in usersCIDs.vals()){
             let user = getUserPreview(usersCID);

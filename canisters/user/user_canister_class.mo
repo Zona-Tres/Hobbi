@@ -28,12 +28,14 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     type Post = Types.Post;
     type PostResponse = Types.PostResponse;
     type PostDataInit = Types.PostDataInit;
+    type PostPreview = GlobalTypes.PostPreview;
     type Comment = Types.Comment;
     type Access = Types.Access;
     type Notification = GlobalTypes.Notification;
     type Event = GlobalTypes.Event;
     type Reaction = GlobalTypes.Reaction;
     type UserClassCanisterId = Principal;
+    type PaginateResponse<T> = {array: [T]; thereIsMore: Bool};
 
     stable let HOBBI = caller; // para validar llamadas desde el canister factory
     stable let OWNER = init.owner;
@@ -57,6 +59,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
+    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {lastUpdate = 0; previews = []};
+    var previewsRefreshTime = 10 * 60 * 1_000_000_000; // 10 minutos 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
 
@@ -102,6 +106,23 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     func isBlokerUser(p: Principal): Bool {
         Set.has<Principal>(blockerUsers, phash, p);
+    };
+
+    func extractPostPreview(){
+        let postArray = Map.toArray<PostID, Post>(posts);
+        let previews = Prim.Array_tabulate<PostPreview>(
+            postArray.size(),
+            func i = {
+                hashTags = postArray[i].1.hashTags;
+                access = postArray[i].1.metadata.access;
+                autor = Principal.fromActor(this); 
+                postId = postArray[i].0;
+                title = postArray[i].1.metadata.title;
+                photoPreview = postArray[i].1.metadata.imagePreview;
+                date = postArray[i].1.metadata.date;
+            }
+        );
+        tempPostPreviews := {lastUpdate = Time.now(); previews}
     };
   ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
@@ -163,6 +184,14 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func getHiddenUsers():async [Principal] {
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(hiddenUsers);
+    };
+
+    public shared ({ caller }) func getPaginatePost({index: Nat}): async [PostPreview]{
+        if( tempPostPreviews.lastUpdate < Time.now() + previewsRefreshTime ){
+            extractPostPreview()
+        };
+
+        []
     };
 
   //////////////////////// Blocking and unblocking users, hiding user //////////////////////////////
@@ -263,7 +292,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         dataUser();
     };
 
-
   ///////////////////////////////////// CRUD Post //////////////////////////////////////////////////
 
     public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
@@ -359,7 +387,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 #Ok({post with likes = post.likes.size(); disLikes = post.disLikes.size()}) }
         }
     };
-
 
   /////////////////////// Intercomunicacion con el canister principal //////////////////////////////
 

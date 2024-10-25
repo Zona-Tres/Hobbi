@@ -40,16 +40,19 @@ module {
         #Private;
         #Followers
     };
+
+    public type PostPreview = {
+        hashTags: [Text];
+        access: Access;
+        autor: Principal; 
+        postId: Nat;
+        title: Text;
+        photoPreview: ?Blob;
+        date: Int;
+    };
+
     public type Event = {
-        #NewPost: {
-            hashTags: [Text];
-            access: Access;
-            autor: Principal; 
-            postId: Nat;
-            title: Text;
-            photoPreview: ?Blob;
-            date: Int;
-        };
+        #NewPost: PostPreview;
         #Pub: Nat;
         #Sub: Principal;
         #React: {reaction: Reaction; postId: Nat; user: Principal};
@@ -83,5 +86,35 @@ module {
         date: Int;
         autor: Principal;
         postId: Nat;
+    };
+
+    type PostID = Nat;
+    public type ReportType = {
+        #InboxReport; //Para cuando se implemente un modulo de mensajeria
+        #PostReport: {post: PostID;};
+        #CommentReport: {post: PostID; commentId: Nat}
+    };
+
+    public type ReportStatus = {
+        #Started;
+        #UnderReview;
+        #EjectedArchived;
+        #ApprovedArchived;
+    };
+
+    public type Report = { 
+        canisterId: Principal;
+        conflictFocus: ReportType; // Para la resolución de conflicto podria integrarse una IA
+        msg: Text;      
+    };
+
+    public type Cause = Report and {
+        id: Nat;
+        date: Int;
+        informer: Principal;
+        speechInDefense: {msg: Text; date: Int};
+        status: ReportStatus;
     }
+
+
 }

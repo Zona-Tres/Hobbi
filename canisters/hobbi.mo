@@ -1,47 +1,57 @@
 import Map "mo:map/Map";
 import Set "mo:map/Set";
 
-import { phash; thash } "mo:map/Map";
+import { phash; thash; nhash } "mo:map/Map";
 import User "./user/user_canister_class";
 import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
+import { now } "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Types "types";
 import { print } "mo:base/Debug";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Char "mo:base/Char";
+import Iter "mo:base/Iter";
+import Nat "mo:base/Nat";
 
 actor {
-  ///////////////////////////////////////////////      Tipoos          ////////////////////////////////////////
+  ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
     type Profile = {
         actorClass: User.User;
         name: Text;
         avatar: ?Blob;
+        openCauses: [Nat];
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
     type UserPreviewInfo = Types.UserPreviewInfo;
     type Event = Types.Event;
     type UserClassCanisterId = Principal;
-  ////////////////////////////////////////////// Variables generales  /////////////////////////////////////////
+    type Report  = Types.Report;
+    type Cause = Types.Cause;
+  //////////////////////////////////////////////   Variables generales      ///////////////////////////////////////
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
     stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
+    stable let admins = Set.new<Principal>();
 
-    //TODO enviar map de eventos a canister dedicado
-    stable let events = Map.new<UserClassCanisterId, [Event]>();
+    
+    stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
     stable let rankingHashTag: [Text] = [];
 
+    stable let causes = Map.new<Nat, Cause>();
+    stable var lastReportId = 0;
+
     // canister de indexación para guardar previsualizaciones de usuario
     stable var indexerUserCanister: UserIndexerCanister.UserIndexerCanister = actor("aaaaa-aa");
 
-  ///////////////////////////////////////////// canisters auxiliares /////////////////////////////////////////
+  /////////////////////////////////////////////   canisters auxiliares     ////////////////////////////////////////
     type InitResponse = {
         indexerUserCanister: Principal;
     };
@@ -52,7 +62,7 @@ actor {
         indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
     };
 
-  ////////////////////////////////////////////  Funciones privadas  //////////////////////////////////////////
+  ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
     public query func isUserActorClass(p: Principal):async Bool {
         Set.has<Principal>(usersCanister, phash, p);
@@ -62,7 +72,11 @@ actor {
         Map.has<Principal, Profile>(users, phash, p);
     };
 
-  ///////////////////////////////////////////  HashTags managment  ///////////////////////////////////////////
+    func isAdmin(p: Principal): Bool {
+        Set.has<Principal>(admins, phash, p);
+    };
+
+  ///////////////////////////////////////////    HashTags managment      //////////////////////////////////////////
 
     func unWrapHashTagCount(ht: Text): Nat {
         switch (Map.get<Text, Nat>(hashTagsMap, thash, ht)){
@@ -122,7 +136,7 @@ actor {
             }
         }
     };
-  //////////////////////////////////////////    Event Managment   ////////////////////////////////////////////
+  //////////////////////////////////////////      Event Managment       ///////////////////////////////////////////
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
@@ -186,7 +200,7 @@ actor {
         }
     };
 
-  /////////////////////////////////////////     SignUp SingIn    /////////////////////////////////////////////
+  /////////////////////////////////////////       SignUp SingIn        ////////////////////////////////////////////
 
     public shared ({ caller }) func signUp(data: Types.SignUpData):async Principal {
         if(Principal.fromActor(indexerUserCanister) == NULL_ADDRESS){
@@ -199,7 +213,13 @@ actor {
             owner = caller; 
             indexerUserCanister = Principal.fromActor(indexerUserCanister)
         });
-        let newUser: Profile = {actorClass; name = data.name; avatar = data.avatar; globalNotifications = []};
+        let newUser: Profile = {
+            actorClass; 
+            name = data.name; 
+            avatar = data.avatar;
+            globalNotifications = [];
+            openCauses = [];
+        };
         ignore Map.put(users, phash, caller, newUser); //TODO Creo que con la implementación del indexerUser ya no es necesario
         ignore Set.put(usersCanister, phash, Principal.fromActor(actorClass));
         let userDataPreview: UserPreviewInfo = {
@@ -229,7 +249,7 @@ actor {
         }
     };
     
-  ////////////////////////////////////////  Getters functions   //////////////////////////////////////////////
+  ////////////////////////////////////////    Getters functions       /////////////////////////////////////////////
 
     public shared query ({ caller }) func getMyCanisterId(): async Principal{
         let user = Map.get<Principal, Profile>(users, phash, caller);
@@ -320,4 +340,114 @@ actor {
     public shared query func getRankingHashTags(): async [Text]{
         rankingHashTag
     };
+  
+  /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
+    
+    public shared ({ caller }) func report(denunciation: Report): async {#Ok: Text; #Err}{
+        let informer = Map.get<Principal, Profile>(users, phash, caller);
+        let accused = Map.get<Principal, Profile>(users, phash, caller);
+        switch informer {
+            case null #Err;
+            case ( ?informer ) {
+                switch accused {
+                    case null #Err;
+                    case ( ?accused ) {
+                        lastReportId += 1;
+                        let cause: Cause = {
+                            denunciation with
+                            id = lastReportId;
+                            date = now();
+                            informer = caller;
+                            speechInDefense = {msg = ""; date = 0};
+                            status = #Started;
+                        };
+                        // Guardamos el id de la denuncia para que el denunciante pueda consultar el estado
+                        let updateCausesInformer = Prim.Array_tabulate<Nat>(
+                            informer.openCauses.size() + 1,
+                            func i = if(i == 0){lastReportId} else {informer.openCauses[i + 1]}
+                        );
+                        ignore Map.put<Principal, Profile>(users, phash, caller, {informer with causes = updateCausesInformer } );
+                        // Guardamos el id de la denuncia para que el denunciado pueda consultar el estado
+                        let updateCausesAccused = Prim.Array_tabulate<Nat>(
+                            accused.openCauses.size(),
+                            func i = if(i == 0){lastReportId} else {accused.openCauses[i + 1]}
+                        );
+                        ignore Map.put<Principal, Profile>(users, phash, caller, {accused with causes = updateCausesAccused } );
+                        ignore Map.put<Nat, Cause>(causes, nhash, lastReportId, cause);
+                        #Ok("Su denuncia será atendida a la brevedad. Gracias por colaborar")
+                    }
+                }
+            }
+        }
+    };
+
+    public shared ({ caller }) func getCauses(): async {#Ok: [Cause]; #Err}{
+        if(isAdmin(caller)){
+           return #Ok(Iter.toArray<Cause>(Map.vals<Nat, Cause>(causes)));
+        };
+        #Err
+    };
+
+    public shared ({ caller }) func getMyCauses(): async {#Ok: [Nat]; #Err} {
+        let user = Map.get<Principal, Profile>(users, phash, caller);
+        switch user {
+            case null { #Err };
+            case ( ?user ) {#Ok(user.openCauses)}
+        };
+    };
+
+    public shared ({ caller }) func getCauseById(id: Nat): async {#Ok: Cause; #Err}{
+        let user = Map.get<Principal, Profile>(users, phash, caller);
+        let admin = isAdmin(caller);
+        let cause = Map.get<Nat, Cause>(causes, nhash, id);
+        switch cause{
+            case null { #Err };
+            case (?cause) {
+                switch user {
+                    case null { 
+                        if( admin ) {  return #Ok({cause with speechInDefense = {date = 0; msg = ""}})} 
+                        else { #Err }
+                    };
+                    case (?user) {
+                        if (caller == cause.informer) {
+                            return #Ok(cause)
+                        } else {
+                            return #Ok({ cause with informer = NULL_ADDRESS })
+                        }
+                    }
+                }
+            }
+        }  
+    };
+
+    public shared ({ caller }) func makeDefense({causeId: Nat; msg: Text}): async {#Ok: Text; #Err: Text}{
+        let cause = Map.get<Nat, Cause>(causes, nhash, causeId);
+        switch cause {
+            case null { return #Err("The cause was not found") };
+            case  (?cause) {
+                let accused = Map.get<Principal, Profile>(users, phash, caller);
+                switch accused {
+                    case null { return #Err("Caller error") };
+                    case (?profile) {
+                        if(Principal.fromActor(profile.actorClass) == cause.canisterId){
+                            
+                            ignore Map.put<Nat, Cause>(
+                                causes,
+                                nhash, 
+                                causeId, 
+                                {cause with speechInDefense = {date = now(); msg}}
+                            );
+                            return #Ok("defense entered")
+                        };
+                        return #Err("Caller error"); 
+                    }
+                }
+            }
+        }
+    };
+    
+    
+
+
+
 }
