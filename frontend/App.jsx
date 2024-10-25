@@ -18,6 +18,7 @@ import ErrorBoundary from "./pages/ErrorBoundary"
 import CreateProfile from "./pages/CreateProfile"
 import Connect2Hobbi from "./pages/Connect"
 import RequireAuth from "./components/utils/require-auth"
+import Feed from "./pages/Feed"
 import { HelmetProvider } from "react-helmet-async"
 import { SeoMarkup } from "./components/utils/seo-markup"
 
@@ -26,7 +27,8 @@ function App() {
     <Routes>
       <Route exact path="/" element={<Home />} />
       <Route path="/connect" element={<Connect2Hobbi />} />
-      <Route path="/profile/:id" element={<Dashboard />} />
+      <Route path="/profile/:id" element={<Feed />} />
+      <Route path="/feed" element={<Feed />} />
       
       {/* Protected Routes */}
       <Route element={<RequireAuth />} >
@@ -47,7 +49,7 @@ const client = createClient({
     post,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://localhost:8000/?canisterId=b77ix-eeaaa-aaaaa-qaada-cai" })
+    new InternetIdentity({ providerUrl: "http://localhost:8000/?canisterId=bw4dl-smaaa-aaaaa-qaacq-cai" })
   ],
   globalProviderConfig: {
     dev: true,

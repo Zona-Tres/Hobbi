@@ -11,6 +11,7 @@ export default function Hero() {
   return (
     <div className="flex flex-col">
       <img src={Illustration} className="w-full" alt="Hero Illustration" />
+{/*
       <div className="flex bg-[#070A10] pb-28">
         <div className="flex flex-col w-2/3 pt-32 pl-14 pr-20">
           <span className="text-[#F7EFFF] font-normal text-[24px] my-6 mt-9">
@@ -396,7 +397,7 @@ export default function Hero() {
           </div>
         </div>
       </div>
-
+*/}
       <div className="flex flex-col bg-[#1C0536] p-20 h-80">
         <div className="flex justify-between">
           <img src={ItemLogo} />
