@@ -377,7 +377,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     };
 
     public shared ({ caller }) func deletePost(id: PostID): async {#Ok: PostResponse; #Err: Text} {
-        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
+        if(not isOwner(caller) and caller != HOBBI) { return #Err("The caller is not the owner")};
         let post = Map.remove<PostID, Post>(posts, nhash, id);
         switch post {
             case null { #Err("Incorrect PostID")};

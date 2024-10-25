@@ -445,8 +445,10 @@ actor {
             }
         }
     };
+
+    // TODO. Aceptar o rechazar acusación y finalmente informar resolución
     
-    
+
 
 
 
