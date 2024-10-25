@@ -11,7 +11,6 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
 
     stable let HOBBI_CANISTER_ID = caller;
 
-
     let canisterIdsUser = Map.new<Principal, CanisterId>();
 
     let userPreviews = Map.new<CanisterId, UserPreviewInfo>();
@@ -60,6 +59,10 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         };
         Buffer.toArray<UserPreviewInfo>(bufferPreviews);
     };
+
+    // public shared ({ caller }) func updateFollowers( qty: Nat) {
+    //     let user 
+    // };
 
     func getUserPreview(u: CanisterId): ?UserPreviewInfo{
         Map.get<CanisterId, UserPreviewInfo>(userPreviews, phash, u)

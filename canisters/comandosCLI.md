@@ -3,10 +3,10 @@ deploy canister hobbi
 signUp usuario. Args: Nombre, opcional email, bio, opcional foto, provisoriamente fee
 ```
 dfx canister call hobbi signUp '(record {
-    name="Usuario B"; 
+    name="Usuario A"; 
     email=null; 
-    bio="Biografía de Usuario B"; 
-    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/"
+    bio="Biografía de Usuario A"; 
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
 

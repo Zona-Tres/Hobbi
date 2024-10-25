@@ -13,6 +13,8 @@ import { print } "mo:base/Debug";
   
 shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = this {
 
+  ////////////////////////////////////// Tipos /////////////////////////////////////////////////////
+
     type FullDataUser = Types.FullDataUser;
     type PublicDataUser = Types.PublicDataUser;
     type EditableUserData = {
@@ -32,6 +34,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     type Event = GlobalTypes.Event;
     type Reaction = GlobalTypes.Reaction;
     type UserClassCanisterId = Principal;
+
     stable let HOBBI = caller; // para validar llamadas desde el canister factory
     stable let OWNER = init.owner;
 
@@ -231,8 +234,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
 
-
-
     public shared ({ caller }) func loadAvatar(_avatar: Blob): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := ?_avatar;
@@ -370,7 +371,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
-    ////////////////////////// Follow ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////// Follow //////////////////////////////////////////////////
     public shared ({ caller }) func followMe(): async Bool {
         let callerActorClassId = await HOBBI_CANISTER.getUserCanisterId(caller);
         switch callerActorClassId {
@@ -392,12 +393,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
+  
+  ////////////////////////////////////////////// Reactions /////////////////////////////////////////
 
-    /// Esta función conecta con el canister del usuario publicador para enviarle la reaccion a su post,
-    /// y conecta con el canister hobbi principal para emitir el evento relacionado ///
     public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
-        // ignore Map.put<PostID, Reaction>(postReacteds, nhash, postId, r);
-        // Registrar el like en el canister del otro usuario
+
         let remoteUserCanister = actor(Principal.toText(userClass)): actor{
             receiveReaction: shared (PostID, Reaction )-> async Bool;
         };
@@ -433,7 +433,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         }      
     };
 
-    //////////////////// Crud Comments Post ///////////////////////
+  ///////////////////////////////////// Crud Comments Post /////////////////////////////////////////
     public shared ({ caller }) func commentPost(id: PostID, msg: Text):async  {#Ok; #Err: Text} {
         if(isBlockedUser(caller) or isBlockedUser(caller)){
             return #Err("Access denied");
@@ -488,18 +488,27 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
             }
         }
-
-        //TODO Establecer un identificador de comentarios
     };
 
-    public shared ({ caller }) func deleteComment() {
-        //TODO
+    public shared ({ caller }) func deleteComment(postId: Nat, commentId: Nat): async {#Ok; #Err} {
+        let post = Map.get<PostID, Post>(posts, nhash, postId);
+        switch post {
+            case null { #Err };
+            case(?post) {
+                let commentsBuffer = Buffer.fromArray<Comment>([]);
+                for(comment in post.comments.vals()){
+                    if(not (comment.commentId == commentId and comment.autor == caller)){   
+                        commentsBuffer.add(comment);
+                    };
+                };
+                let updateComments = Buffer.toArray(commentsBuffer);
+                ignore Map.put<PostID, Post>(posts, nhash, postId, {post with comments = updateComments});
+                #Err 
+            }
+        }
     };
 
-    /////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // public shared query ({ caller }) func getFood(): async [Types.FeedPart] {
-
-    // }
 
 }

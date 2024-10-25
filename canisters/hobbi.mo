@@ -10,8 +10,11 @@ import Buffer "mo:base/Buffer";
 import Types "types";
 import { print } "mo:base/Debug";
 import Array "mo:base/Array";
+import Text "mo:base/Text";
+import Char "mo:base/Char";
 
 actor {
+  ///////////////////////////////////////////////      Tipoos          ////////////////////////////////////////
     type Profile = {
         actorClass: User.User;
         name: Text;
@@ -20,9 +23,9 @@ actor {
     };
 
     type UserPreviewInfo = Types.UserPreviewInfo;
-
     type Event = Types.Event;
     type UserClassCanisterId = Principal;
+  ////////////////////////////////////////////// Variables generales  /////////////////////////////////////////
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
@@ -31,13 +34,14 @@ actor {
 
     //TODO enviar map de eventos a canister dedicado
     stable let events = Map.new<UserClassCanisterId, [Event]>();
+    stable var rankingQtyHahsTags = 10;
+    stable let hashTagsMap = Map.new<Text, Nat>();
+    stable let rankingHashTag: [Text] = [];
 
-    stable let rankingHashTag = Map.new<Text, Nat>();
-
-  // canister de indexación para guardar previsualizaciones de usuario
+    // canister de indexación para guardar previsualizaciones de usuario
     stable var indexerUserCanister: UserIndexerCanister.UserIndexerCanister = actor("aaaaa-aa");
 
-  //////////////////////////// Despliegue de canisters auxiliares ///////////////////////////////
+  ///////////////////////////////////////////// canisters auxiliares /////////////////////////////////////////
     type InitResponse = {
         indexerUserCanister: Principal;
     };
@@ -48,7 +52,7 @@ actor {
         indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
     };
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////  Funciones privadas  //////////////////////////////////////////
 
     public query func isUserActorClass(p: Principal):async Bool {
         Set.has<Principal>(usersCanister, phash, p);
@@ -58,27 +62,44 @@ actor {
         Map.has<Principal, Profile>(users, phash, p);
     };
 
-    public shared query ({ caller }) func getMyUserCanisterId(): async Principal{
-        assert(isUser(caller));
-        let user = Map.get<Principal, Profile>(users, phash, caller);
-        switch user {
-            case null { assert false; NULL_ADDRESS};
-            case (?user){
-                Principal.fromActor(user.actorClass);
-            }
+  ///////////////////////////////////////////  HashTags managment  ///////////////////////////////////////////
+
+    func unWrapHashTagCount(ht: Text): Nat {
+        switch (Map.get<Text, Nat>(hashTagsMap, thash, ht)){
+            case null { 0 };
+            case (?n) { n };
         }
+    };
+
+    func normalizeHashTag(hashtag: Text): Text {
+        var result: Text = "";
+        for(c in Text.toIter(hashtag)){ 
+            result #= Char.toText((Prim.charToUpper(c)));
+        };
+        result   
     };
 
     func putHashTags(event: Event) {
         switch event {
             case (#NewPost(post)) {
                 for(hashtag in post.hashTags.vals()){
-                    let previousValue = Map.get<Text, Nat>(rankingHashTag, thash, hashtag);
-                    let updtaeValue = switch previousValue {
-                        case null { 0 };
-                        case( ?qty ) { qty + 1 };
+                    let normHashTag = normalizeHashTag(hashtag);
+                    let updateValue = unWrapHashTagCount(normHashTag) + 1;
+                   
+                    let tempBufferRanking = Buffer.fromArray<Text>([]);
+                    var index = 0;
+                    var inserted = false;
+                    while(index < rankingQtyHahsTags){
+                        let rValue = unWrapHashTagCount(rankingHashTag[index]);  
+                        if(updateValue > rValue and not inserted){
+                            tempBufferRanking.add(normHashTag);
+                            index += 1
+                        } else {
+                            tempBufferRanking.add(normHashTag);
+                        };
+                        index += 1;
                     };
-                    ignore Map.put<Text, Nat>(rankingHashTag, thash, hashtag, updtaeValue )
+                    ignore Map.put<Text, Nat>(hashTagsMap, thash, normHashTag, updateValue )
                 };
             };
             case (_) { }
@@ -86,20 +107,22 @@ actor {
     };
 
     func decrementHashTags(_hashTags: [Text]) {
-        for(hashTag in _hashTags.vals()){
-            let oldValue = Map.get<Text, Nat>(rankingHashTag, thash, hashTag);
+        for(hashtag in _hashTags.vals()){
+            let normHashTag = normalizeHashTag(hashtag);
+            let oldValue = Map.get<Text, Nat>(hashTagsMap, thash, normHashTag);
             switch oldValue{
                 case(?value){
                     if (value == 1) {
-                        ignore Map.remove<Text, Nat>(rankingHashTag, thash, hashTag)
+                        ignore Map.remove<Text, Nat>(hashTagsMap, thash, normHashTag)
                     } else {
-                        ignore Map.put<Text, Nat>(rankingHashTag, thash, hashTag, value -1)
+                        ignore Map.put<Text, Nat>(hashTagsMap, thash, normHashTag, value -1)
                     };
                 };
                 case null {};
             }
         }
     };
+  //////////////////////////////////////////    Event Managment   ////////////////////////////////////////////
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
@@ -156,12 +179,14 @@ actor {
     };
 
     func getEventsFromUser(user: UserClassCanisterId): [Event]{
-        let eventList = Map.get<UserClassCanisterId, [Event]>(events, phash, user); 
-        switch eventList {
+        let eventArray = Map.get<UserClassCanisterId, [Event]>(events, phash, user); 
+        switch eventArray {
             case null {[]};
-            case (?list) { list }
+            case (?array) { array }
         }
     };
+
+  /////////////////////////////////////////     SignUp SingIn    /////////////////////////////////////////////
 
     public shared ({ caller }) func signUp(data: Types.SignUpData):async Principal {
         if(Principal.fromActor(indexerUserCanister) == NULL_ADDRESS){
@@ -203,6 +228,18 @@ actor {
             }
         }
     };
+    
+  ////////////////////////////////////////  Getters functions   //////////////////////////////////////////////
+
+    public shared query ({ caller }) func getMyCanisterId(): async Principal{
+        let user = Map.get<Principal, Profile>(users, phash, caller);
+        switch user {
+            case null { assert false; NULL_ADDRESS};
+            case (?user){
+                Principal.fromActor(user.actorClass);
+            }
+        }
+    };
 
     public query func getUserCanisterId(u: Principal): async ?Principal {
         let user = Map.get<Principal, Profile>(users, phash, u);
@@ -214,25 +251,8 @@ actor {
         } 
     };
 
-    // public func getEvents(): async [Types.FeedPart]{
-    //     let eventLists = Map.vals<UserClassCanisterId, [var ?Event]>(events);
-    //     let tempBufferEvents = Buffer.fromArray<Types.FeedPart>([]);
-    //     for(eList in eventLists){
-    //         for (e in eList.vals()){
-    //             switch e {
-    //                 case(?#NewPost(post)){
-    //                     tempBufferEvents.add(post);
-    //                 };
-    //                 case _ {}
-    //             }
-    //         }
-    //     };
-    //     Buffer.toArray<Types.FeedPart>(tempBufferEvents)
-    // };
-
     public shared ({ caller }) func getMyFeed(): async [Types.FeedPart] {
-        let user = Map.get<Principal, Profile>(users, phash, caller);
-        
+        let user = Map.get<Principal, Profile>(users, phash, caller);      
         switch user {
             case null { [] };
             case (?user) {
@@ -279,12 +299,13 @@ actor {
     };
 
     public query func getPostByHashTag(h: Text):async [Types.FeedPart]{
+        let hNorm = normalizeHashTag(h);
         let postPreviewBuffer = Buffer.fromArray<Types.FeedPart>([]);
         for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
-                        switch (Array.find<Text>(post.hashTags , func x = x == h)){
+                        switch (Array.find<Text>(post.hashTags , func x = x == hNorm)){
                             case null {};
                             case _ { postPreviewBuffer.add(post)}
                         }
@@ -292,10 +313,11 @@ actor {
                     case _ { };
                 }
             };
-
         };
         Buffer.toArray<Types.FeedPart>(postPreviewBuffer);
     };
     
-
+    public shared query func getRankingHashTags(): async [Text]{
+        rankingHashTag
+    };
 }
