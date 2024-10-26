@@ -60,8 +60,9 @@ actor {
 
     func hobbiInit(): async () {
         print("Desplegando el canister indexer");
-        Prim.cyclesAdd<system>(200_000_000_000);
-        indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
+        // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
+        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+        indexerUserCanister := await UserIndexerCanister.UserIndexerCanister(); 
     };
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
@@ -209,7 +210,8 @@ actor {
             await hobbiInit();
         };
         assert(not isUser(caller));    
-        Prim.cyclesAdd<system>(feeUserCanisterDeploy);
+        // Prim.cyclesAdd<system>(feeUserCanisterDeploy);  // 0.24.1 dfx version
+        Prim.cyclesAdd(feeUserCanisterDeploy);  // 0.17.0 dfx version
         let actorClass = await User.User({
             data with 
             owner = caller; 
@@ -453,12 +455,15 @@ actor {
     //                                     date = now();
     //                                     msg
     //                                 };
-    //                                 ignore Map.put<Nat, Cause>(causes, nhash, causeId, {cause with speechInDefense})
+    //                                 ignore Map.put<Nat, Cause>(causes, nhash, causeId, {cause with speechInDefense});
+    //                                 return #Ok("defense discharge entered")
+    //                             } else {
+    //                                 return #Err "Caller Error";
     //                             };
-    //                             #Ok("defense discharge entered")
+                                
     //                         };
     //                         case (#CommentReport(postReportData)) {
-    //                             if(caller )
+    //                             if(caller)
 
     //                         };
     //                     }

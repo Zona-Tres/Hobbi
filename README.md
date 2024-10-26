@@ -1,6 +1,13 @@
 #### Deploy instructions:
+Instalar el gestor de paquetes mops:
+``` npm i -g ic-mops ```
+
+posiblemente se requiera activar los permisos
+```chmod +x /home/ariel/.nvm/versions/node/v20.12.2/bin/mops```
+
 ```bash
 npm install
+mops install
 dfx start --background --clean
 # Generate declarations
 dfx generate nft
