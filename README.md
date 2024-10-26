@@ -7,6 +7,7 @@ posiblemente se requiera activar los permisos
 
 ```bash
 npm install
+mops init 
 mops install
 dfx start --background --clean
 # Generate declarations
