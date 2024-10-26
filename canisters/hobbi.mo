@@ -19,6 +19,7 @@ import Nat "mo:base/Nat";
 actor {
   ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
     type Profile = {
+        principal: Principal;
         actorClass: User.User;
         name: Text;
         avatar: ?Blob;
@@ -26,6 +27,7 @@ actor {
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
+    type CanisterID = Principal;
     type UserPreviewInfo = Types.UserPreviewInfo;
     type Event = Types.Event;
     type UserClassCanisterId = Principal;
@@ -214,6 +216,7 @@ actor {
             indexerUserCanister = Principal.fromActor(indexerUserCanister)
         });
         let newUser: Profile = {
+            principal = caller;
             actorClass; 
             name = data.name; 
             avatar = data.avatar;
@@ -343,9 +346,9 @@ actor {
   
   /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
     
-    public shared ({ caller }) func report(denunciation: Report): async {#Ok: Text; #Err}{
+    public shared ({ caller }) func report(report: Report): async {#Ok: Text; #Err}{
         let informer = Map.get<Principal, Profile>(users, phash, caller);
-        let accused = Map.get<Principal, Profile>(users, phash, caller);
+        let accused = Map.get<CanisterID, Profile>(users, phash, report.accused);
         switch informer {
             case null #Err;
             case ( ?informer ) {
@@ -354,10 +357,11 @@ actor {
                     case ( ?accused ) {
                         lastReportId += 1;
                         let cause: Cause = {
-                            denunciation with
+                            report with
                             id = lastReportId;
                             date = now();
                             informer = caller;
+                            defender = accused.principal;
                             speechInDefense = {msg = ""; date = 0};
                             status = #Started;
                         };
@@ -405,14 +409,27 @@ actor {
             case (?cause) {
                 switch user {
                     case null { 
-                        if( admin ) {  return #Ok({cause with speechInDefense = {date = 0; msg = ""}})} 
-                        else { #Err }
+                        if( admin ) { 
+                            #Ok(cause) 
+                        } 
+                        else { 
+                            #Err 
+                        }
                     };
                     case (?user) {
-                        if (caller == cause.informer) {
-                            return #Ok(cause)
+                        if(caller == cause.informer) {
+                            return #Ok({ 
+                                cause with 
+                                speechInDefense = {date = 0; msg = ""};
+                            })
+                        } else if (caller == cause.accused){
+                            return #Ok({ 
+                                cause with 
+                                informer = NULL_ADDRESS;
+                                msg = "" 
+                            })
                         } else {
-                            return #Ok({ cause with informer = NULL_ADDRESS })
+                            #Err;
                         }
                     }
                 }
@@ -420,31 +437,37 @@ actor {
         }  
     };
 
-    public shared ({ caller }) func makeDefense({causeId: Nat; msg: Text}): async {#Ok: Text; #Err: Text}{
-        let cause = Map.get<Nat, Cause>(causes, nhash, causeId);
-        switch cause {
-            case null { return #Err("The cause was not found") };
-            case  (?cause) {
-                let accused = Map.get<Principal, Profile>(users, phash, caller);
-                switch accused {
-                    case null { return #Err("Caller error") };
-                    case (?profile) {
-                        if(Principal.fromActor(profile.actorClass) == cause.canisterId){
-                            
-                            ignore Map.put<Nat, Cause>(
-                                causes,
-                                nhash, 
-                                causeId, 
-                                {cause with speechInDefense = {date = now(); msg}}
-                            );
-                            return #Ok("defense entered")
-                        };
-                        return #Err("Caller error"); 
-                    }
-                }
-            }
-        }
-    };
+    // public shared ({ caller }) func makeDefense({causeId: Nat; msg: Text}): async {#Ok: Text; #Err: Text}{
+    //     let cause = Map.get<Nat, Cause>(causes, nhash, causeId); // Buscamos la causa
+    //     switch cause {
+    //         case null { return #Err("The cause was not found") };
+    //         case  (?cause) {    // La causa existe
+    //             let profile = Map.get<Principal, Profile>(users, phash, caller); // Buscamos al caller
+    //             switch profile {
+    //                 case null { return #Err("Caller error") };
+    //                 case (?profile) {   // El caller tiene un perfil
+    //                     switch (cause.conflictFocus){   // Comprobamos el foco del conflicto
+    //                         case (#PostReport(_)){ // Si es un posteo el acusado es el caller
+    //                             if(cause.accused == Principal.fromActor(profile.actorClass)){
+    //                                 let speechInDefense = {
+    //                                     date = now();
+    //                                     msg
+    //                                 };
+    //                                 ignore Map.put<Nat, Cause>(causes, nhash, causeId, {cause with speechInDefense})
+    //                             };
+    //                             #Ok("defense discharge entered")
+    //                         };
+    //                         case (#CommentReport(postReportData)) {
+    //                             if(caller )
+
+    //                         };
+    //                     }
+    //                 };
+    //             };              
+    //         }
+    //     };
+    // }
+}
 
     // TODO. Aceptar o rechazar acusación y finalmente informar resolución
     
@@ -452,4 +475,3 @@ actor {
 
 
 
-}

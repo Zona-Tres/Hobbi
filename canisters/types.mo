@@ -1,6 +1,8 @@
 
 
 module {
+
+    type CanisterID = Principal;
     public type SignUpData = {
         // indexerUserCanister: Principal;
         // owner: Principal;
@@ -92,7 +94,10 @@ module {
     public type ReportType = {
         #InboxReport; //Para cuando se implemente un modulo de mensajeria
         #PostReport: {post: PostID;};
-        #CommentReport: {post: PostID; commentId: Nat}
+        #CommentReport: {
+            post: PostID; 
+            commentId: Nat;
+            autor: Principal}
     };
 
     public type ReportStatus = {
@@ -103,7 +108,7 @@ module {
     };
 
     public type Report = { 
-        canisterId: Principal;
+        accused: CanisterID;
         conflictFocus: ReportType; // Para la resolución de conflicto podria integrarse una IA
         msg: Text;      
     };
@@ -112,6 +117,7 @@ module {
         id: Nat;
         date: Int;
         informer: Principal;
+        
         speechInDefense: {msg: Text; date: Int};
         status: ReportStatus;
     }
