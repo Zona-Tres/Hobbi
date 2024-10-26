@@ -50,11 +50,11 @@ const client = createClient({
   },
   providers: [
     // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
-    new InternetIdentity({ providerUrl: "http://localhost:8000/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai" }),
+    new InternetIdentity({ providerUrl: "http://b77ix-eeaaa-aaaaa-qaada-cai.localhost:8000/"}),
     new NFID(),
   ],
   globalProviderConfig: {
-    dev: false,
+    dev: true,
   },
 })
 
