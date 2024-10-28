@@ -14,6 +14,7 @@ import { Route, Routes } from "react-router-dom"
 
 import Home from "./pages/Home"
 import Dashboard from "./pages/Dashboard"
+import Friends from './pages/Friends'
 import NotFound from "./pages/NotFound"
 import ErrorBoundary from "./pages/ErrorBoundary"
 import CreateProfile from "./pages/CreateProfile"
@@ -28,6 +29,7 @@ function App() {
       <Route exact path="/" element={<Home />} />
       <Route path="/connect" element={<Connect2Hobbi />} />
       <Route path="/profile/:id" element={<Dashboard />} />
+      <Route path="/friends" element={<Friends />} />
       
       {/* Protected Routes */}
       <Route element={<RequireAuth />} >
@@ -50,11 +52,11 @@ const client = createClient({
   },
   providers: [
     // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
-    new InternetIdentity({ providerUrl: "http://localhost:8000/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai" }),
+    new InternetIdentity({ providerUrl: "http://b77ix-eeaaa-aaaaa-qaada-cai.localhost:8000/" }),
     new NFID(),
   ],
   globalProviderConfig: {
-    dev: false,
+    dev: true,
   },
 })
 

@@ -1,53 +1,411 @@
-import React from 'react'
-import Particles from './Particles'
-import Illustration from '/images/glow-bottom.svg'
-import { Link } from 'react-router-dom'
-
+import React from "react"
+import Particles from "./Particles"
+import Illustration from "/images/glow-bottom.svg"
+import ItemLogo from "/images/logonew.svg"
+import { Link } from "react-router-dom"
+import Hashtag from "../components/hashtag"
 export default function Hero() {
   return (
-    <section>
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="flex flex-col">
+      <img src={Illustration} className="w-full" alt="Hero Illustration" />
+      {/*
+      <div className="flex bg-[#070A10] pb-28">
+        <div className="flex flex-col w-2/3 pt-32 pl-14 pr-20">
+          <span className="text-[#F7EFFF] font-normal text-[24px] my-6 mt-9">
+            Comunidades más activas
+          </span>
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
 
-        { /* Particles animation */}
-        <Particles className="absolute inset-0 z-10" />
+          <span className="text-[#F7EFFF] font-normal text-[24px] my-6 mt-9">
+            Comunidades nuevas
+          </span>
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
 
-        { /* Illustration */}
-        <div className="absolute inset-0 -mx-28 rounded-b-[3rem] pointer-events-none overflow-hidden" aria-hidden="true">
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-0">
-            <img src={Illustration} className="max-w-none" width={2146} alt="Hero Illustration" />
-            {/* <div className='bg-slate-900 w-full h-64'></div> */}
-          </div>
-        </div>
-
-        <div className="pt-32 pb-16 md:pt-52 md:pb-32">
-
-          { /* Hero content */}
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 pb-4" data-aos="fade-down">Hobbi, la plataforma <br /> social web3</h1>
-            <h4 className="h4 font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 mb-8" data-aos="fade-down" data-aos-delay="200">Reinventa la forma de socializar <br /> y se el dueño de tú información en internet.</h4>
-            <div className="mb-6 mt-14" data-aos="fade-down">
-              <div className="inline-flex relative before:absolute before:inset-0 before:bg-purple-500 before:blur-md">
-                {/* <a className="btn-sm p-4 w-56 text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(theme(colors.purple.500),_theme(colors.purple.500))_padding-box,_linear-gradient(theme(colors.purple.500),_theme(colors.purple.200)_75%,_theme(colors.transparent)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/50 before:rounded-full before:pointer-events-none shadow" href="#0">
-                  <span className="relative inline-flex items-center text-xl">
-                    Coming soon!
-                  </span>
-                </a> */}
-                <Link to={'/connect'}>
-                <div className="btn-sm z-50 px-4 py-2 w-56 cursor-pointer text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(theme(colors.slate.900),_theme(colors.slate.900))_padding-box,_conic-gradient(theme(colors.slate.400),_theme(colors.slate.700)_25%,_theme(colors.slate.700)_75%,_theme(colors.slate.400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none">
-                  <span className="relative inline-flex items-center text-xl">
-                    <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="m1.999 0 1 2-1 2 2-1 2 1-1-2 1-2-2 1zM11.999 0l1 2-1 2 2-1 2 1-1-2 1-2-2 1zM11.999 10l1 2-1 2 2-1 2 1-1-2 1-2-2 1zM6.292 7.586l2.646-2.647L11.06 7.06 8.413 9.707zM0 13.878l5.586-5.586 2.122 2.121L2.12 16z" />
-                    </svg>
-                    Conectáte!
-                  </span>
-                </div>
-                </Link>
+          <span className="text-[#F7EFFF] font-normal text-[24px] my-6 mt-9">
+            Comunidades nuevas
+          </span>
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <ItemInfo
+            img={Item1}
+            title="¿Cual es tu serie favorita del 2024?"
+            comments="12,345 Comentarios"
+            hashtags="#Música"
+          />
+          <div className="flex mt-16 justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center border-b border-[#E1C9FB] py-3">
+                <span className="text-2xl text-[#F7EFFF] font-normal">
+                  Top Videojuegos
+                </span>
+              </div>
+              <div className="flex flex-col pt-4">
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  The Legend of Zelda: Breath of the Wild
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  The Witcher 3: Wild Hunt
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Minecraft
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Red Dead Redemption 2
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Fortnite
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Among Us
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Call of Duty: Warzone
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Overwatch
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Animal Crossing: New Horizons
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Super Mario Odyssey
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center border-b border-[#E1C9FB] py-3">
+                <span className="text-2xl text-[#F7EFFF] font-normal">
+                  Top Libros
+                </span>
+              </div>
+              <div className="flex flex-col pt-4">
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Cien años de soledad – Gabriel García Márquez
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  1984 – George Orwell
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Orgullo y prejuicio – Jane Austen
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Matar a un ruiseñor – Harper Lee
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  El gran Gatsby – F. Scott Fitzgerald
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Crimen y castigo – Fiódor Dostoyevski
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Los miserables – Victor Hugo
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  Don Quijote de la Mancha – Miguel de Cervantes
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  El hobbit – J.R.R. Tolkien
+                </span>
+                <span className="text-base text-[#F7EFFF] font-normal">
+                  La sombra del viento – Carlos Ruiz Zafón
+                </span>
               </div>
             </div>
           </div>
-
+        </div>
+        <div className="flex flex-col px-14 py-8">
+          <div className="flex flex-col rounded-2xl bg-[#0F0C17] px-7 py-12 mt-20">
+            <span className="text-xl text-[#FFFFFF] font-bold">
+              Videojuegos
+            </span>
+            <div className="flex flex-wrap gap-4 mt-5">
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+            </div>
+            <div className="flex flex-col gap-4 mt-4">
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col rounded-2xl bg-[#0F0C17] px-7 py-12 mt-20">
+            <span className="text-xl text-[#FFFFFF] font-bold">
+              Videojuegos
+            </span>
+            <div className="flex flex-wrap gap-4 mt-5">
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+            </div>
+            <div className="flex flex-col gap-4 mt-4">
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col rounded-2xl bg-[#0F0C17] px-7 py-12 mt-20">
+            <span className="text-xl text-[#FFFFFF] font-bold">
+              Videojuegos
+            </span>
+            <div className="flex flex-wrap gap-4 mt-5">
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+              <Hashtag name="#Exitosdelmomento" />
+            </div>
+            <div className="flex flex-col gap-4 mt-4">
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+              <ItemInfo
+                img={Item1}
+                title="¿Cual es tu serie favorita del 2024?"
+                comments="12,345 Comentarios"
+                hashtags="#Música"
+              />
+            </div>
+          </div>
+          <span className="text-2xl text-[#F7EFFF] font-normal my-8 ml-7">
+            Usuarios mas activos
+          </span>
+          <div className="flex justify-between pl-6 pr-8">
+            <img src={Item1} width="56px" />
+            <div className="flex flex-col">
+              <span className="text-2xl text-[#F7EFFF] font-bold">
+                @White Warrior
+              </span>
+              <span className="text-xl text-[#BCBCBC] font-medium">
+                124K Followers{" "}
+              </span>
+            </div>
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
+              Seguir
+            </div>
+          </div>
+          <div className="flex justify-between pl-6 pr-8 py-8">
+            <img src={Item1} width="56px" />
+            <div className="flex flex-col">
+              <span className="text-2xl text-[#F7EFFF] font-bold">
+                @White Warrior
+              </span>
+              <span className="text-xl text-[#BCBCBC] font-medium">
+                124K Followers{" "}
+              </span>
+            </div>
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
+              Seguir
+            </div>
+          </div>
+          <div className="flex justify-between pl-6 pr-8">
+            <img src={Item1} width="56px" />
+            <div className="flex flex-col">
+              <span className="text-2xl text-[#F7EFFF] font-bold">
+                @White Warrior
+              </span>
+              <span className="text-xl text-[#BCBCBC] font-medium">
+                124K Followers{" "}
+              </span>
+            </div>
+            <div className="w-20 h-12 flex justify-center items-center bg-[#B577F7] rounded-md text-2xl text-[#FDFCFF] font-medium cursor-pointer">
+              Seguir
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+*/}
+      <div className="flex flex-col bg-[#1C0536] p-20 h-80">
+        <div className="flex justify-between">
+          <img src={ItemLogo} />
+          <div className="w-[180px] h-[50px] flex rounded-md items-center justify-center bg-[#505CE6] text-sm text-[#E3EFFD] font-medium">
+            Inicia o crea tu cuenta
+          </div>
+        </div>
+        <span className="text-sm text-[#FFFFFF] align-middle font-medium m-auto">
+          Aviso de privacidad | Términos y condiciones
+        </span>
+      </div>
+    </div>
   )
 }
