@@ -4,6 +4,10 @@
       "main": "canisters/hobbi.mo",
       "type": "motoko"
     },
+    "user_no_deploy": {
+      "main": "canisters/user/user_canister_class.mo",
+      "type": "motoko"
+    },
     "nft": {
       "main": "canisters/nft/main.mo",
       "type": "motoko"

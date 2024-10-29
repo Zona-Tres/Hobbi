@@ -283,12 +283,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func editProfile(data: EditableUserData): async FullDataUser {
         // TODO Agragar campo intereses
         assert(isOwner(caller));
-        if(email != data.email) { verified := false}; // Si se cambia el email se requiere nueva verificacion
+        if(email != data.email) { verified := false }; // Si se cambia el email se requiere nueva verificacion
         email := data.email;
         bio := data.bio;
         name := data.name;
         interests := data.interests;
-
         dataUser();
     };
 
