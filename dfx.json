@@ -16,6 +16,10 @@
       "main": "canisters/post/main.mo",
       "type": "motoko"
     },
+    "user_no_deploy": {
+      "main": "canisters/user/user_canister_class.mo",
+      "type": "motoko"
+    },
     "internet_identity": {
       "type": "custom",
       "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-10-25/internet_identity.did",

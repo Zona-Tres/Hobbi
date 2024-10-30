@@ -2,7 +2,6 @@ import React, { useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
-
 import Cropper from "react-easy-crop"
 import { FiZoomIn, FiRotateCcw } from "react-icons/fi"
 import {
@@ -23,18 +22,28 @@ import {
   urlToUint8Array,
   arrayBufferToImgSrc,
 } from "../utils/image"
-
 import Particles from "../components/Particles"
 import Illustration from "/images/img-create-profile.svg"
 import Header from "../components/ui/Header"
 import { useNavigate } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
 
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+// Definir el esquema de validación de Zod
+const profileSchema = z.object({
+  username: z.string().nonempty("Username is required"),
+  bio: z.string().nonempty("Bio is required"),
+  picture: z.any().optional(),
+})
+
 function CreateProfile() {
   const [nft, { loading }] = useCanister("nft")
+  const [hobbi] = useCanister("hobbi")
   const { principal } = useConnect()
   const navigate = useNavigate()
-
   const [isLoading, setIsLoading] = useState(false)
 
   const [file, setFile] = useState(null)
@@ -81,7 +90,6 @@ function CreateProfile() {
         croppedAreaPixels,
         rotation,
       )
-      console.log("done", { croppedImage })
       setCroppedImage(croppedImage)
       setFile(null)
     } catch (e) {
@@ -89,56 +97,57 @@ function CreateProfile() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
+  // Configuración de React Hook Form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+  })
 
-    const minter = Principal.fromText(principal)
-    const nftMetadata = [
-      {
-        data: croppedImage,
-        purpose: { Rendered: null },
-        key_val_data: [
-          { key: "user", val: { TextContent: e.target[0].value } },
-          { key: "bio", val: { TextContent: e.target[1].value } },
-          { key: "post", val: { BlobContent: [] } },
-          { key: "helps", val: { Nat8Content: 0 } },
-        ],
-      },
-    ]
+  const onSubmit = async (data) => {
+    setIsLoading(true)
+    debugger
+    const profileData = {
+      bio: data.bio,
+      name: data.username,
+      thumbnail: null,
+      email: "email@gmail.com",
+      avatar: null,
+    }
+
     try {
-      debugger
-      await nft.mintDip721(minter, nftMetadata).then((result) => {
+      await hobbi.signUp(profileData).then((result) => {
+        debugger
         if (result.Ok) {
           navigate(`/profile/${principal}`)
-        } else {
         }
       })
     } catch (e) {
+      console.error(e)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loadingSvg = () => {
-    return (
-      <svg
-        className="inline w-6 h-6 text-gray-200 animate-spin fill-purple-600"
-        viewBox="0 0 100 101"
-        fill="none"
-        xmlns="https://www.w3.org/2000/svg"
-      >
-        <path
-          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-          fill="currentColor"
-        />
-        <path
-          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-          fill="currentFill"
-        />
-      </svg>
-    )
-  }
+  const loadingSvg = () => (
+    <svg
+      className="inline w-6 h-6 text-gray-200 animate-spin fill-purple-600"
+      viewBox="0 0 100 101"
+      fill="none"
+      xmlns="https://www.w3.org/2000/svg"
+    >
+      <path
+        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+        fill="currentColor"
+      />
+      <path
+        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+        fill="currentFill"
+      />
+    </svg>
+  )
 
   return (
     <>
@@ -162,7 +171,7 @@ function CreateProfile() {
 
         <div className="fixed z-20 flex flex-col w-[414px] h-[395px] justify-start p-6 rounded-3xl border border-[#E2E8F0] bg-[#F7EFFF] top-1/2 right-0 transform -translate-y-1/2">
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col items-start justify-start space-y-4"
           >
             {!file && !croppedImage && (
@@ -266,15 +275,20 @@ function CreateProfile() {
               </div>
             )}
             <div className="space-y-2 w-full">
-              <label htmlFor="nickname" className="font-medium text-sm ">
+              <label htmlFor="username" className="font-medium text-sm ">
                 Username
               </label>
               <input
-                id="nickname"
-                required
+                id="username"
                 className="h-9 w-full rounded-md border border-[#CBD5E1]"
                 type="text"
+                {...register("username")}
               />
+              {errors.username && (
+                <p className="text-red-500 text-xs">
+                  {errors.username.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2 w-full">
               <label htmlFor="bio" className="font-medium text-sm rounded-md">
@@ -282,10 +296,12 @@ function CreateProfile() {
               </label>
               <textarea
                 id="bio"
-                required
                 className="rounded-md w-full h-20 border border-[#CBD5E1]"
-                type="text"
+                {...register("bio")}
               />
+              {errors.bio && (
+                <p className="text-red-500 text-xs">{errors.bio.message}</p>
+              )}
             </div>
 
             <button
