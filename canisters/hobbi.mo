@@ -15,6 +15,7 @@ import Text "mo:base/Text";
 import Char "mo:base/Char";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
+import Rand "mo:random/Rand";
 
 actor {
   ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
@@ -27,6 +28,8 @@ actor {
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
+    type Feed = Types.Feed;
+
     type CanisterID = Principal;
     type UserPreviewInfo = Types.UserPreviewInfo;
     type Event = Types.Event;
@@ -36,7 +39,12 @@ actor {
   //////////////////////////////////////////////   Variables generales      ///////////////////////////////////////
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
+    var maxFeedGeneralPost = 200;
+    var feedUpdateRefreshTime = 20; // En minutos
+    var lastUpdateFeed = 0;
+
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
+
     stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
@@ -45,6 +53,7 @@ actor {
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
+    var generalFeed: [Types.FeedPart] = [];
     stable let rankingHashTag: [Text] = [];
 
     stable let causes = Map.new<Nat, Cause>();
@@ -52,6 +61,8 @@ actor {
 
     // canister de indexación para guardar previsualizaciones de usuario
     stable var indexerUserCanister: UserIndexerCanister.UserIndexerCanister = actor("aaaaa-aa");
+
+    let random = Rand.Rand();
 
   /////////////////////////////////////////////   canisters auxiliares     ////////////////////////////////////////
     type InitResponse = {
@@ -77,6 +88,25 @@ actor {
 
     func isAdmin(p: Principal): Bool {
         Set.has<Principal>(admins, phash, p);
+    };
+
+    func updateGeneralFeed() {
+        let feedBuffer = Buffer.fromArray<Types.FeedPart>([]);
+        for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
+            for(event in eventList.vals()){
+                switch event {
+                    case(#NewPost(post)){
+                        if(post.access != #Private){
+                            feedBuffer.add(post);   
+                        };
+                        if (feedBuffer.size() >= maxFeedGeneralPost){
+                            generalFeed := Buffer.toArray(feedBuffer);
+                        }
+                    };
+                    case _ { };
+                }
+            } 
+        };
     };
 
   ///////////////////////////////////////////    HashTags managment      //////////////////////////////////////////
@@ -276,61 +306,71 @@ actor {
         } 
     };
 
-    public shared ({ caller }) func getMyFeed(): async [Types.FeedPart] {
-        let user = Map.get<Principal, Profile>(users, phash, caller);      
-        switch user {
-            case null { [] };
-            case (?user) {
-                let feedBuffer = Buffer.fromArray<Types.FeedPart>([]);
-                for(followed in (await user.actorClass.getFolloweds()).vals()){
-                    for(event in getEventsFromUser(followed).vals()){
-                        switch event {
-                            case(#NewPost(post)){
-                                if(post.access != #Private){
-                                    feedBuffer.add(post);   
-                                };
-                                
-                                if (feedBuffer.size() >= 5){
-                                    return Buffer.toArray(feedBuffer);
-                                }
-                            };
-                            case _ {
-                                //TODO Establecer acciones para otros tipos de evento, por ejemplo cuando hay un nuevo seguidor
-                            };
-                        };
-                    }
-                };
-                if(feedBuffer.size() < 5) {
-                    for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
-                        for(event in eventList.vals()){
-                            switch event {
-                                case(#NewPost(post)){
-                                    if(post.access != #Private){
-                                        feedBuffer.add(post);   
-                                    };
-                                    if (feedBuffer.size() >=5){
-                                        return Buffer.toArray(feedBuffer);
-                                    }
-                                };
-                                case _ { };
-                            }
-                        } 
-                    };                  
-                };
-                return Buffer.toArray(feedBuffer);
-            };
+    public shared ({ caller }) func getMyFeed({page: Nat}): async Feed {
+
+        if ( now() > lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000) {
+            updateGeneralFeed();
         };
 
+        let user = Map.get<Principal, Profile>(users, phash, caller);
+        switch user {
+            case (?user) {
+                // TODO
+                // if (page == 0) {
+                //     let bufferFeedPart = Buffer.fromArray<Types.FeedPart>([]);
+                //     for(followed in (await user.actorClass.getFolloweds()).vals()){
+                //         for(event in getEventsFromUser(followed).vals()){
+                //             switch event {
+                //                 case(#NewPost(post)){
+                //                     if(post.access != #Private){
+                //                         feedBuffer.add(post);   
+                //                     }; 
+                //                     if (feedBuffer.size() >= 100){
+                //                         random.setRange(0, 10);
+                //                         let randArray = Rand.randArray(10);
+                //                         let arrayFeed = Buffer.toArray(feedBuffer);
+                //                         return {
+                //                             feedPage = Prim.Array_tabulate(
+                //                                 10,
+                //                                 func i = arrayFeed[1 * 10 + randArray[i]]
+                //                             );
+                //                             hasNext = true;
+                //                         };
+                //                     }
+                //                 };
+                //                 case _ {
+                //                     //TODO Establecer acciones para otros tipos de evento, por ejemplo cuando hay un nuevo seguidor
+                //                 };
+                //             };
+                //         }
+                //     }
+                // }
+                {
+                    feedPage = getPaginateGeneralFeed(page: Nat);
+                    hasNext = generalFeed.size()  > page *10 + 10; 
+                }
+            };
+            case _ {
+                {
+                    feedPage = getPaginateGeneralFeed(page: Nat);
+                    hasNext = generalFeed.size()  > page *10 + 10; 
+                }
+            }
+        }
+    };
+
+    func getPaginateGeneralFeed(page: Nat): [Types.FeedPart] {
+        let end = if (page *10 <= generalFeed.size()) {10} else { generalFeed.size() % 10}; 
+        Array.subArray(generalFeed, page * 10, end);
     };
 
     public query func getPostByHashTag(h: Text):async [Types.FeedPart]{
-        let hNorm = normalizeHashTag(h);
         let postPreviewBuffer = Buffer.fromArray<Types.FeedPart>([]);
         for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
-                        switch (Array.find<Text>(post.hashTags , func x = x == hNorm)){
+                        switch (Array.find<Text>(post.hashTags , func x = x == normalizeHashTag(h))){
                             case null {};
                             case _ { postPreviewBuffer.add(post)}
                         }

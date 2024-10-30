@@ -79,6 +79,11 @@ module {
         #Err;
     };
 
+    public type Feed = {
+        feedPage : [FeedPart];
+        hasNext : Bool;
+    };
+
     public type FeedPart = {
         // likes: Nat;
         // disLikes: Nat;
