@@ -8,10 +8,6 @@
       "main": "canisters/user/user_canister_class.mo",
       "type": "motoko"
     },
-    "nft": {
-      "main": "canisters/nft/main.mo",
-      "type": "motoko"
-    },
     "outcall": {
       "main": "canisters/outcall/main.mo",
       "type": "motoko"
@@ -36,7 +32,6 @@
       "dependencies": [
         "internet_identity",
         "outcall",
-        "nft",
         "post"
       ],
       "frontend": {

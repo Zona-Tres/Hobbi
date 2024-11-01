@@ -43,7 +43,6 @@ function App() {
 const helmetContext = {}
 const client = createClient({
   canisters: {
-    nft,
     outcall,
     post,
     hobbi
