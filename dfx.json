@@ -4,10 +4,6 @@
       "main": "canisters/hobbi.mo",
       "type": "motoko"
     },
-    "nft": {
-      "main": "canisters/nft/main.mo",
-      "type": "motoko"
-    },
     "outcall": {
       "main": "canisters/outcall/main.mo",
       "type": "motoko"
@@ -18,7 +14,10 @@
     },
     "user_no_deploy": {
       "main": "canisters/user/user_canister_class.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "candid": "src/user_no_deploy/user_no_deploy.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_no_deploy.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --release"
     },
     "internet_identity": {
       "type": "custom",
@@ -36,7 +35,6 @@
       "dependencies": [
         "internet_identity",
         "outcall",
-        "nft",
         "post"
       ],
       "frontend": {

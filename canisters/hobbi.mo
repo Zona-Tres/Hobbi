@@ -206,7 +206,6 @@ actor {
   /////////////////////////////////////////       SignUp SingIn        ////////////////////////////////////////////
 
     public shared ({ caller }) func signUp(data: Types.SignUpData):async Principal {
-        debugger
         if(Principal.fromActor(indexerUserCanister) == NULL_ADDRESS){
             await hobbiInit();
         };

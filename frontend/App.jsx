@@ -45,14 +45,13 @@ function App() {
 const helmetContext = {}
 const client = createClient({
   canisters: {
-    nft,
     outcall,
     post,
     hobbi
   },
   providers: [
     // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
-    new InternetIdentity({ providerUrl: "http://b77ix-eeaaa-aaaaa-qaada-cai.localhost:8000/" }),
+    new InternetIdentity({ providerUrl: "http://bw4dl-smaaa-aaaaa-qaacq-cai.localhost:8000/" }),
     new NFID(),
   ],
   globalProviderConfig: {

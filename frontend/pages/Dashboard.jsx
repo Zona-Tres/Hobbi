@@ -7,24 +7,75 @@ import portada from "/images/portada.svg"
 import CustomConnectButton from "../components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
+import useStore from "../store/useStore"
+import crearActorParaBucket from "../hooks/crearActorParaBucket"
+import Avatar from "../components/Avatar"
+import SearchAndPost from "../components/SearchAndPost";
+import SearchDialog from '../components/SearchDialog';
 
 export default function Dashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
 
+  const setCanisterId = useStore((state) => state.setCanisterId)
+  const setUsername = useStore((state) => state.setUsername)
+  const setMyInfo = useStore((state) => state.setMyInfo)
+  const canisterId = useStore((state) => state.canisterId)
+  const username = useStore((state) => state.username)
+  const myinfo = useStore((state) => state.myinfo)
   const [nft] = useCanister("nft")
   const [post] = useCanister("post")
+  const [hobbi] = useCanister("hobbi")
   const { principal } = useConnect()
-
+  const [media, setMedia] = useState(null)
+  const [mediaType, setMediaType] = useState(1)
   const firstLoad = useRef(true)
-  const [nftMetadata, setNftMetadata] = useState({})
   const [loading, setLoading] = useState(false)
   const [postList, setPostList] = useState([])
   const [selected, setSelected] = useState(1)
+  const [bucketActor, setBucketActor] = useState(null)
+  const [selectedTheme, setSelectedTheme] = useState(1)
+  const handlePublicInfo = async (actor) => {
+    try {
+      const response = await actor.getMyInfo()
 
+      if (response) {
+        setMyInfo(response)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
   useEffect(() => {
-    setLoading(true)
-  }, [])
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const result = await hobbi.signIn()
+
+        if (result.Ok) {
+          if (result.Ok.name !== username) {
+            setUsername(result.Ok.name)
+          }
+          const newCanisterId = result.Ok.userCanisterId.toText()
+          setCanisterId(newCanisterId)
+          const actor = await crearActorParaBucket(newCanisterId)
+
+          
+          handlePublicInfo(actor)
+        }
+      } catch (e) {
+        
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (firstLoad.current) {
+      fetchData()
+      firstLoad.current = false
+    }
+  }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
   const handleClick = (url, index) => {
     setSelected(index)
@@ -48,10 +99,13 @@ export default function Dashboard() {
           <div className="h-[86px] flex items-center justify-start pl-10">
             <LogoDark />
           </div>
-          <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 p-8">
-            <span className="text-md font-bold text-[#B577F7]">
-              @Corpuzville
-            </span>
+          <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
+            <div className="flex justify-start gap-4 items-center">
+              <Avatar avatarData={myinfo.avatar} />
+              <span className="text-md font-bold text-[#B577F7]">
+                @{myinfo.name}
+              </span>
+            </div>
             <div className="flex gap-3 mt-3">
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
@@ -189,10 +243,19 @@ export default function Dashboard() {
           <div className="h-[214px] rounded-3xl w-full">
             <img src={portada} alt="Portada" />
           </div>
-          <div className="flex py-7 pl-36">
-            <div className="flex flex-col">
-              <span className="text-xl font-bold text-[#36115E]">
-                Corpuzville
+          <div className="flex pt-7 pl-3">
+            <div className="relative -top-14">
+              {" "}
+              {/* Mueve el avatar hacia arriba */}
+              <Avatar
+                avatarData={myinfo.avatar}
+                version="square"
+                size="large"
+              />
+            </div>
+            <div className="flex flex-col pl-5">
+              <span className="text-xl font-bold text-[#FFFFFF]">
+                {myinfo.name}
               </span>
               <span className="text-sm font-medium text-[#B577F7] mt-2">
                 120 Seguidos
@@ -202,24 +265,53 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-          <p className="text-sm font-medium text-[#FDFCFF] w-1/2">
-            🎮 Estilo de juego: Estratega nato, me encanta liderar escuadrones y
-            crear tácticas de equipo. Siempre buscando mejorar y aprender nuevas
-            estrategias. 💬 Disponibilidad: Juego todas las noches y el fin de
-            semana. 📡 Conéctate: Sígueme en Twitch para ver gameplays épicos y
-            análisis en vivo.
-          </p>
-          <div className="flex h-20 items-center bg-[#B577F7] rounded-2xl px-3 w-1/2 mt-5">
+          <span className="text-sm font-medium text-[#FDFCFF] w-1/2 ml-3 mb-4">
+            {myinfo.bio}
+          </span>
+          <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
+            Temas
+          </span>
+          <div className="flex gap-4 mt-3 ml-3">
+            <div
+              onClick={() => setSelectedTheme(1)}
+              className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
+                selectedTheme === 1
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
+              }`}
+            >
+              Libros
+            </div>
+            <div
+              onClick={() => setSelectedTheme(2)}
+              className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
+                selectedTheme === 2
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
+              }`}
+            >
+              TV Shows
+            </div>
+            <div
+              onClick={() => setSelectedTheme(3)}
+              className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
+                selectedTheme === 3
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
+              }`}
+            >
+              Videojuegos
+            </div>
+          </div>
+          <SearchDialog isOpened={true} setMedia={setMedia} mediaType={selectedTheme}/>
+          <div className="flex h-20 items-center bg-[#B577F7] rounded-2xl px-3 w-1/2 mt-5 ml-3">
             <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
-              <div
-                className="h-6 w-6 rounded-full bg-gray-300 mr-2"
-                style={{ width: "24px", height: "24px" }}
-              ></div>
+              <Avatar avatarData={myinfo.avatar} size="small" />
 
               <input
                 type="text"
                 placeholder="Comparte con nosotros"
-                className="flex-grow bg-transparent focus:outline-none text-gray-700"
+                className="flex-grow bg-transparent focus:outline-none text-gray-700 pl-2"
               />
 
               <div className="ml-2 hover:cursor-pointer">

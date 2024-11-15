@@ -13,10 +13,10 @@ function SearchAndPost(params) {
   const {principal} = useConnect()
   const [post] = useCanister("post")
   const [media, setMedia] = useState(null)
-  const [mediaType, setMediaType] = useState(0)
+  const [mediaType, setMediaType] = useState(1)
   const [loading, setLoading] = useState(false)
   const [selection, setSelection] = useState('1')
-  const [isOpened, setIsOpened] = useState(false)
+  const [isOpened, setIsOpened] = useState(true)
   const [textAreaValue, setTextAreaValue] = useState("")
 
   const handleButtonClick = (selected) => {
@@ -77,20 +77,9 @@ function SearchAndPost(params) {
   return (
     <div className="w-full py-2 px-4 rounded-2xl space-y-3 bg-slate-200">
       {/* Title and animation */}
-      <div className="font-bold text-xl [text-wrap:balance] bg-clip-text text-transparent bg-gradient-to-r from-slate-900/70 to-slate-900">What are you{' '}
-        <span className="text-purple-800 inline-flex flex-col h-[26px] overflow-hidden">
-          <ul className="block animate-text-slide text-left font-medium leading-tight [&_li]:block">
-              <li>thinking<span className='text-slate-900/90'>?</span></li>
-              <li>whatching<span className='text-slate-900/90'>?</span></li>
-              <li>listening<span className='text-slate-900/90'>?</span></li>
-              <li>reading<span className='text-slate-900/90'>?</span></li>
-              <li>playing<span className='text-slate-900/90'>?</span></li>
-              <li aria-hidden="true">binging<span className='text-slate-900/90'>?</span></li>
-          </ul>
-        </span>
-      </div>
+     
       <div className="border-b border-slate-400" />
-      <SearchDialog isOpened={isOpened} onClose={() => setIsOpened(false)} setMedia={setMedia} mediaType={mediaType}/>
+      <SearchDialog isOpened={true} setMedia={setMedia} mediaType={mediaType}/>
       {media ?
       <div className='flex flex-col w-full space-y-2'>
         <div className='w-full space-y-2'>
@@ -108,12 +97,6 @@ function SearchAndPost(params) {
             </button>
           </div>
         </div>
-        <label className='font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900'>Select your progress:</label>
-        <select value={selection} onChange={(e) => setSelection(e.target.value)} className='border border-purple-800 px-2 w-full rounded-full outline-purple-800 p-2 font-medium'>
-          <option value={'1'} className='p-2 bg-yellow-200 font-medium text-sm'>Interested</option>
-          <option value={'2'} className='p-2 bg-sky-200 font-medium text-sm'>Started</option>
-          <option value={'3'} className='p-2 bg-green-200 font-medium text-sm'>Finished</option>
-        </select>
         <div className='flex flex-col space-y-2'>
           <label className='font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900'>Tell us what you thought of it:</label>
           <textarea value={textAreaValue} onChange={(e) => setTextAreaValue(e.target.value)} className='border border-purple-800 rounded-2xl w-full p-2 font-medium' />
@@ -133,11 +116,6 @@ function SearchAndPost(params) {
       </div>
       :
       <div className='flex space-x-4 w-full'>
-        <div className='flex flex-row space-x-4 w-full'>
-          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(1)}><FaBookOpen className='inline mr-2'/>Libro</button>
-          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(2)}><PiTelevisionSimpleFill className='inline mr-2'/>TV</button>
-          <button className={BUTTON_CLASS} onClick={() => handleButtonClick(3)}><FaGamepad className='inline mr-2'/>Videojuego</button>
-        </div>
       </div>}
     </div>
   );

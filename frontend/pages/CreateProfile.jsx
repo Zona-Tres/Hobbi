@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import Cropper from "react-easy-crop"
+import imageCompression from "browser-image-compression"
 import { FiZoomIn, FiRotateCcw } from "react-icons/fi"
 import {
   FaUser,
@@ -27,6 +28,7 @@ import Illustration from "/images/img-create-profile.svg"
 import Header from "../components/ui/Header"
 import { useNavigate } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
+import iconArrow from "/images/iconArrow.svg"
 
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -52,7 +54,6 @@ function CreateProfile() {
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [croppedImage, setCroppedImage] = useState(null)
-
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }
@@ -67,14 +68,18 @@ function CreateProfile() {
       if (acceptedFiles.length > 0) {
         try {
           const firstFile = acceptedFiles[0]
-          const newFile = await resizeImage(firstFile, ImageMaxWidth)
-          let imageDataUrl = await readFileToUrl(newFile)
 
           const orientation = await getOrientation(firstFile)
           const rotation = ORIENTATION_TO_ANGLE[orientation]
+
+          const compressedFile = await resizeImage(firstFile, ImageMaxWidth)
+
+          let imageDataUrl = await readFileToUrl(compressedFile)
+
           if (rotation) {
             imageDataUrl = await getRotatedImage(imageDataUrl, rotation)
           }
+
           setFile(imageDataUrl)
         } catch (error) {
           console.error(error)
@@ -105,23 +110,72 @@ function CreateProfile() {
   } = useForm({
     resolver: zodResolver(profileSchema),
   })
+  const dataURLToBlob = (dataURL) => {
+    const byteString = atob(dataURL.split(",")[1])
+    const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0]
+    const arrayBuffer = new ArrayBuffer(byteString.length)
+    const uint8Array = new Uint8Array(arrayBuffer)
 
-  const onSubmit = async (data) => {
-    setIsLoading(true)
-    debugger
-    const profileData = {
-      bio: data.bio,
-      name: data.username,
-      thumbnail: null,
-      email: "email@gmail.com",
-      avatar: null,
+    for (let i = 0; i < byteString.length; i++) {
+      uint8Array[i] = byteString.charCodeAt(i)
     }
 
+    return new Blob([uint8Array], { type: mimeString })
+  }
+
+  const uint8ArrayToBlob = (uint8Array, mimeType) => {
+    return new Blob([uint8Array], { type: mimeType })
+  }
+  const arrayBufferToUint8Array = (arrayBuffer) => {
+    return new Uint8Array(arrayBuffer) // Convierte el ArrayBuffer a Uint8Array
+  }
+  const onSubmit = async (data) => {
+    setIsLoading(true)
+
     try {
+      let imageBlob = null
+
+      // Comprobamos que croppedImage sea un Uint8Array
+      let uint8Array = null
+      if (ArrayBuffer.isView(croppedImage)) {
+        uint8Array = croppedImage // Si ya es un Uint8Array, lo usamos
+      } else if (Array.isArray(croppedImage)) {
+        uint8Array = new Uint8Array(croppedImage) // Convertimos el array regular en un Uint8Array
+      } else {
+        console.error("croppedImage is not a valid type")
+        return // Salimos si el tipo no es válido
+      }
+
+      // Convertir el Uint8Array en un Blob
+      imageBlob = uint8ArrayToBlob(uint8Array, "image/jpeg")
+
+      // Comprimir la imagen
+      const compressedImageBlob = await imageCompression(imageBlob, {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 500,
+        useWebWorker: true,
+        initialQuality: 1,
+      })
+
+      // Convertir el Blob comprimido en un Uint8Array
+      const arrayBuffer = await compressedImageBlob.arrayBuffer()
+      const croppedImageArray = new Uint8Array(arrayBuffer)
+
+      // Preparar los datos del perfil
+      const profileData = {
+        bio: data.bio,
+        name: data.username,
+        thumbnail: [], // Si no tienes un thumbnail, lo puedes dejar vacío como en el ejemplo anterior
+        email: [],
+        avatar: [croppedImageArray], // Aquí estamos enviando un array que contiene el Uint8Array
+      }
+
+      // Enviar los datos del perfil
       await hobbi.signUp(profileData).then((result) => {
-        debugger
-        if (result.Ok) {
-          navigate(`/profile/${principal}`)
+        
+        if (result) {
+          
+         navigate('/profile/{principal}') 
         }
       })
     } catch (e) {
@@ -169,13 +223,21 @@ function CreateProfile() {
           />
         </section>
 
-        <div className="fixed z-20 flex flex-col w-[414px] h-[395px] justify-start p-6 rounded-3xl border border-[#E2E8F0] bg-[#F7EFFF] top-1/2 right-0 transform -translate-y-1/2">
+        <div className="fixed z-20 flex flex-col w-[414px] min-h-[395px] justify-start p-6 rounded-3xl border border-[#E2E8F0] bg-[#F7EFFF] top-1/2 right-8 transform -translate-y-1/2">
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col items-start justify-start space-y-4"
           >
-            {!file && !croppedImage && (
-              <div className="space-y-2 w-full">
+            {!file && (
+              <div className="space-y-2 w-full flex">
+                {croppedImage && (
+                  <div className="w-16 h-16 rounded-full overflow-hidden inline-block">
+                    <img
+                      src={arrayBufferToImgSrc(croppedImage)}
+                      className="w-full h-full object-cover mb-2"
+                    />
+                  </div>
+                )}
                 <div
                   {...getRootProps({ className: "dropzone" })}
                   className="hover:cursor-pointer h-10 w-[123px] rounded-md bg-[#FFFFFF] border-[#E2E8F0] flex items-center justify-center "
@@ -188,12 +250,11 @@ function CreateProfile() {
             {file && !croppedImage && (
               <>
                 <span className="flex items-center justify-start space-x-2 w-full">
-                  <FaCropAlt className="inline text-purple-800" />
                   <p className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900">
                     Crop your picture
                   </p>
                 </span>
-                <div className="relative w-96 h-96 ">
+                <div className="relative w-96 h-72">
                   <Cropper
                     image={file}
                     crop={crop}
@@ -236,87 +297,80 @@ function CreateProfile() {
                     onChange={(e) => setRotation(e.target.value)}
                   />
                 </div>
-                <a
-                  className="btn-sm cursor-pointer w-full text-slate-50 bg-slate-900 hover:bg-slate-700 transition duration-150 ease-in-out"
-                  onClick={showCroppedImage}
-                >
-                  Show Result
-                </a>
+                <div className="flex w-full justify-between items-center">
+                  <div className="flex gap-2">
+                    <img src={iconArrow} />
+                    <span className="text-sm font-normal text-[#B577F7]">
+                      Atras
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={showCroppedImage}
+                    className="hover:cursor-pointer h-10 w-20 flex items-center justify-center rounded-md bg-[#B577F7] text-white hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out"
+                  >
+                    <span className="text-sm font-medium text-white">
+                      Aplicar{" "}
+                    </span>
+                  </div>
+                </div>
               </>
             )}
-            {croppedImage && (
-              <div className="w-full space-y-2">
-                <span className="flex items-center justify-start space-x-2 w-full mb-2">
-                  <FaImage className="inline text-purple-800" />
-                  <label
-                    htmlFor="picture"
-                    className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-800 to-slate-900"
-                  >
-                    Upload an avatar
+            {!file && (
+              <>
+                <div className="space-y-2 w-full">
+                  <label htmlFor="username" className="font-medium text-sm">
+                    Username
                   </label>
-                </span>
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <img
-                    src={arrayBufferToImgSrc(croppedImage)}
-                    width={250}
-                    className="mb-2"
-                  />
-                  <a
-                    {...getRootProps({ className: "dropzone" })}
-                    className="btn-sm cursor-pointer w-full text-slate-50 bg-slate-900 hover:bg-slate-700 transition duration-150 ease-in-out"
-                  >
-                    <span className="flex items-center justify-start">
-                      <FaExchangeAlt className="inline mr-2" />
-                      <p className="text-white">Change</p>
+                  <div className="relative">
+                    <span className="absolute left-2 top-2 text-gray-500">
+                      @
                     </span>
-                    <input name="picture" {...getInputProps()} />
-                  </a>
+                    <input
+                      id="username"
+                      className="h-9 w-full rounded-md border border-[#CBD5E1] pl-6"
+                      type="text"
+                      {...register("username")}
+                    />
+                  </div>
+                  {errors.username && (
+                    <p className="text-red-500 text-xs">
+                      {errors.username.message}
+                    </p>
+                  )}
                 </div>
-              </div>
-            )}
-            <div className="space-y-2 w-full">
-              <label htmlFor="username" className="font-medium text-sm ">
-                Username
-              </label>
-              <input
-                id="username"
-                className="h-9 w-full rounded-md border border-[#CBD5E1]"
-                type="text"
-                {...register("username")}
-              />
-              {errors.username && (
-                <p className="text-red-500 text-xs">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2 w-full">
-              <label htmlFor="bio" className="font-medium text-sm rounded-md">
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                className="rounded-md w-full h-20 border border-[#CBD5E1]"
-                {...register("bio")}
-              />
-              {errors.bio && (
-                <p className="text-red-500 text-xs">{errors.bio.message}</p>
-              )}
-            </div>
+                <div className="space-y-2 w-full">
+                  <label
+                    htmlFor="bio"
+                    className="font-medium text-sm rounded-md"
+                  >
+                    Bio
+                  </label>
+                  <textarea
+                    id="bio"
+                    className="rounded-md w-full h-20 border border-[#CBD5E1]"
+                    {...register("bio")}
+                  />
+                  {errors.bio && (
+                    <p className="text-red-500 text-xs">{errors.bio.message}</p>
+                  )}
+                </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="h-10 w-28 flex items-center justify-center rounded-md bg-[#B577F7] text-white hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out"
-            >
-              {isLoading ? (
-                loadingSvg()
-              ) : (
-                <span className="text-sm font-medium text-white">
-                  Crear perfil
-                </span>
-              )}
-            </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-10 w-28 flex items-center justify-center rounded-md bg-[#B577F7] text-white hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out"
+                >
+                  {isLoading ? (
+                    loadingSvg()
+                  ) : (
+                    <span className="text-sm font-medium text-white">
+                      Crear perfil
+                    </span>
+                  )}
+                </button>
+              </>
+            )}
           </form>
         </div>
       </div>
