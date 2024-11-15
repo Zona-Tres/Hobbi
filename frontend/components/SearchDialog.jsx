@@ -124,7 +124,7 @@ function SearchDialog(params) {
           </div>
         )}
         {searchResult.length === 0 && !loading ? (
-          <p className="p-4 text-sm text-gray-500">{message}</p>
+          <></>
         ) : (
           searchResult.map((element) => (
             <div
