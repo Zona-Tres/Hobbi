@@ -101,7 +101,7 @@ function SearchDialog(params) {
   );
 
   return (
-    <div className="flex flex-col space-y-2 max-w-md p-4" style={{ position: "relative" }}>
+    <div className="flex flex-col w-full" style={{ position: "relative" }}>
       {/* Input de búsqueda */}
       <div className="relative w-full">
         <input

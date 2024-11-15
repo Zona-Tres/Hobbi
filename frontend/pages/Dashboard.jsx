@@ -10,8 +10,8 @@ import { Seo } from "../components/utils/seo"
 import useStore from "../store/useStore"
 import crearActorParaBucket from "../hooks/crearActorParaBucket"
 import Avatar from "../components/Avatar"
-import SearchAndPost from "../components/SearchAndPost";
-import SearchDialog from '../components/SearchDialog';
+import SearchAndPost from "../components/SearchAndPost"
+import SearchDialog from "../components/SearchDialog"
 
 export default function Dashboard() {
   const { id } = useParams()
@@ -60,11 +60,9 @@ export default function Dashboard() {
           setCanisterId(newCanisterId)
           const actor = await crearActorParaBucket(newCanisterId)
 
-          
           handlePublicInfo(actor)
         }
       } catch (e) {
-        
         console.error(e)
       } finally {
         setLoading(false)
@@ -303,8 +301,12 @@ export default function Dashboard() {
               Videojuegos
             </div>
           </div>
-          <SearchDialog isOpened={true} setMedia={setMedia} mediaType={selectedTheme}/>
-          <div className="flex h-20 items-center bg-[#B577F7] rounded-2xl px-3 w-1/2 mt-5 ml-3">
+          <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-1/2 mt-5 ml-3">
+            <SearchDialog
+              isOpened={true}
+              setMedia={setMedia}
+              mediaType={selectedTheme}
+            />
             <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
               <Avatar avatarData={myinfo.avatar} size="small" />
 
