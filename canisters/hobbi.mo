@@ -28,7 +28,9 @@ actor {
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
-    type Feed = Types.Feed;
+    type PaginateFeed = Types.Feed;
+    type PostPreview = Types.PostPreview;
+    type Feed = {arr: [PostPreview]; lastUpdateFeed: Int};
 
     type CanisterID = Principal;
     type UserPreviewInfo = Types.UserPreviewInfo;
@@ -40,8 +42,10 @@ actor {
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     var maxFeedGeneralPost = 200;
-    var feedUpdateRefreshTime = 20; // En minutos
-    var lastUpdateFeed = 0;
+    var feedUpdateRefreshTime = 1; // En minutos
+    var rankingUpdateRefresh = 1; //en minutos
+    var maxEventsPerUser = 20;
+    // var lastUpdateFeed = 0;
 
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
@@ -51,10 +55,24 @@ actor {
 
     
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
+
+    public func getEvents():async [Event]{
+        let b = Buffer.fromArray<Event>([]);
+        for (el in Map.vals<UserClassCanisterId, [Event]>(events)){
+            for(e in el.vals()){
+                b.add(e)
+            }
+        };
+        Buffer.toArray(b) 
+    };
+
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
-    var generalFeed: [Types.FeedPart] = [];
-    stable let rankingHashTag: [Text] = [];
+    stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
+    stable var generalFeed: Feed = {arr = []; lastUpdateFeed = 0};
+    stable let personlizedFeeds = Map.new<Principal, Feed>();
+
+    
 
     stable let causes = Map.new<Nat, Cause>();
     stable var lastReportId = 0;
@@ -73,7 +91,8 @@ actor {
         print("Desplegando el canister indexer");
         // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
         Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
-        indexerUserCanister := await UserIndexerCanister.UserIndexerCanister(); 
+        indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
+        print("Canister indexer desplegado en " # Principal.toText(Principal.fromActor(indexerUserCanister)))
     };
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
@@ -91,30 +110,49 @@ actor {
     };
 
     func updateGeneralFeed() {
-        let feedBuffer = Buffer.fromArray<Types.FeedPart>([]);
+        if ( not (now() > generalFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000)) {
+            return
+        };
+        print("Actualizando el feed general");
+        let feedBuffer = Buffer.fromArray<PostPreview>([]);
         for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
                         if(post.access != #Private){
-                            feedBuffer.add(post);   
+                            feedBuffer.add(post);
                         };
                         if (feedBuffer.size() >= maxFeedGeneralPost){
-                            generalFeed := Buffer.toArray(feedBuffer);
+                            generalFeed := {arr = Buffer.toArray(feedBuffer); lastUpdateFeed = now()};
+                            return 
                         }
                     };
                     case _ { };
                 }
             } 
         };
+        generalFeed := {arr = Buffer.toArray(feedBuffer); lastUpdateFeed = now()};
     };
 
   ///////////////////////////////////////////    HashTags managment      //////////////////////////////////////////
 
-    func unWrapHashTagCount(ht: Text): Nat {
+    func pushHashTagToMapCounter(ht: Text): Nat {
+        switch (Map.get<Text, Nat>(hashTagsMap, thash, ht)){
+            case null { 
+                ignore Map.put<Text, Nat>(hashTagsMap, thash, ht, 1);
+                1;
+            };
+            case (?n) {
+                ignore Map.put<Text, Nat>(hashTagsMap, thash, ht, n + 1);
+                n + 1 
+            };
+        }
+    };
+
+    func getCounterFor(ht: Text): Nat {
         switch (Map.get<Text, Nat>(hashTagsMap, thash, ht)){
             case null { 0 };
-            case (?n) { n };
+            case (?n) { n }
         }
     };
 
@@ -126,31 +164,54 @@ actor {
         result   
     };
 
+    func updateRankingHashTags() {  //TODO revisar otras opciones menos costosas computacionalmente
+        if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 60_000_000_000)){
+            return
+        };
+
+        print("In updateRankingHashTags Function");
+        var arrayHashTagsCounter = Map.toArray(hashTagsMap);
+             
+        arrayHashTagsCounter := Array.sort<(Text,Nat)>(
+            arrayHashTagsCounter, 
+            func (a, b) = if (a.1 < b.1){#greater} else {#less}
+        );
+        print("HashTagsMap" # debug_show(arrayHashTagsCounter));
+        let size = if (rankingQtyHahsTags >= arrayHashTagsCounter.size()){
+            arrayHashTagsCounter.size()
+        } else {
+            rankingQtyHahsTags;
+        };
+        let arr = Prim.Array_tabulate<Text>(size, func i = arrayHashTagsCounter[i].0 );
+        rankingHashTag := {
+            arr; 
+            lastUpdate = now()
+        };
+        print("Out updateRankingHashTags Function");
+    };
+
     func putHashTags(event: Event) {
+        print("In putHashTags Function");
+        print("HashTagMap size: " # Nat.toText((Map.size<Text, Nat>(hashTagsMap))));
+        if (Map.size<Text, Nat>(hashTagsMap) > 2){ 
+            updateRankingHashTags() 
+        };
+        
+        for(h in rankingHashTag.arr.vals()){print(h)};
         switch event {
             case (#NewPost(post)) {
+                print("Extrayendo hashtags del post");
                 for(hashtag in post.hashTags.vals()){
-                    let normHashTag = normalizeHashTag(hashtag);
-                    let updateValue = unWrapHashTagCount(normHashTag) + 1;
-                   
-                    let tempBufferRanking = Buffer.fromArray<Text>([]);
+                    let normalizedHashTag = normalizeHashTag(hashtag);
+                    let updateCounter = pushHashTagToMapCounter(normalizedHashTag);
+                    print("\tHashTag: " # normalizedHashTag # "\tContador -> " # Nat.toText(updateCounter));
                     var index = 0;
                     var inserted = false;
-                    while(index < rankingQtyHahsTags){
-                        let rValue = unWrapHashTagCount(rankingHashTag[index]);  
-                        if(updateValue > rValue and not inserted){
-                            tempBufferRanking.add(normHashTag);
-                            index += 1
-                        } else {
-                            tempBufferRanking.add(normHashTag);
-                        };
-                        index += 1;
-                    };
-                    ignore Map.put<Text, Nat>(hashTagsMap, thash, normHashTag, updateValue )
                 };
             };
             case (_) { }
-        }
+        };
+        print("Out putHashTags Function");
     };
 
     func decrementHashTags(_hashTags: [Text]) {
@@ -173,19 +234,24 @@ actor {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
+        print("In putEvetFunction");
         putHashTags(event);
+
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
+        // print(debug_show(myEvents));
         switch myEvents {
             case null {
+                print("Inicializando mi lista de eventos y registrando evento");
                 let eventsList: [Event] = [event];
                 ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, eventsList);
                 true;
             };
             case (?eventsList) {
+                print("Actualizando mi lista de eventos");
                 var updteEventList: [Event] = []; 
-                if(eventsList.size() == 20){
+                if(eventsList.size() == maxEventsPerUser){
                     updteEventList := Prim.Array_tabulate<Event>(
-                        20, func x = if(x == 0){event} else { eventsList[x - 1]}
+                        maxEventsPerUser, func x = if(x == 0){event} else { eventsList[x - 1]}
                     );
                     
                 } else {
@@ -193,7 +259,7 @@ actor {
                         eventsList.size() + 1, func x = if(x == 0){event} else { eventsList[x - 1]}
                     );
                 };
-                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, updteEventList);
+                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, updteEventList); 
                 true;
             }
         }
@@ -306,71 +372,95 @@ actor {
         } 
     };
 
-    public shared ({ caller }) func getMyFeed({page: Nat}): async Feed {
-
-        if ( now() > lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000) {
-            updateGeneralFeed();
+    func updateFeedForUser(u: Principal, followeds: [Principal]) {
+        let bufferPreviews = Buffer.fromArray<PostPreview>([]);
+        for(f in followeds.vals()){
+            for(event in getEventsFromUser(f).vals()){
+                switch event {
+                    case ( #NewPost(post) ) {
+                        if (post.access != #Private){
+                            bufferPreviews.add(post)
+                        };
+                    };
+                    case (_) {}
+                };
+            }
         };
+        let feedUpdate = {arr = Buffer.toArray(bufferPreviews); lastUpdateFeed = now()};
+        ignore Map.put<Principal, Feed>(personlizedFeeds, phash, u, feedUpdate)
+    };
 
+
+    public shared ({ caller }) func getMyFeed({page: Nat; qtyPerPage: Nat}): async PaginateFeed {
+        updateGeneralFeed();
         let user = Map.get<Principal, Profile>(users, phash, caller);
         switch user {
             case (?user) {
-                // TODO
-                // if (page == 0) {
-                //     let bufferFeedPart = Buffer.fromArray<Types.FeedPart>([]);
-                //     for(followed in (await user.actorClass.getFolloweds()).vals()){
-                //         for(event in getEventsFromUser(followed).vals()){
-                //             switch event {
-                //                 case(#NewPost(post)){
-                //                     if(post.access != #Private){
-                //                         feedBuffer.add(post);   
-                //                     }; 
-                //                     if (feedBuffer.size() >= 100){
-                //                         random.setRange(0, 10);
-                //                         let randArray = Rand.randArray(10);
-                //                         let arrayFeed = Buffer.toArray(feedBuffer);
-                //                         return {
-                //                             feedPage = Prim.Array_tabulate(
-                //                                 10,
-                //                                 func i = arrayFeed[1 * 10 + randArray[i]]
-                //                             );
-                //                             hasNext = true;
-                //                         };
-                //                     }
-                //                 };
-                //                 case _ {
-                //                     //TODO Establecer acciones para otros tipos de evento, por ejemplo cuando hay un nuevo seguidor
-                //                 };
-                //             };
-                //         }
-                //     }
-                // }
-                {
-                    feedPage = getPaginateGeneralFeed(page: Nat);
-                    hasNext = generalFeed.size()  > page *10 + 10; 
-                }
+                let followeds = await user.actorClass.getFolloweds();
+                var myRawFeed = Map.get<Principal, Feed>(personlizedFeeds, phash, caller); 
+                if(followeds.size() > 0) {
+                    switch myRawFeed {
+                        case null { 
+                            updateFeedForUser(caller, followeds);
+                            print("Inicializando el feed Personalizado")
+                        };
+                        case (?myRawFeed) {
+                            if( now() >= myRawFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000){ 
+                                updateFeedForUser(caller, followeds);
+                                print("Actualizando el feed Personalizado")
+                            } 
+                        }
+                    };
+                };
+                myRawFeed := Map.get<Principal, Feed>(personlizedFeeds, phash, caller);
+
+                switch myRawFeed {
+                    case null { getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)};
+                    case (?myRawFeed) {
+
+                        if (myRawFeed.arr.size() > page * qtyPerPage){
+                            {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
+                            with hasNext = true};
+                        } else {
+                            let bias = myRawFeed.arr.size()/qtyPerPage;
+                            print("Get My Feed: " # Nat.toText(page - bias));
+                            getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
+                        };
+    
+                    }
+                };     
             };
             case _ {
-                {
-                    feedPage = getPaginateGeneralFeed(page: Nat);
-                    hasNext = generalFeed.size()  > page *10 + 10; 
-                }
+                getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)
             }
         }
     };
 
-    func getPaginateGeneralFeed(page: Nat): [Types.FeedPart] {
-        let end = if (page *10 <= generalFeed.size()) {10} else { generalFeed.size() % 10}; 
-        Array.subArray(generalFeed, page * 10, end);
+    func getPaginateElements<T>(arr: [T], page: Nat, qtyPerPage: Nat ): {arr: [T]; hasNext: Bool}{
+        print("size feed:         " # Nat.toText(arr.size()));
+        print("page * qtyPerPage: " # Nat.toText(page * qtyPerPage));
+        print("arr.size()  % qtyPerPage: " # Nat.toText(arr.size()  % qtyPerPage));
+        if(arr.size() > page * qtyPerPage ){ 
+            let end = if(arr.size() / qtyPerPage > page ) {
+                qtyPerPage
+            } else {
+                arr.size()  %  qtyPerPage
+            };
+            let hasNext = (page + 1)  * qtyPerPage < arr.size();
+            {arr = Array.subArray(arr, page * qtyPerPage, end); hasNext}
+        } else {
+            {arr = []; hasNext = false}
+        }
     };
 
-    public query func getPostByHashTag(h: Text):async [Types.FeedPart]{
-        let postPreviewBuffer = Buffer.fromArray<Types.FeedPart>([]);
+
+    public query func getPostByHashTag(h: Text):async [PostPreview]{
+        let postPreviewBuffer = Buffer.fromArray<PostPreview>([]);
         for(eventList in Map.vals<UserClassCanisterId, [Event]>(events)){
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
-                        switch (Array.find<Text>(post.hashTags , func x = x == normalizeHashTag(h))){
+                        switch (Array.find<Text>(post.hashTags , func x = normalizeHashTag(x) == normalizeHashTag(h))){
                             case null {};
                             case _ { postPreviewBuffer.add(post)}
                         }
@@ -379,11 +469,12 @@ actor {
                 }
             };
         };
-        Buffer.toArray<Types.FeedPart>(postPreviewBuffer);
+        Buffer.toArray<PostPreview>(postPreviewBuffer);
     };
     
     public shared query func getRankingHashTags(): async [Text]{
-        rankingHashTag
+        updateRankingHashTags();
+        rankingHashTag.arr
     };
   
   /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
