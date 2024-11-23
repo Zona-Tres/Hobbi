@@ -56,15 +56,15 @@ actor {
     
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
 
-    public func getEvents():async [Event]{
-        let b = Buffer.fromArray<Event>([]);
-        for (el in Map.vals<UserClassCanisterId, [Event]>(events)){
-            for(e in el.vals()){
-                b.add(e)
-            }
-        };
-        Buffer.toArray(b) 
-    };
+    // public func getEvents():async [Event]{
+    //     let b = Buffer.fromArray<Event>([]);
+    //     for (el in Map.vals<UserClassCanisterId, [Event]>(events)){
+    //         for(e in el.vals()){
+    //             b.add(e)
+    //         }
+    //     };
+    //     Buffer.toArray(b) 
+    // };
 
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
@@ -149,13 +149,6 @@ actor {
         }
     };
 
-    func getCounterFor(ht: Text): Nat {
-        switch (Map.get<Text, Nat>(hashTagsMap, thash, ht)){
-            case null { 0 };
-            case (?n) { n }
-        }
-    };
-
     func normalizeHashTag(hashtag: Text): Text {
         var result: Text = "";
         for(c in Text.toIter(hashtag)){ 
@@ -196,14 +189,13 @@ actor {
         if (Map.size<Text, Nat>(hashTagsMap) > 2){ 
             updateRankingHashTags() 
         };
-        
-        for(h in rankingHashTag.arr.vals()){print(h)};
+
         switch event {
             case (#NewPost(post)) {
                 print("Extrayendo hashtags del post");
                 for(hashtag in post.hashTags.vals()){
                     let normalizedHashTag = normalizeHashTag(hashtag);
-                    let updateCounter = pushHashTagToMapCounter(normalizedHashTag);
+                    let updateCounter: Nat = pushHashTagToMapCounter(normalizedHashTag);
                     print("\tHashTag: " # normalizedHashTag # "\tContador -> " # Nat.toText(updateCounter));
                     var index = 0;
                     var inserted = false;
@@ -211,7 +203,6 @@ actor {
             };
             case (_) { }
         };
-        print("Out putHashTags Function");
     };
 
     func decrementHashTags(_hashTags: [Text]) {
@@ -238,12 +229,10 @@ actor {
         putHashTags(event);
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
-        // print(debug_show(myEvents));
         switch myEvents {
             case null {
                 print("Inicializando mi lista de eventos y registrando evento");
-                let eventsList: [Event] = [event];
-                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, eventsList);
+                ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, [event]);
                 true;
             };
             case (?eventsList) {
@@ -253,7 +242,6 @@ actor {
                     updteEventList := Prim.Array_tabulate<Event>(
                         maxEventsPerUser, func x = if(x == 0){event} else { eventsList[x - 1]}
                     );
-                    
                 } else {
                     updteEventList := Prim.Array_tabulate<Event>(
                         eventsList.size() + 1, func x = if(x == 0){event} else { eventsList[x - 1]}
@@ -265,7 +253,7 @@ actor {
         }
     };
 
-    public shared ({ caller }) func removeEvent(_date: Int): async () {
+    public shared ({ caller }) func removeEvent(_date: Int) {
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
         switch myEvents {
             case null{  };
@@ -275,9 +263,9 @@ actor {
                     switch e {
                         case (#NewPost(data)){
                             if(data.date != _date){
-                                decrementHashTags(data.hashTags);
                                 eventBuffer.add(#NewPost(data));
                             } else {
+                                decrementHashTags(data.hashTags);
                                 print("Post encontrado")
                             }
                         };
@@ -426,7 +414,6 @@ actor {
                             print("Get My Feed: " # Nat.toText(page - bias));
                             getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
                         };
-    
                     }
                 };     
             };
@@ -437,9 +424,6 @@ actor {
     };
 
     func getPaginateElements<T>(arr: [T], page: Nat, qtyPerPage: Nat ): {arr: [T]; hasNext: Bool}{
-        print("size feed:         " # Nat.toText(arr.size()));
-        print("page * qtyPerPage: " # Nat.toText(page * qtyPerPage));
-        print("arr.size()  % qtyPerPage: " # Nat.toText(arr.size()  % qtyPerPage));
         if(arr.size() > page * qtyPerPage ){ 
             let end = if(arr.size() / qtyPerPage > page ) {
                 qtyPerPage
@@ -452,7 +436,6 @@ actor {
             {arr = []; hasNext = false}
         }
     };
-
 
     public query func getPostByHashTag(h: Text):async [PostPreview]{
         let postPreviewBuffer = Buffer.fromArray<PostPreview>([]);
