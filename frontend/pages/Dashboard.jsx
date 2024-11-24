@@ -35,10 +35,11 @@ export default function Dashboard() {
   const [selected, setSelected] = useState(1)
   const [bucketActor, setBucketActor] = useState(null)
   const [selectedTheme, setSelectedTheme] = useState(1)
+  const [textArea, setTextArea] = useState("")
   const handlePublicInfo = async (actor) => {
     try {
       const response = await actor.getMyInfo()
-
+debugger
       if (response) {
         setMyInfo(response)
       }
@@ -49,6 +50,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
+      debugger
       try {
         const result = await hobbi.signIn()
 
@@ -57,6 +59,7 @@ export default function Dashboard() {
             setUsername(result.Ok.name)
           }
           const newCanisterId = result.Ok.userCanisterId.toText()
+          debugger
           setCanisterId(newCanisterId)
           const actor = await crearActorParaBucket(newCanisterId)
 
@@ -80,6 +83,31 @@ export default function Dashboard() {
     navigate(url)
   }
 
+  const handleCreatePost = async () => {
+    debugger
+    setCanisterId(canisterId)
+    const actor = await crearActorParaBucket(canisterId)
+
+    try {
+      const json={
+        access: {'Public':null},
+        title : media?.title,
+        body: textArea,
+        image : [], 
+        imagePreview : [],
+        hashTags: [],
+        image_url : [media?.image],
+        media_type : {'Book':null}
+      }
+      const response = await actor.createPost(json)
+      const responsePost= await actor.getPaginatePost({"index":0})
+      debugger
+    } catch (e) {
+      debugger
+      console.error(e)
+    }
+  }
+  console.log(canisterId, "media------------")
   return (
     <>
       <Seo
@@ -301,22 +329,39 @@ export default function Dashboard() {
               Videojuegos
             </div>
           </div>
-          <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-1/2 mt-5 ml-3">
+          <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-[70%] mt-5 ml-3">
             <SearchDialog
               isOpened={true}
               setMedia={setMedia}
               mediaType={selectedTheme}
             />
+            {media && (
+              <div className="flex justify-start w-full gap-3">
+                <div className="rounded-xl">
+                  <img src={media.image} width="70px" />
+                </div>
+                <div className="flex flex-col justify-start items-start">
+                  <span className="text-xl font-bold text-[#FFFFFF]">
+                    {media.title}
+                  </span>
+                  <span className="text-lg font-medium text-[#FFFFFF]">
+                    {media.sub}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
               <Avatar avatarData={myinfo.avatar} size="small" />
 
               <input
                 type="text"
+                value={textArea}
+                onChange={(e) => setTextArea(e.target.value)}
                 placeholder="Comparte con nosotros"
                 className="flex-grow bg-transparent focus:outline-none text-gray-700 pl-2"
               />
 
-              <div className="ml-2 hover:cursor-pointer">
+              <div className="ml-2 hover:cursor-pointer" onClick={(e) => handleCreatePost()} >
                 <svg
                   width="24"
                   height="24"

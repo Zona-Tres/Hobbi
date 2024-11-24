@@ -60,7 +60,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
     var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {lastUpdate = 0; previews = []};
-    var previewsRefreshTime = 10 * 60 * 1_000_000_000; // 10 minutos 
+    var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 10 minutos 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
 
