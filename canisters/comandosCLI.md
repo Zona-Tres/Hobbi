@@ -18,7 +18,7 @@ ver info de Alice
 
 cear Post
 ```
-dfx canister call be2us-64aaa-aaaaa-qaabq-cai createPost '(record {
+dfx canister call br5f7-7uaaa-aaaaa-qaaca-cai createPost '(record {
     access = variant{Public};
     title ="Mi primer Posteo en Hobbi. Soy Usuario B";
     hashTags = vec {"Musica"; "Jazz"; "Charly Parker"};

@@ -59,7 +59,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
-    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {lastUpdate = 0; previews = []};
+    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {previews = []; lastUpdate = 0};
     var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 10 minutos 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
@@ -186,12 +186,31 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.toArray<Principal>(hiddenUsers);
     };
 
-    public shared ({ caller }) func getPaginatePost({index: Nat}): async [PostPreview]{
-        if( tempPostPreviews.lastUpdate < Time.now() + previewsRefreshTime ){
-            extractPostPreview()
+    public shared ({ caller }) func getPaginatePost({index: Nat; qtyPerPage: Nat}): async {arr: [PostPreview]; hasNext: Bool}{
+        if( Time.now() > tempPostPreviews.lastUpdate + previewsRefreshTime ){
+            print("UpdatePostPreview");
+            extractPostPreview();
         };
+        if(tempPostPreviews.previews.size() >= index * qtyPerPage) {
+            let (length: Nat, hasNext: Bool) = if (tempPostPreviews.previews.size() >= (index + 1)  * qtyPerPage){
+                (qtyPerPage, tempPostPreviews.previews.size() > (index + 1))
+            } else {
+                (tempPostPreviews.previews.size() % qtyPerPage, false)
+            };
+            print("LenArray: " # debug_show(tempPostPreviews.previews.size()));
+            print("startPosition: " # debug_show(index * qtyPerPage));
+            print("endPosition: " # debug_show(length));
 
-        []
+            let arr = Array.subArray<PostPreview>(
+                tempPostPreviews.previews, index * qtyPerPage, length);
+            {arr; hasNext}
+        } else {
+            {arr = []; hasNext = false}
+        }   
+    };
+
+    public shared ({ caller }) func getPostQty(): async Nat{
+        Map.size(posts)
     };
 
   //////////////////////// Blocking and unblocking users, hiding user //////////////////////////////
@@ -283,12 +302,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func editProfile(data: EditableUserData): async FullDataUser {
         // TODO Agragar campo intereses
         assert(isOwner(caller));
-        if(email != data.email) { verified := false}; // Si se cambia el email se requiere nueva verificacion
+        if(email != data.email) { verified := false }; // Si se cambia el email se requiere nueva verificacion
         email := data.email;
         bio := data.bio;
         name := data.name;
         interests := data.interests;
-
         dataUser();
     };
 

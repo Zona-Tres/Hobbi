@@ -14,7 +14,10 @@ dfx start --background --clean
 dfx generate nft
 dfx generate outcall
 dfx generate post
+dfx generate social
 dfx generate hobbi
+dfx generate internet_identity
+dfx generate user_no_deploy
 # Deploy canisters
 dfx deploy outcall
 dfx deploy post

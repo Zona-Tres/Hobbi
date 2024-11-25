@@ -79,16 +79,22 @@ module {
         #Err;
     };
 
-    public type FeedPart = {
-        // likes: Nat;
-        // disLikes: Nat;
-        hashTags: [Text];
-        title: Text;
-        photoPreview: ?Blob;
-        date: Int;
-        autor: Principal;
-        postId: Nat;
+    public type Feed = {
+        // feedPage : [FeedPart];
+        arr : [PostPreview];
+        hasNext : Bool;
     };
+
+    // public type FeedPart = {
+    //     // likes: Nat;
+    //     // disLikes: Nat;
+    //     hashTags: [Text];
+    //     title: Text;
+    //     photoPreview: ?Blob;
+    //     date: Int;
+    //     autor: Principal;
+    //     postId: Nat;
+    // };
 
     type PostID = Nat;
     public type ReportType = {

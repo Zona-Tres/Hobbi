@@ -39,8 +39,13 @@ export default function Dashboard() {
   const handlePublicInfo = async (actor) => {
     try {
       const response = await actor.getMyInfo()
-debugger
       if (response) {
+        const responsePost = await actor.getPaginatePost({
+          qtyPerPage: 10,
+          index: 0,
+        })
+        debugger
+        setPostList(responsePost.arr)
         setMyInfo(response)
       }
     } catch (e) {
@@ -50,16 +55,15 @@ debugger
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      debugger
+
       try {
         const result = await hobbi.signIn()
-
         if (result.Ok) {
           if (result.Ok.name !== username) {
             setUsername(result.Ok.name)
           }
           const newCanisterId = result.Ok.userCanisterId.toText()
-          debugger
+
           setCanisterId(newCanisterId)
           const actor = await crearActorParaBucket(newCanisterId)
 
@@ -82,32 +86,38 @@ debugger
     setSelected(index)
     navigate(url)
   }
-
+  const mediaTypeMap = {
+    1: "Book",
+    2: "Tv",
+    3: "Game",
+  }
   const handleCreatePost = async () => {
-    debugger
     setCanisterId(canisterId)
     const actor = await crearActorParaBucket(canisterId)
 
     try {
-      const json={
-        access: {'Public':null},
-        title : media?.title,
+      const json = {
+        access: { Public: null },
+        title: media?.title,
         body: textArea,
-        image : [], 
-        imagePreview : [],
+        image: [],
+        imagePreview: [],
         hashTags: [],
-        image_url : [media?.image],
-        media_type : {'Book':null}
+        image_url: [media?.image],
+        media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
       const response = await actor.createPost(json)
-      const responsePost= await actor.getPaginatePost({"index":0})
+      const responsePost = await actor.getPaginatePost({
+        qtyPerPage: 10,
+        index: 0,
+      })
       debugger
+      setPostList(responsePost.arr)
     } catch (e) {
-      debugger
       console.error(e)
     }
   }
-  console.log(canisterId, "media------------")
+  console.log(postList, "postList------------")
   return (
     <>
       <Seo
@@ -269,7 +279,7 @@ debugger
           <div className="h-[214px] rounded-3xl w-full">
             <img src={portada} alt="Portada" />
           </div>
-          <div className="flex pt-7 pl-3">
+          <div className="flex pt-7 pl-3 h-24">
             <div className="relative -top-14">
               {" "}
               {/* Mueve el avatar hacia arriba */}
@@ -291,42 +301,44 @@ debugger
               </span>
             </div>
           </div>
-          <span className="text-sm font-medium text-[#FDFCFF] w-1/2 ml-3 mb-4">
+          <span className="text-sm font-medium text-[#FDFCFF] w-1/2 ml-3 mb-3 ">
             {myinfo.bio}
           </span>
-          <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
-            Temas
-          </span>
-          <div className="flex gap-4 mt-3 ml-3">
-            <div
-              onClick={() => setSelectedTheme(1)}
-              className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
-                selectedTheme === 1
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-              }`}
-            >
-              Libros
-            </div>
-            <div
-              onClick={() => setSelectedTheme(2)}
-              className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
-                selectedTheme === 2
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-              }`}
-            >
-              TV Shows
-            </div>
-            <div
-              onClick={() => setSelectedTheme(3)}
-              className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
-                selectedTheme === 3
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-              }`}
-            >
-              Videojuegos
+          <div className="flex gap-3 items-center">
+            <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
+              Temas
+            </span>
+            <div className="flex gap-4 mt-3 ml-3">
+              <div
+                onClick={() => setSelectedTheme(1)}
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 1
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
+              >
+                Libros
+              </div>
+              <div
+                onClick={() => setSelectedTheme(2)}
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 2
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
+              >
+                TV Shows
+              </div>
+              <div
+                onClick={() => setSelectedTheme(3)}
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 3
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
+              >
+                Videojuegos
+              </div>
             </div>
           </div>
           <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-[70%] mt-5 ml-3">
@@ -338,7 +350,7 @@ debugger
             {media && (
               <div className="flex justify-start w-full gap-3">
                 <div className="rounded-xl">
-                  <img src={media.image} width="70px" />
+                  <img src={media.image} width="40px" />
                 </div>
                 <div className="flex flex-col justify-start items-start">
                   <span className="text-xl font-bold text-[#FFFFFF]">
@@ -360,24 +372,39 @@ debugger
                 placeholder="Comparte con nosotros"
                 className="flex-grow bg-transparent focus:outline-none text-gray-700 pl-2"
               />
-
-              <div className="ml-2 hover:cursor-pointer" onClick={(e) => handleCreatePost()} >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+              {textArea !== "" && (
+                <div
+                  className="ml-2 hover:cursor-pointer"
+                  onClick={() => handleCreatePost()}
                 >
-                  <path
-                    d="M3.47779 2.40479C3.21306 2.32789 2.92747 2.40242 2.73407 2.59889C2.54068 2.79536 2.47066 3.08209 2.55174 3.34558L4.98402 11.2505H13.4998C13.914 11.2505 14.2498 11.5863 14.2498 12.0005C14.2498 12.4147 13.914 12.7505 13.4998 12.7505H4.98403L2.55183 20.6551C2.47076 20.9186 2.54077 21.2054 2.73417 21.4018C2.92756 21.5983 3.21315 21.6728 3.47789 21.5959C10.1765 19.6499 16.3972 16.5819 21.923 12.6092C22.119 12.4683 22.2352 12.2416 22.2352 12.0002C22.2352 11.7588 22.119 11.5322 21.923 11.3913C16.3971 7.41866 10.1764 4.3507 3.47779 2.40479Z"
-                    fill="#B577F7"
-                  />
-                </svg>
-              </div>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3.47779 2.40479C3.21306 2.32789 2.92747 2.40242 2.73407 2.59889C2.54068 2.79536 2.47066 3.08209 2.55174 3.34558L4.98402 11.2505H13.4998C13.914 11.2505 14.2498 11.5863 14.2498 12.0005C14.2498 12.4147 13.914 12.7505 13.4998 12.7505H4.98403L2.55183 20.6551C2.47076 20.9186 2.54077 21.2054 2.73417 21.4018C2.92756 21.5983 3.21315 21.6728 3.47789 21.5959C10.1765 19.6499 16.3972 16.5819 21.923 12.6092C22.119 12.4683 22.2352 12.2416 22.2352 12.0002C22.2352 11.7588 22.119 11.5322 21.923 11.3913C16.3971 7.41866 10.1764 4.3507 3.47779 2.40479Z"
+                      fill="#B577F7"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
           </div>
-
+          {postList.length > 0 &&
+            postList.map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-col bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 mb-4 ml-3"
+              >
+                <span className="text-sm font-bold text-[#FDFCFF]">
+                  {item.title}
+                </span>
+                <span className="text-sm font-medium text-[#FDFCFF]"></span>
+              </div>
+            ))}
           <CustomConnectButton />
         </div>
       </div>
