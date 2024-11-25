@@ -44,7 +44,6 @@ export default function Dashboard() {
           qtyPerPage: 10,
           index: 0,
         })
-        debugger
         setPostList(responsePost.arr)
         setMyInfo(response)
       }
@@ -111,13 +110,11 @@ export default function Dashboard() {
         qtyPerPage: 10,
         index: 0,
       })
-      debugger
       setPostList(responsePost.arr)
     } catch (e) {
       console.error(e)
     }
   }
-  console.log(postList, "postList------------")
   return (
     <>
       <Seo

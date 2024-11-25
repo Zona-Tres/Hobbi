@@ -31,7 +31,6 @@ function SearchDialog(params) {
     setSearchResult([]);
     
     try {
-      debugger
       switch(mediaType) {
         case 1: { // Libros
           
@@ -91,7 +90,6 @@ function SearchDialog(params) {
   };
 
   const handleSelectMedia = (element) => {
-    debugger
     setMedia(element);
     setSearchResult([]);
   };
