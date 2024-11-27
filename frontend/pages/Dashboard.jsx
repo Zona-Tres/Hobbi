@@ -42,7 +42,7 @@ export default function Dashboard() {
       if (response) {
         const responsePost = await actor.getPaginatePost({
           qtyPerPage: 10,
-          index: 0,
+          page: 0,
         })
         setPostList(responsePost.arr)
         setMyInfo(response)
@@ -91,6 +91,7 @@ export default function Dashboard() {
     3: "Game",
   }
   const handleCreatePost = async () => {
+    
     setCanisterId(canisterId)
     const actor = await crearActorParaBucket(canisterId)
 
@@ -108,8 +109,10 @@ export default function Dashboard() {
       const response = await actor.createPost(json)
       const responsePost = await actor.getPaginatePost({
         qtyPerPage: 10,
-        index: 0,
+        page: 0,
       })
+      setMedia(null)
+      setTextArea("")
       setPostList(responsePost.arr)
     } catch (e) {
       console.error(e)
@@ -127,7 +130,7 @@ export default function Dashboard() {
         rel={"https://hobbi.me/profile"}
       />
 
-      <div className="flex w-full bg-[#070A10] h-screen">
+      <div className="flex w-full bg-[#070A10] max-h-full min-h-screen">
         <div className="flex flex-col w-[300px] h-full border border-[#0E1425]">
           <div className="h-[86px] flex items-center justify-start pl-10">
             <LogoDark />
@@ -201,74 +204,6 @@ export default function Dashboard() {
                 Inicio
               </span>
             </div>
-
-            <div
-              className="flex gap-4 hover:cursor-pointer"
-              onClick={() => handleClick("/comunidades", 2)}
-            >
-              <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 2 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                    stroke={selected === 2 ? "#B577F7" : "#505CE6"}
-                    strokeWidth="1.125"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <span
-                className={`text-base font-bold ${
-                  selected === 2 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
-              >
-                Comunidades
-              </span>
-            </div>
-
-            <div
-              className="flex gap-4 hover:cursor-pointer"
-              onClick={() => handleClick("/friends", 3)}
-            >
-              <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 3 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                    stroke={selected === 3 ? "#B577F7" : "#505CE6"}
-                    strokeWidth="1.125"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <span
-                className={`text-base font-bold ${
-                  selected === 3 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
-              >
-                Amigos
-              </span>
-            </div>
           </div>
         </div>
 
@@ -278,8 +213,6 @@ export default function Dashboard() {
           </div>
           <div className="flex pt-7 pl-3 h-24">
             <div className="relative -top-14">
-              {" "}
-              {/* Mueve el avatar hacia arriba */}
               <Avatar
                 avatarData={myinfo.avatar}
                 version="square"
@@ -347,9 +280,9 @@ export default function Dashboard() {
             {media && (
               <div className="flex justify-start w-full gap-3">
                 <div className="rounded-xl">
-                  <img src={media.image} width="40px" />
+                  <img src={media.image} width="30px" />
                 </div>
-                <div className="flex flex-col justify-start items-start">
+                <div className="flex flex-col justify-start items-start gap-3">
                   <span className="text-xl font-bold text-[#FFFFFF]">
                     {media.title}
                   </span>
@@ -394,12 +327,17 @@ export default function Dashboard() {
             postList.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 mb-4 ml-3"
+                className="flex  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4"
               >
-                <span className="text-sm font-bold text-[#FDFCFF]">
-                  {item.title}
-                </span>
-                <span className="text-sm font-medium text-[#FDFCFF]"></span>
+                <img src={item.image_url[0]} width="40px" />
+                <div className="flex flex-col gap-2 pl-3">
+                  <span className="text-sm font-bold text-[#FDFCFF]">
+                    {item.title}
+                  </span>
+                  <span className="text-sm font-medium text-[#FDFCFF]">
+                    {item.body}
+                  </span>
+                </div>
               </div>
             ))}
           <CustomConnectButton />

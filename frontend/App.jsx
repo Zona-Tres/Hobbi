@@ -28,7 +28,7 @@ function App() {
     <Routes>
       <Route exact path="/" element={<Home />} />
       <Route path="/connect" element={<Connect2Hobbi />} />
-      <Route path="/profile/:id" element={<Dashboard />} />
+      <Route path="/profile" element={<Dashboard />} />
       <Route path="/friends" element={<Friends />} />
       
       {/* Protected Routes */}

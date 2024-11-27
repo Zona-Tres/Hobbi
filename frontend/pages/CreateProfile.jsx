@@ -174,8 +174,7 @@ function CreateProfile() {
       await hobbi.signUp(profileData).then((result) => {
         
         if (result) {
-          
-         navigate('/profile/{principal}') 
+         navigate(`/profile`) 
         }
       })
     } catch (e) {
