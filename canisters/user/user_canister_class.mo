@@ -59,8 +59,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
-    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {previews = []; lastUpdate = 0};
-    var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 10 minutos 
+    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreviewExtended]} = {previews = []; lastUpdate = 0};
+    var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 1 minuto 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
 
@@ -108,9 +108,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.has<Principal>(blockerUsers, phash, p);
     };
 
-    func extractPostPreview(){
+    func extractPostPreviewExtended(){
         let postArray = Map.toArray<PostID, Post>(posts);
-        let previews = Prim.Array_tabulate<PostPreview>(
+        let previews = Prim.Array_tabulate<PostPreviewExtended>(
             postArray.size(),
             func i = {
                 hashTags = postArray[i].1.hashTags;
@@ -120,6 +120,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 title = postArray[i].1.metadata.title;
                 photoPreview = postArray[i].1.metadata.imagePreview;
                 date = postArray[i].1.metadata.date;
+                body = postArray[i].1.metadata.body;
+                image_url = postArray[i].1.metadata.image_url;
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
@@ -186,23 +188,21 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.toArray<Principal>(hiddenUsers);
     };
 
-    public shared ({ caller }) func getPaginatePost({index: Nat; qtyPerPage: Nat}): async {arr: [PostPreview]; hasNext: Bool}{
+    type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
+
+    public shared ({ caller }) func getPaginatePost({page: Nat; qtyPerPage: Nat}): async {arr: [PostPreviewExtended]; hasNext: Bool}{
         if( Time.now() > tempPostPreviews.lastUpdate + previewsRefreshTime ){
-            print("UpdatePostPreview");
-            extractPostPreview();
+            extractPostPreviewExtended();
         };
-        if(tempPostPreviews.previews.size() >= index * qtyPerPage) {
-            let (length: Nat, hasNext: Bool) = if (tempPostPreviews.previews.size() >= (index + 1)  * qtyPerPage){
-                (qtyPerPage, tempPostPreviews.previews.size() > (index + 1))
+        if(tempPostPreviews.previews.size() >= page * qtyPerPage) {
+            let (length: Nat, hasNext: Bool) = if (tempPostPreviews.previews.size() >= (page + 1)  * qtyPerPage){
+                (qtyPerPage, tempPostPreviews.previews.size() > (page + 1))
             } else {
                 (tempPostPreviews.previews.size() % qtyPerPage, false)
             };
-            print("LenArray: " # debug_show(tempPostPreviews.previews.size()));
-            print("startPosition: " # debug_show(index * qtyPerPage));
-            print("endPosition: " # debug_show(length));
 
-            let arr = Array.subArray<PostPreview>(
-                tempPostPreviews.previews, index * qtyPerPage, length);
+            let arr = Array.subArray<PostPreviewExtended>(
+                tempPostPreviews.previews, page * qtyPerPage, length);
             {arr; hasNext}
         } else {
             {arr = []; hasNext = false}
