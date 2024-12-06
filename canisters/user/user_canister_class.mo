@@ -59,7 +59,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
-    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreviewExtended]} = {previews = []; lastUpdate = 0};
+    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {previews = []; lastUpdate = 0};
     var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 1 minuto 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
@@ -108,9 +108,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.has<Principal>(blockerUsers, phash, p);
     };
 
-    func extractPostPreviewExtended(){
+    func extractPostPreview(){
         let postArray = Map.toArray<PostID, Post>(posts);
-        let previews = Prim.Array_tabulate<PostPreviewExtended>(
+        let previews = Prim.Array_tabulate<PostPreview>(
             postArray.size(),
             func i = {
                 hashTags = postArray[i].1.hashTags;
@@ -188,11 +188,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.toArray<Principal>(hiddenUsers);
     };
 
-    type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
+    // type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
 
-    public shared ({ caller }) func getPaginatePost({page: Nat; qtyPerPage: Nat}): async {arr: [PostPreviewExtended]; hasNext: Bool}{
+    public shared ({ caller }) func getPaginatePost({page: Nat; qtyPerPage: Nat}): async {arr: [PostPreview]; hasNext: Bool}{
         if( Time.now() > tempPostPreviews.lastUpdate + previewsRefreshTime ){
-            extractPostPreviewExtended();
+            extractPostPreview();
         };
         if(tempPostPreviews.previews.size() >= page * qtyPerPage) {
             let (length: Nat, hasNext: Bool) = if (tempPostPreviews.previews.size() >= (page + 1)  * qtyPerPage){
@@ -201,7 +201,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 (tempPostPreviews.previews.size() % qtyPerPage, false)
             };
 
-            let arr = Array.subArray<PostPreviewExtended>(
+            let arr = Array.subArray<PostPreview>(
                 tempPostPreviews.previews, page * qtyPerPage, length);
             {arr; hasNext}
         } else {
@@ -330,6 +330,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             autor = Principal.fromActor(this); 
             postId = newPost.id;
             access = init.access;
+            body = init.body;
+            image_url = init.image_url;
             hashTags = init.hashTags;
             title = newPost.metadata.title;
             photoPreview = newPost.metadata.imagePreview;

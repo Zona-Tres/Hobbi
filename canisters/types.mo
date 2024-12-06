@@ -50,6 +50,8 @@ module {
         postId: Nat;
         title: Text;
         photoPreview: ?Blob;
+        image_url: ?Text;
+        body: Text;
         date: Int;
     };
 
