@@ -12,6 +12,7 @@ import crearActorParaBucket from "../hooks/crearActorParaBucket"
 import Avatar from "../components/Avatar"
 import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
+import Hashtag from "../components/hashtag"
 
 export default function Dashboard() {
   const { id } = useParams()
@@ -54,28 +55,27 @@ export default function Dashboard() {
   }
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
+      setLoading(true);
 
       try {
-        debugger
-        const result = await hobbi.signIn()
+        const result = await hobbi.signIn();
         if (result.Ok) {
           if (result.Ok.name !== username) {
-            setUsername(result.Ok.name)
+            setUsername(result.Ok.name);
           }
-          const newCanisterId = result.Ok.userCanisterId.toText()
-          debugger
-          setCanisterId(newCanisterId)
-          const actor = await crearActorParaBucket(newCanisterId)
 
-          handlePublicInfo(actor)
+          const newCanisterId = result.Ok.userCanisterId.toText();
+          setCanisterId(newCanisterId); 
+
+          const actor = await crearActorParaBucket(newCanisterId);
+          handlePublicInfo(actor);
         }
       } catch (e) {
-        console.error(e)
+        console.error(e);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (firstLoad.current) {
       fetchData()
@@ -96,13 +96,24 @@ export default function Dashboard() {
     const actor = await crearActorParaBucket(canisterId)
 
     try {
+      const hashtagRegex = /#(\w+)/g;
+      const hashtags = [];
+      let match;
+      let cleanedText = textArea;
+
+      while ((match = hashtagRegex.exec(textArea)) !== null) {
+        hashtags.push(match[1]);
+      }
+
+      cleanedText = textArea.replace(hashtagRegex, "").trim();
+
       const json = {
         access: { Public: null },
         title: media?.title,
-        body: textArea,
+        body: cleanedText,
         image: [],
         imagePreview: [],
-        hashTags: [],
+        hashTags: hashtags,
         image_url: [media?.image],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
@@ -113,6 +124,7 @@ export default function Dashboard() {
       })
       setMedia(null)
       setTextArea("")
+      debugger
       setPostList(responsePost.arr)
     } catch (e) {
       console.error(e)
@@ -240,8 +252,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(1)}
                 className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
-                    ? "bg-[#4F239E] text-[#FDFCFF]"
-                    : "bg-[#FDFCFF] text-[#4F239E]"
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 Libros
@@ -249,8 +261,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(2)}
                 className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
-                    ? "bg-[#4F239E] text-[#FDFCFF]"
-                    : "bg-[#FDFCFF] text-[#4F239E]"
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 TV Shows
@@ -258,8 +270,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(3)}
                 className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
-                    ? "bg-[#4F239E] text-[#FDFCFF]"
-                    : "bg-[#FDFCFF] text-[#4F239E]"
+                  ? "bg-[#4F239E] text-[#FDFCFF]"
+                  : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 Videojuegos
@@ -332,6 +344,11 @@ export default function Dashboard() {
                   <span className="text-sm font-medium text-[#FDFCFF]">
                     {item.body}
                   </span>
+                  <div className="flex gap-3 ">
+                  {item.hashTags.length > 1 && (
+                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
+                  )}
+                  </div>
                 </div>
               </div>
             ))}

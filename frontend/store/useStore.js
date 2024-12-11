@@ -18,12 +18,15 @@ const reviver = (key, value) => {
 const useStore = create(
   persist(
     (set) => ({
-      canisterId: 0n, // Asegúrate de que el valor inicial sea un BigInt
+      canisterId: "", // Almacenar como string para evitar problemas con BigInt
       username: "",
       myinfo: {},
-      setCanisterId: (id) => set((state) => (state.canisterId !== id ? { canisterId: id } : {})),
-      setUsername: (username) => set((state) => (state.username !== username ? { username: username } : {})),
-      setMyInfo: (data) => set((state) => (state.myinfo !== data ? { myinfo: data } : {}))
+      setCanisterId: (id) =>
+        set((state) => (state.canisterId !== id ? { canisterId: id } : {})),
+      setUsername: (username) =>
+        set((state) => (state.username !== username ? { username: username } : {})),
+      setMyInfo: (data) =>
+        set((state) => (state.myinfo !== data ? { myinfo: data } : {})),
     }),
     {
       name: "user-storage",
