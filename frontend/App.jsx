@@ -5,8 +5,6 @@ import { InternetIdentity, NFID } from "@connect2ic/core/providers"
 import { Connect2ICProvider } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 
-//Import canister definitions like this:
-import * as nft from "../src/declarations/nft"
 import * as outcall from "../src/declarations/outcall"
 import * as post from "../src/declarations/post"
 import * as hobbi from "../src/declarations/hobbi"

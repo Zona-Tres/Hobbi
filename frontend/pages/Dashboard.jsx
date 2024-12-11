@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [textArea, setTextArea] = useState("")
   const handlePublicInfo = async (actor) => {
     try {
+      debugger
       const response = await actor.getMyInfo()
       if (response) {
         const responsePost = await actor.getPaginatePost({
@@ -56,13 +57,14 @@ export default function Dashboard() {
       setLoading(true)
 
       try {
+        debugger
         const result = await hobbi.signIn()
         if (result.Ok) {
           if (result.Ok.name !== username) {
             setUsername(result.Ok.name)
           }
           const newCanisterId = result.Ok.userCanisterId.toText()
-
+          debugger
           setCanisterId(newCanisterId)
           const actor = await crearActorParaBucket(newCanisterId)
 
@@ -91,8 +93,6 @@ export default function Dashboard() {
     3: "Game",
   }
   const handleCreatePost = async () => {
-    
-    setCanisterId(canisterId)
     const actor = await crearActorParaBucket(canisterId)
 
     try {
@@ -176,9 +176,8 @@ export default function Dashboard() {
               onClick={() => handleClick("/inicio", 1)}
             >
               <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 1 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
+                className={`flex items-center justify-center h-6 w-6 rounded-md ${selected === 1 ? "bg-[#B577F7]" : "bg-[#0E1425]"
+                  }`}
               >
                 <svg
                   width="16"
@@ -197,9 +196,8 @@ export default function Dashboard() {
                 </svg>
               </div>
               <span
-                className={`text-base font-bold ${
-                  selected === 1 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
+                className={`text-base font-bold ${selected === 1 ? "text-[#B577F7]" : "text-[#505CE6]"
+                  }`}
               >
                 Inicio
               </span>
@@ -241,31 +239,28 @@ export default function Dashboard() {
             <div className="flex gap-4 mt-3 ml-3">
               <div
                 onClick={() => setSelectedTheme(1)}
-                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 1
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Libros
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
-                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 2
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 TV Shows
               </div>
               <div
                 onClick={() => setSelectedTheme(3)}
-                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 3
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Videojuegos
               </div>
