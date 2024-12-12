@@ -39,7 +39,6 @@ export default function Dashboard() {
   const [textArea, setTextArea] = useState("")
   const handlePublicInfo = async (actor) => {
     try {
-      debugger
       const response = await actor.getMyInfo()
       if (response) {
         const responsePost = await actor.getPaginatePost({
@@ -124,7 +123,6 @@ export default function Dashboard() {
       })
       setMedia(null)
       setTextArea("")
-      debugger
       setPostList(responsePost.arr)
     } catch (e) {
       console.error(e)
