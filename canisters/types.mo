@@ -46,13 +46,16 @@ module {
     public type PostPreview = {
         hashTags: [Text];
         access: Access;
-        autor: Principal; 
+        autor: Principal;
+        userName: Text; 
         postId: Nat;
         title: Text;
         photoPreview: ?Blob;
         image_url: ?Text;
         body: Text;
         date: Int;
+        likes: Nat;
+        disLikes: Nat;
     };
 
     public type Event = {

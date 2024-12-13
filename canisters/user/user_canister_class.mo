@@ -122,6 +122,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 date = postArray[i].1.metadata.date;
                 body = postArray[i].1.metadata.body;
                 image_url = postArray[i].1.metadata.image_url;
+                likes = Set.size(postArray[i].1.likes);
+                disLikes = Set.size(postArray[i].1.disLikes);
+                userName = name;
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
@@ -327,7 +330,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         };
         ignore Map.put<PostID, Post>(posts, nhash, lastPostID, newPost);
         let newPostEvent = {
-            autor = Principal.fromActor(this); 
+            autor = Principal.fromActor(this);
+            userName = name;
             postId = newPost.id;
             access = init.access;
             body = init.body;
@@ -336,6 +340,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             title = newPost.metadata.title;
             photoPreview = newPost.metadata.imagePreview;
             date;
+            likes = 0;
+            disLikes = 0;
         };
         
         ignore emitEvent(#NewPost(newPostEvent));

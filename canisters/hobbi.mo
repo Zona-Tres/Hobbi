@@ -42,14 +42,14 @@ actor {
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     var maxFeedGeneralPost = 200;
-    var feedUpdateRefreshTime = 1; // En minutos
-    var rankingUpdateRefresh = 1; //en minutos
+    var feedUpdateRefreshTime = 25; // En seundos
+    var rankingUpdateRefresh = 25; //en segundos
     var maxEventsPerUser = 20;
     // var lastUpdateFeed = 0;
 
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
-    stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass
+    stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass PROBAR
     stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
@@ -110,7 +110,7 @@ actor {
     };
 
     func updateGeneralFeed() {
-        if ( not (now() > generalFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000)) {
+        if ( not (now() > generalFeed.lastUpdateFeed + feedUpdateRefreshTime * 1_000_000_000)) {
             return
         };
         print("Actualizando el feed general");
@@ -158,7 +158,7 @@ actor {
     };
 
     func updateRankingHashTags() {  //TODO revisar otras opciones menos costosas computacionalmente
-        if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 60_000_000_000)){
+        if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 10_000_000_000)){
             return
         };
 
@@ -226,7 +226,7 @@ actor {
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
         print("In putEvetFunction");
-        putHashTags(event);
+        
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         switch myEvents {
@@ -252,6 +252,15 @@ actor {
             }
         }
     };
+   
+    // public shared ({ caller }) func pushReactionToPostPreview(): async Bool{
+    //     assert(Set.has<Principal>(usersCanister, phash, caller));
+    //     let eventOfUser = switch (Map.get<Principal, [Event]>(events, phash, caller)) {
+    //         case null {
+
+    //         }
+    //     }
+    // };
 
     public shared ({ caller }) func removeEvent(_date: Int) {
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
@@ -461,7 +470,7 @@ actor {
     };
   
   /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
-    
+ 
     public shared ({ caller }) func report(report: Report): async {#Ok: Text; #Err}{
         let informer = Map.get<Principal, Profile>(users, phash, caller);
         let accused = Map.get<CanisterID, Profile>(users, phash, report.accused);
