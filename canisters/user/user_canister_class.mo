@@ -447,23 +447,28 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
   ////////////////////////////////// Follow & favorites ////////////////////////////////////////////
-    public shared ({ caller }) func followMe(): async Bool {
-        // Si el caller no es un canisterID se esta llamando desde el frontend directamente
-        let (canisterID, principal) = if(Principal.toText(caller).size() != 27){
-           (await HOBBI_CANISTER.getUserCanisterId(caller), ?caller); 
+
+    func identifyCaller(p: Principal): async {userCID: ?Principal; userPrincipal: ?Principal }{
+        if(Principal.toText(p).size() != 27){
+            {userCID = await HOBBI_CANISTER.getUserCanisterId(p); userPrincipal= ?p}; 
         } else {
-            (?caller, await HOBBI_CANISTER.getPrincipalFromCanisterId(caller));        
-        };    
-        switch canisterID {
+            {userCID = ?p; userPrincipal = await HOBBI_CANISTER.getPrincipalFromCanisterId(p)};        
+        };
+    };
+
+    public shared ({ caller }) func followMe(): async Bool {
+        let {userCID; userPrincipal} = await identifyCaller(caller);
+        print(debug_show(userCID, userPrincipal));
+        switch userCID {
             case null { false };
             case (?canisterID) {
                 let remoteCaller = actor(Principal.toText(canisterID)): actor {
                     followBack: shared () -> async Bool
                 };
-                switch principal {
+                switch userPrincipal {
                     case null { false };
-                    case (?principal) {
-                        ignore Set.put<Principal>(followers, phash, principal);
+                    case (?userPrincipal) {
+                        ignore Set.put<Principal>(followers, phash, userPrincipal);
                         INDEXER_CANISTER.updateFollowers(Set.size(followers));
                         await remoteCaller.followBack();
                     }
@@ -473,28 +478,23 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     };
 
     public shared ({ caller }) func unFollowMe(): async Bool{
-        let (canisterID, principal) = if(Principal.toText(caller).size() != 27){
-           (await HOBBI_CANISTER.getUserCanisterId(caller), ?caller); 
-        } else {
-            (?caller, await HOBBI_CANISTER.getPrincipalFromCanisterId(caller));        
-        };
-        switch canisterID {
+        let {userCID; userPrincipal} = await identifyCaller(caller);
+        switch userCID {
             case null { false };
-            case (?canisterID) {
-                let remoteCaller = actor(Principal.toText(canisterID)): actor {
+            case (?userCID) {
+                let remoteCaller = actor(Principal.toText(userCID)): actor {
                     unFollowBack: shared () -> async Bool
                 };
-                switch principal {
+                switch userPrincipal {
                     case null { false };
-                    case (?principal) {
-                        ignore Set.remove<Principal>(followers, phash, principal);
+                    case (?userPrincipal) {
+                        ignore Set.remove<Principal>(followers, phash, userPrincipal);
                         INDEXER_CANISTER.updateFollowers(Set.size(followers));
                         await remoteCaller.unFollowBack();
                     }
                 }    
             }
         }
-
     };
 
     public shared ({ caller }) func followBack(): async Bool {
