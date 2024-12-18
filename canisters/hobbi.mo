@@ -50,7 +50,7 @@ actor {
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
     stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass PROBAR
-    stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
+    stable let principalByCID = Map.new<Principal, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
     
@@ -98,7 +98,7 @@ actor {
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
     public query func isUserActorClass(p: Principal):async Bool {
-        Set.has<Principal>(usersCanister, phash, p);
+        Map.has<Principal, Principal>(principalByCID, phash, p);
     };
 
     func isUser(p: Principal): Bool{
@@ -319,7 +319,7 @@ actor {
             openCauses = [];
         };
         ignore Map.put(users, phash, caller, newUser); //TODO Creo que con la implementación del indexerUser ya no es necesario
-        ignore Set.put(usersCanister, phash, Principal.fromActor(actorClass));
+        ignore Map.put(principalByCID, phash, Principal.fromActor(actorClass), caller);
         let userDataPreview: UserPreviewInfo = {
             name = data.name;
             thumbnail = data.thumbnail;
@@ -367,6 +367,10 @@ actor {
                 ?Principal.fromActor(user.actorClass)
             }
         } 
+    };
+
+    public query func getPrincipalFromCanisterId(cID: CanisterID): async ?Principal {
+        Map.get<Principal, Principal>(principalByCID, phash, cID)
     };
 
     func updateFeedForUser(u: Principal, followeds: [Principal]) {

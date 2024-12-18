@@ -10,6 +10,10 @@ import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Prim "mo:⛔";
 import { print } "mo:base/Debug";
+
+// TODO usuarios favoritos
+// TODO hashtags favoritos
+// TODO usuarios sugeridos
   
 shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = this {
 
@@ -53,6 +57,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable let posts = Map.new<PostID, Post>();
     stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id
     stable let followeds = Set.new<UserClassCanisterId>(); //Los seguidos se identifican por su canister id
+    stable let favorites = Set.new<UserClassCanisterId>(); //Los favoritos se identifican por su canister id
     stable let blockedUsers = Set.new<Principal>();
     stable let blockerUsers = Set.new<Principal>();
     stable let hiddenUsers = Set.new<Principal>();
@@ -73,6 +78,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
         getUserCanisterId: shared (Principal) -> async ?Principal;
+        getPrincipalFromCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
         removeEvent: shared (Int) -> async ();
     };
@@ -80,6 +86,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
         updateFollowers: shared (Nat) -> ();
         updateFolloweds: shared (Nat) -> ();
+        getFollowedsPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
+        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo]
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -178,12 +186,26 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
         assert(isOwner(caller) or isHobbi(caller));
-        Set.toArray<UserClassCanisterId>(followeds)
+        Set.toArray<UserClassCanisterId>(followeds);
     };
 
     public shared query ({ caller }) func getFollowers(): async [Principal]{
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(followers);
+    };
+
+    public shared ({ caller }) func getFollowedsPreview(): async [GlobalTypes.UserPreviewInfo and {isFavorite: Bool}] {
+        assert(isOwner(caller) or isHobbi(caller));
+        let result = await INDEXER_CANISTER.getFollowedsPreview(Set.toArray(followeds));
+        Prim.Array_tabulate<GlobalTypes.UserPreviewInfo and {isFavorite: Bool}>(
+            result.size(),
+            func x = {result[x] with isFavorite = _isFavorite(result[x].userCanisterId)}
+        )
+    };
+
+    public shared ({ caller }) func getFollowersPreview(): async [GlobalTypes.UserPreviewInfo]{
+        assert(isOwner(caller) or isHobbi(caller));
+        await INDEXER_CANISTER.getFollowersPreview(Set.toArray(followers));
     };
 
     public shared ({ caller }) func getHiddenUsers():async [Principal] {
@@ -424,20 +446,55 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
-  //////////////////////////////////////// Follow //////////////////////////////////////////////////
+  ////////////////////////////////// Follow & favorites ////////////////////////////////////////////
     public shared ({ caller }) func followMe(): async Bool {
-        let callerActorClassId = await HOBBI_CANISTER.getUserCanisterId(caller);
-        switch callerActorClassId {
+        // Si el caller no es un canisterID se esta llamando desde el frontend directamente
+        let (canisterID, principal) = if(Principal.toText(caller).size() != 27){
+           (await HOBBI_CANISTER.getUserCanisterId(caller), ?caller); 
+        } else {
+            (?caller, await HOBBI_CANISTER.getPrincipalFromCanisterId(caller));        
+        };    
+        switch canisterID {
             case null { false };
-            case (?callerActorClassId) {
-                let remoteCaller = actor(Principal.toText(callerActorClassId)): actor {
+            case (?canisterID) {
+                let remoteCaller = actor(Principal.toText(canisterID)): actor {
                     followBack: shared () -> async Bool
                 };
-                ignore Set.put<Principal>(followers, phash, caller);
-                INDEXER_CANISTER.updateFollowers(Set.size(followers));
-                await remoteCaller.followBack();
+                switch principal {
+                    case null { false };
+                    case (?principal) {
+                        ignore Set.put<Principal>(followers, phash, principal);
+                        INDEXER_CANISTER.updateFollowers(Set.size(followers));
+                        await remoteCaller.followBack();
+                    }
+                }    
             }
         }
+    };
+
+    public shared ({ caller }) func unFollowMe(): async Bool{
+        let (canisterID, principal) = if(Principal.toText(caller).size() != 27){
+           (await HOBBI_CANISTER.getUserCanisterId(caller), ?caller); 
+        } else {
+            (?caller, await HOBBI_CANISTER.getPrincipalFromCanisterId(caller));        
+        };
+        switch canisterID {
+            case null { false };
+            case (?canisterID) {
+                let remoteCaller = actor(Principal.toText(canisterID)): actor {
+                    unFollowBack: shared () -> async Bool
+                };
+                switch principal {
+                    case null { false };
+                    case (?principal) {
+                        ignore Set.remove<Principal>(followers, phash, principal);
+                        INDEXER_CANISTER.updateFollowers(Set.size(followers));
+                        await remoteCaller.unFollowBack();
+                    }
+                }    
+            }
+        }
+
     };
 
     public shared ({ caller }) func followBack(): async Bool {
@@ -446,11 +503,59 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
+
+    public shared ({ caller }) func unFollowBack(): async Bool {
+        assert(await HOBBI_CANISTER.isUserActorClass(caller));
+        ignore Set.remove<Principal>(followeds, phash, caller);
+        INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
+        true
+    };
+
+    
+    public shared ({ caller }) func addFavorite(p: Principal): async {#Ok; #Err: Text} {
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
+        if(not (await HOBBI_CANISTER.isUserActorClass(p))){
+            return #Err("The principal provided does not correspond to a User Actor Class")
+        };
+        
+        // if(not Set.has<Principal>(followeds, phash, p)){ return #Err("You must follow the user before you can add them as a favorite.") };
+        let remoteUser = actor(Principal.toText(p)): actor {
+            followMe: shared () -> async Bool
+        };
+        if(await remoteUser.followMe()){
+           ignore Set.put<Principal>(favorites, phash, p);
+            #Ok 
+        } else {
+            #Err("Unexpected error")
+        }     
+    };
+
+    public shared ({ caller }) func removeFavorite(p: Principal): async {#Ok; #Err: Text}{
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
+        Set.delete<Principal>(favorites, phash, p);
+        #Ok
+    };
+
+    func _isFavorite(p: Principal): Bool {Set.has<Principal>(favorites, phash, p)};
+
+    public shared query ({ caller }) func isFavorite(p: Principal): async Bool{
+        if(not isOwner(caller)) { return false};
+        _isFavorite(p)
+    };
+    
+    public shared ({ caller }) func getFavoritesPreview(): async [GlobalTypes.UserPreviewInfo]{
+        await INDEXER_CANISTER.getFollowedsPreview(Set.toArray(favorites));
+    };
+
+    public shared query ({ caller }) func getFavorites(): async [Principal]{
+        Set.toArray(favorites);
+    };
+
   
   ////////////////////////////////////////////// Reactions /////////////////////////////////////////
 
     public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
-
+        //Revisar acceso
         let remoteUserCanister = actor(Principal.toText(userClass)): actor{
             receiveReaction: shared (PostID, Reaction )-> async Bool;
         };

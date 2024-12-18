@@ -27,7 +27,7 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         #Ok
     };
 
-    public query func getFollowedsPreview(usersPIDs: [Principal]): async [UserPreviewInfo]{
+    public query func getFollowersPreview(usersPIDs: [Principal]): async [UserPreviewInfo]{
         let bufferPreviews = Buffer.fromArray<UserPreviewInfo>([]);
         for(userPID in usersPIDs.vals()){
             let canisterId = Map.get<Principal, CanisterId>(canisterIdsUser, phash, userPID);
@@ -46,7 +46,22 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         Buffer.toArray<UserPreviewInfo>(bufferPreviews);
     };
 
-    public query func getFollowersPreview(usersCIDs: [CanisterId]): async [UserPreviewInfo] {
+    public shared ({ caller }) func updateFollowers(followers: Nat): async Bool{
+        let userPreview = Map.get<CanisterId, UserPreviewInfo>(userPreviews, phash, caller);
+        switch userPreview {
+            case null { false };
+            case (?userPreview) {
+                ignore Map.put<CanisterId, UserPreviewInfo>(
+                    userPreviews, 
+                    phash, 
+                    caller, 
+                    { userPreview with followers});
+                true
+            }
+        }
+    };
+
+    public query func getFollowedsPreview(usersCIDs: [CanisterId]): async [UserPreviewInfo] {
         // TODO devolver una paginacion: 20 previsualizaciones mas un booleano que indique si hay mas
         let bufferPreviews = Buffer.fromArray<UserPreviewInfo>([]);
         for(usersCID in usersCIDs.vals()){
