@@ -517,8 +517,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         if(not (await HOBBI_CANISTER.isUserActorClass(p))){
             return #Err("The principal provided does not correspond to a User Actor Class")
         };
-        
-        // if(not Set.has<Principal>(followeds, phash, p)){ return #Err("You must follow the user before you can add them as a favorite.") };
         let remoteUser = actor(Principal.toText(p)): actor {
             followMe: shared () -> async Bool
         };
@@ -544,10 +542,12 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     };
     
     public shared ({ caller }) func getFavoritesPreview(): async [GlobalTypes.UserPreviewInfo]{
+        if(not isOwner(caller)) { return []};
         await INDEXER_CANISTER.getFollowedsPreview(Set.toArray(favorites));
     };
 
     public shared query ({ caller }) func getFavorites(): async [Principal]{
+        if(not isOwner(caller)) { return []};
         Set.toArray(favorites);
     };
 

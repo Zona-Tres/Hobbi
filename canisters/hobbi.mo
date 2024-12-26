@@ -16,8 +16,9 @@ import Char "mo:base/Char";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Rand "mo:random/Rand";
+import ManagerCanister "./interfaces/ic-management-interface";
 
-actor {
+shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
     type Profile = {
         principal: Principal;
@@ -310,6 +311,8 @@ actor {
             owner = caller; 
             indexerUserCanister = Principal.fromActor(indexerUserCanister)
         });
+        // Add dfx deployer hobby as a controller for the actor class to facilitate future updates
+        await ManagerCanister.addController(Principal.fromActor(actorClass), DEPLOYER_HOBBI);
         let newUser: Profile = {
             principal = caller;
             actorClass; 
@@ -598,10 +601,10 @@ actor {
     //             };              
     //         }
     //     };
-    // }
+    // };
+    // TODO. Aceptar o rechazar acusación y finalmente informar resolución
 }
 
-    // TODO. Aceptar o rechazar acusación y finalmente informar resolución
     
 
 
