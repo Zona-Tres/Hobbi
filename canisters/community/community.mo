@@ -7,13 +7,16 @@ import GlobalTypes "../types";
 import Set "mo:map/Set";
 import { phash; nhash } "mo:map/Map";
 import Map "mo:map/Map";
- 
-shared ({ caller }) actor class Community(params: Types.InitCommunityParams) {
+
+// Los Canister de comunidades se despliegan desde el canister HOBBI
+shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityParams) { 
 
   //////////////////////////////////////////         Types         ////////////////////////////////////
     public type Post = UserTypes.Post and {publisher: {principal: Principal; name: Text}};
     public type PostDataInit = UserTypes. PostDataInit;
+    type UpdatableDataPost = UserTypes.UpdatableDataPost;
     public type PostPreview = GlobalTypes.PostPreview;
+    public type PostResponse = UserTypes.PostResponse;
     type Feed = GlobalTypes.Feed;
 
   /////////////////////////////////////////  Variables generales  /////////////////////////////////////
@@ -125,7 +128,7 @@ shared ({ caller }) actor class Community(params: Types.InitCommunityParams) {
         });
     };
 
-  ////////////////////////////////////      Create Post      //////////////////////////////////////////
+  ////////////////////////////////////      CRUD Post      //////////////////////////////////////////
 
     public shared ({ caller }) func createPost(init: PostDataInit): async (){
         let userName = Map.get<Principal, Text>(members, phash, caller);
@@ -150,6 +153,49 @@ shared ({ caller }) actor class Community(params: Types.InitCommunityParams) {
                 );   
             }
         };
+    };
+
+    public shared ({ caller }) func readPost(postId: Nat): async {#Ok: PostResponse; #Err: Text} {
+        if(accessAllowed(caller)) { return #Err("You are not allowed to see this content") };
+        let post = Map.get<Nat, Post>(posts, nhash, postId);
+        switch post {
+            case null { return #Err("Post not found") };
+            case (?post) {
+                #Ok({
+                    id = post.id;
+                    metadata = post.metadata;
+                    likes = Set.size<Principal>(post.likes);
+                    disLikes = Set.size<Principal>(post.disLikes);
+                    comments = post.comments;
+                });
+            }
+        }
+    };
+
+    public shared ({ caller }) func updatePost(postId: Nat, postUpdated: UpdatableDataPost): async {#Ok: PostResponse; #Err: Text}{
+        let post = Map.get<Nat, Post>(posts, nhash, postId);
+        switch post {
+            case null { return #Err("Post not found") };
+            case (?post) {
+                if(post.publisher.principal != caller) {
+                    return #Err("You are not the autor of this post");
+                };
+                let updatedPost = {post with metadata = {post.metadata with postUpdated}};
+                ignore Map.put<Nat, Post>(
+                    posts,
+                    nhash,
+                    postId,
+                    updatedPost
+                );
+                #Ok({
+                    id = updatedPost.id;
+                    metadata = updatedPost.metadata;
+                    likes = Set.size<Principal>(updatedPost.likes);
+                    disLikes = Set.size<Principal>(updatedPost.disLikes);
+                    comments = updatedPost.comments;
+                }); 
+            }
+        }
     };
 
     

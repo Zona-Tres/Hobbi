@@ -14,13 +14,18 @@ module {
         #Game
     };
 
-    public type PostDataInit = {
+    public type UpdatableDataPost = {
         access: Access;
         title : Text;
         body: Text; //Eventulmente puede ser en formato MD
-        image : ?Blob; //Imagen preferentemente menor a 1 MB
-        imagePreview : ?Blob; //Imagen para previsualización. Reducción de la original a 64 KB aprox 
         hashTags: [Text];
+
+    };
+
+
+    public type PostDataInit = UpdatableDataPost and {
+        image : ?Blob; //Imagen preferentemente menor a 1 MB
+        imagePreview : ?Blob; //Imagen para previsualización. Reducción de la original a 64 KB aprox  
         image_url : ?Text;
         media_type : MediaType
     };
@@ -59,6 +64,7 @@ module {
         comments: [Comment];
     };
 
+    
     public type PostResponse = {  
         id : Nat; 
         metadata : PostMetadata;
