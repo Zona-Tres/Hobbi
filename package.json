@@ -2,6 +2,8 @@
   "name": "starter_1",
   "version": "0.0.0",
   "scripts": {
+    "deploy-local": "dfx generate; dfx deploy hobbi; dfx deploy internet_identity --specified-id rdmx6-jaaaa-aaaaa-aaadq-cai; dfx deploy assets",
+    "deploy-ic": "dfx generate; dfx deploy hobbi --ic; dfx deploy assets --ic",
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview"

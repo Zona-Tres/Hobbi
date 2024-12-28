@@ -93,6 +93,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
         Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
         indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
+        await ManagerCanister.addController(Principal.fromActor(indexerUserCanister), DEPLOYER_HOBBI);
         print("Canister indexer desplegado en " # Principal.toText(Principal.fromActor(indexerUserCanister)))
     };
 
@@ -311,7 +312,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             owner = caller; 
             indexerUserCanister = Principal.fromActor(indexerUserCanister)
         });
-        // Add dfx deployer hobby as a controller for the actor class to facilitate future updates
+        // Add dfx deployer hobby as a controller for the user actor class to facilitate future updates
         await ManagerCanister.addController(Principal.fromActor(actorClass), DEPLOYER_HOBBI);
         let newUser: Profile = {
             principal = caller;

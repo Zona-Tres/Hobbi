@@ -8,6 +8,10 @@
       "main": "canisters/user/user_canister_class.mo",
       "type": "motoko"
     },
+    "community_no_deploy": {
+      "main": "canisters/community/community.mo",
+      "type": "motoko"
+    },
     "outcall": {
       "main": "canisters/outcall/main.mo",
       "type": "motoko"
