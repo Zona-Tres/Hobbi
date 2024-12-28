@@ -198,5 +198,25 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         }
     };
 
+    public shared ({ caller }) func deletePost(postId: Nat): async {#Ok; #Err: Text} {
+        let post = Map.remove<Nat, Post>(posts, nhash, postId);
+        switch post {
+            case null { #Err("Post not found") };
+            case (?post) {
+                if(post.publisher.principal != caller) {
+                    ignore Map.put<Nat, Post>(posts, nhash, postId, post);
+                    return #Err("You are not the autor of this post");
+                };
+                postPreviewArray := Array.filter<PostPreview>(
+                    postPreviewArray,
+                    func p = p.postId != postId
+                );
+                #Ok
+            }
+        }
+    };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     
 }
