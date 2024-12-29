@@ -1,6 +1,7 @@
 import Prim "mo:⛔";
 import { now } "mo:base/Time";
 import Array "mo:base/Array";
+import Principal "mo:base/Principal";
 import Types "./types";
 import UserTypes  "../user/types";
 import GlobalTypes "../types";
@@ -12,6 +13,7 @@ import Map "mo:map/Map";
 shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityParams) { 
 
   //////////////////////////////////////////         Types         ////////////////////////////////////
+
     public type Post = UserTypes.Post and {publisher: {principal: Principal; name: Text}};
     public type PostDataInit = UserTypes. PostDataInit;
     type UpdatableDataPost = UserTypes.UpdatableDataPost;
@@ -24,17 +26,19 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     stable var name = params.name;
     stable let dateCreation = params.dateCreation;
     stable var manifest = "";
+    stable var logo: ?Blob = null;
     stable var coverImage: ?Blob = null;
     
   ////////////////////////////////////////  Variables operativas //////////////////////////////////////
 
     stable let admins = Set.fromIter<Principal>(params.admins.vals(), phash);
+    stable let membersRequsts = Map.new<Principal, Text>();
     stable let members = Map.new<Principal, Text>();
     stable let posts = Map.new<Nat, Post>();
     stable var lastPostId = 0;
-    stable var visibility = false; // Revisar junto con visibilityContent
-    stable var visibilityContent = false; 
-    stable var accessUnderAprobal = false;
+    stable var visibility = true; // Revisar junto con visibilityContent
+    stable var visibilityContent = true; 
+    stable var accessUnderApprobal = false;
     stable var seo: [Text] = [];
     stable var postPreviewArray: [PostPreview] = []; 
 
@@ -43,15 +47,15 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     func getPostQtyfromRange(start: Int, end: Int): Nat { // Probar
         var qty = 0;
         var index = 0;
-        while (index < postPreviewArray.size() or postPreviewArray[index].date > start) {
+        while (index < postPreviewArray.size() and postPreviewArray[index].date > start) {
             if(postPreviewArray[index].date < end) { qty += 1 };
             index += 1;
         };
         return qty
     };
 
-    func isAdmin(caller: Principal): Bool {
-        return Set.has<Principal>(admins, phash, caller);
+    func isAdmin(p: Principal): Bool {
+        return Set.has<Principal>(admins, phash, p);
     };
 
     func accessAllowed(p: Principal): Bool {
@@ -97,19 +101,27 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         #Ok
     };
 
-    public shared ({ caller }) func settings(setings_: Types.CommunitySettings): async {#Ok; #Err: Text}{
+    public shared ({ caller }) func setLogo(logo_: Blob): async {#Ok; #Err: Text} {
         if(not isAdmin(caller)) { return #Err("You are not an admin") };
-        visibility := setings_.visibility;
-        visibilityContent := setings_.visibilityContent;
-        accessUnderAprobal := setings_.accessUnderAprobal;
-        seo := setings_.seo;
+        logo := ?logo_;
+        #Ok
+    };
+
+    public shared ({ caller }) func config(config_: Types.CommunityConfig): async {#Ok; #Err: Text}{
+        if(not isAdmin(caller)) { return #Err("You are not an admin") };
+        visibility := config_.visibility;
+        visibilityContent := config_.visibilityContent;
+        accessUnderApprobal := config_.accessUnderApprobal;
+        seo := config_.seo;
         #Ok
     };
 
   /////////////////////////////////////        Getters        /////////////////////////////////////////
     
-    public func getCommunityInfo(): async Types.CommunityInfo {
+    public query func getCommunityInfo(): async Types.CommunityInfo {
         return {
+            logo;
+            coverImage;
             name;
             manifest;
             dateCreation;
@@ -118,8 +130,8 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         };
     };
 
-    public shared ({ caller }) func getPaginatePosts({page: Nat; qtyPerPage: Nat}): async {#Ok: Feed; #Err: Text}{
-        if(accessAllowed(caller)) { return #Err("You are not allowed to see this content") };
+    public shared query({ caller }) func getPaginatePosts({page: Nat; qtyPerPage: Nat}): async {#Ok: Feed; #Err: Text}{
+        if(not accessAllowed(caller)) { return #Err("You are not allowed to see this content") };
         if(page * qtyPerPage > postPreviewArray.size()) { return #Err("No more posts") };
         let sizePage = if((page + 1) * qtyPerPage > postPreviewArray.size()) {postPreviewArray.size() % qtyPerPage} else {qtyPerPage}; 
         #Ok({
@@ -128,12 +140,56 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         });
     };
 
-  ////////////////////////////////////      CRUD Post      //////////////////////////////////////////
+  ////////////////////////////////////   Users Management    //////////////////////////////////////////
 
-    public shared ({ caller }) func createPost(init: PostDataInit): async (){
+    public shared ({ caller }) func joinCommunity(): async {#Ok: Text; #Err: Text} {
+        let hobbiCanister = actor(Principal.toText(HOBBI)): actor { 
+            getNameUser: shared (Principal) -> async ?Text
+        };
+        let name = await hobbiCanister.getNameUser(caller);
+        switch name {
+            case null { return #Err("User not found") };
+            case (?name) {
+                if(accessUnderApprobal) {
+                    ignore Map.put<Principal, Text>(membersRequsts, phash, caller, name);
+                    return #Ok("Application for admission received")
+                } else {
+                    ignore Map.put<Principal, Text>(members, phash, caller, name);
+                    return #Ok("Welcome to the community")
+                };
+            }
+        }    
+    };
+
+    public shared ({ caller }) func approveMember(u: Principal): async {#Ok; #Err: Text} {
+        if(not isAdmin(caller)) { return #Err("You are not an admin") };
+        let name = Map.remove<Principal, Text>(membersRequsts, phash, u);
+        switch name {
+            case null { return #Err("User not found") };
+            case (?name) {
+                ignore Map.remove<Principal, Text>(membersRequsts, phash, u);
+                ignore Map.put<Principal, Text>(members, phash, u, name);
+                #Ok
+            }
+        }
+    };
+
+    public shared ({ caller }) func leaveCommunity(): async {#Ok; #Err: Text} {
+        ignore Map.remove<Principal, Text>(members, phash, caller);
+        #Ok
+    };
+
+    public shared ({ caller }) func removeUser(user: Principal): async {#Ok; #Err: Text} {
+        if(not isAdmin(caller)) { return #Err("You are not an admin") };
+        ignore Map.remove<Principal, Text>(members, phash, user);
+        #Ok
+    };
+  ///////////////////////////////////       CRUD Post       ///////////////////////////////////////////
+
+    public shared ({ caller }) func createPost(init: PostDataInit): async {#Ok: Nat; #Err: Text} {
         let userName = Map.get<Principal, Text>(members, phash, caller);
         switch userName {
-            case null { return };
+            case null { #Err("Caller is not member") };
             case (?name) {
                 let post: Post = {
                     publisher = {principal = caller; name};
@@ -150,13 +206,14 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
                 postPreviewArray := Prim.Array_tabulate<PostPreview>(
                     postPreviewArray.size() + 1, 
                     func i = if(i == postPreviewArray.size()) {postPreview} else {postPreviewArray[i]}
-                );   
+                );
+                #Ok(lastPostId)
             }
         };
     };
 
-    public shared ({ caller }) func readPost(postId: Nat): async {#Ok: PostResponse; #Err: Text} {
-        if(accessAllowed(caller)) { return #Err("You are not allowed to see this content") };
+    public shared query ({ caller }) func readPost(postId: Nat): async {#Ok: PostResponse; #Err: Text} {
+        if(not accessAllowed(caller)) { return #Err("You are not allowed to see this content") };
         let post = Map.get<Nat, Post>(posts, nhash, postId);
         switch post {
             case null { return #Err("Post not found") };
@@ -216,7 +273,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         }
     };
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     
 }

@@ -6,14 +6,20 @@ module {
         name: Text;
     };
 
-    public type CommunitySettings = {
+    public type CommunityConfig = {
         seo: [Text]; // Para indexar en motores de busqueda del canister Hobbi
         visibility: Bool; 
         visibilityContent: Bool;
-        accessUnderAprobal: Bool;    
+        accessUnderApprobal: Bool;    
     };
 
-    public type CommunityInfo = {
+    public type CommunityVisualSettings = {
+        logo: ?Blob;
+        coverImage: ?Blob;
+        // css: ?Text;
+    };
+
+    public type CommunityInfo = CommunityVisualSettings  and {
         name: Text;
         dateCreation: Int;
         manifest: Text;

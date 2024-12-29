@@ -3,6 +3,7 @@ import Set "mo:map/Set";
 
 import { phash; thash; nhash } "mo:map/Map";
 import User "./user/user_canister_class";
+import Community "./community/community_canister_class";
 import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
@@ -29,6 +30,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
+    type Community = Community.Community;
+
     type PaginateFeed = Types.Feed;
     type PostPreview = Types.PostPreview;
     type Feed = {arr: [PostPreview]; lastUpdateFeed: Int};
@@ -51,6 +54,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
     stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass PROBAR
+    stable let communities = Map.new<Principal, Community>(); // Text solo para probar. Eventualmente se guardaria el actor class
     stable let principalByCID = Map.new<Principal, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
@@ -109,6 +113,10 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     func isAdmin(p: Principal): Bool {
         Set.has<Principal>(admins, phash, p);
+    };
+
+    func isCommunity(p: Principal ): Bool {
+        Map.has<Principal, Community>(communities, phash, p)
     };
 
     func updateGeneralFeed() {
@@ -377,6 +385,14 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         Map.get<Principal, Principal>(principalByCID, phash, cID)
     };
 
+    public shared query ({ caller })  func getNameUser(u: Principal): async ?Text {
+        if(not isCommunity(caller)) { return null };
+        switch (Map.get<Principal, Profile>(users, phash, u)){
+            case null { null };
+            case ( ?user ) { ?user.name}
+        };
+    };
+
     func updateFeedForUser(u: Principal, followeds: [Principal]) {
         let bufferPreviews = Buffer.fromArray<PostPreview>([]);
         for(f in followeds.vals()){
@@ -477,7 +493,27 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         rankingHashTag.arr
     };
   
-  /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
+  ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
+
+    public shared ({ caller }) func createCommunity(name: Text /*, dataTransaction:{to: Account; amount: Nat} */): async {#Ok: Principal; #Err: Text} {
+        if(not isUser(caller)) {return #Err("Caller is not User")};
+        //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
+        let params = {
+            name; 
+            admins = [caller]; 
+            dateCreation = now() 
+        };
+        // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
+        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+        let community = await Community.Community(params);
+        let communityPID = Principal.fromActor(community);
+        ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
+        // TODO Agregar referencia a la comunidad en el user Actor class del admin
+        #Ok(communityPID);
+
+    };
+
+  ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////
  
     public shared ({ caller }) func report(report: Report): async {#Ok: Text; #Err}{
         let informer = Map.get<Principal, Profile>(users, phash, caller);
