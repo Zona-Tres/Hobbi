@@ -53,8 +53,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
-    stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass PROBAR
-    stable let communities = Map.new<Principal, Community>(); // Text solo para probar. Eventualmente se guardaria el actor class
+    stable let users = Map.new<Principal, Profile>(); 
+    stable let communities = Map.new<Principal, Community>(); 
     stable let principalByCID = Map.new<Principal, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
@@ -235,7 +235,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        print("In putEvetFunction");
+        print("In putEventFunction");
         
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);

@@ -9,7 +9,7 @@
       "type": "motoko"
     },
     "community_no_deploy": {
-      "main": "canisters/community/community.mo",
+      "main": "canisters/community/community_canister_class.mo",
       "type": "motoko"
     },
     "outcall": {

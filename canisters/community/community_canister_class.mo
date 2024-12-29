@@ -117,6 +117,16 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     };
 
   /////////////////////////////////////        Getters        /////////////////////////////////////////
+
+    public shared query ({ caller }) func getUsers(): async [(Principal, Text)]{
+        assert(isAdmin(caller));
+        Map.toArray<Principal, Text>(members);
+    };
+
+    public shared query ({ caller }) func getAdmins(): async [Principal] {
+        assert(isAdmin(caller));
+        Set.toArray<Principal>(admins);
+    };
     
     public query func getCommunityInfo(): async Types.CommunityInfo {
         return {
@@ -161,6 +171,10 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         }    
     };
 
+    public shared ({ caller }) func getIncomingMembers(): async [(Principal, Text)]{
+        Map.toArray<Principal, Text>(membersRequsts)
+    };
+
     public shared ({ caller }) func approveMember(u: Principal): async {#Ok; #Err: Text} {
         if(not isAdmin(caller)) { return #Err("You are not an admin") };
         let name = Map.remove<Principal, Text>(membersRequsts, phash, u);
@@ -191,16 +205,17 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         switch userName {
             case null { #Err("Caller is not member") };
             case (?name) {
+                lastPostId += 1;
                 let post: Post = {
                     publisher = {principal = caller; name};
-                    id = Map.size(posts);
+                    id = lastPostId;
                     metadata = {init with date = now(); progress = #Started};
                     likes = Set.new<Principal>();
                     disLikes = Set.new<Principal>();
                     hashTags = init.hashTags;
                     comments = [];
                 };    
-                lastPostId += 1;
+                
                 ignore Map.put<Nat, Post>(posts, nhash, lastPostId, post);
                 let postPreview = getPostPreview(post);
                 postPreviewArray := Prim.Array_tabulate<PostPreview>(
