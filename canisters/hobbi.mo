@@ -47,7 +47,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     var maxFeedGeneralPost = 200;
-    var feedUpdateRefreshTime = 25; // En seundos
+    var feedUpdateRefreshTime = 25; // En segundos
     var rankingUpdateRefresh = 25; //en segundos
     var maxEventsPerUser = 20;
     // var lastUpdateFeed = 0;
@@ -61,17 +61,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
-
-    // public func getEvents():async [Event]{
-    //     let b = Buffer.fromArray<Event>([]);
-    //     for (el in Map.vals<UserClassCanisterId, [Event]>(events)){
-    //         for(e in el.vals()){
-    //             b.add(e)
-    //         }
-    //     };
-    //     Buffer.toArray(b) 
-    // };
-
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
     stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
@@ -172,15 +161,11 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 10_000_000_000)){
             return
         };
-
-        print("In updateRankingHashTags Function");
-        var arrayHashTagsCounter = Map.toArray(hashTagsMap);
-             
+        var arrayHashTagsCounter = Map.toArray(hashTagsMap);    
         arrayHashTagsCounter := Array.sort<(Text,Nat)>(
             arrayHashTagsCounter, 
             func (a, b) = if (a.1 < b.1){#greater} else {#less}
         );
-        print("HashTagsMap" # debug_show(arrayHashTagsCounter));
         let size = if (rankingQtyHahsTags >= arrayHashTagsCounter.size()){
             arrayHashTagsCounter.size()
         } else {
@@ -191,23 +176,15 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             arr; 
             lastUpdate = now()
         };
-        print("Out updateRankingHashTags Function");
     };
 
     func putHashTags(event: Event) {
-        print("In putHashTags Function");
-        print("HashTagMap size: " # Nat.toText((Map.size<Text, Nat>(hashTagsMap))));
-        if (Map.size<Text, Nat>(hashTagsMap) > 2){ 
-            updateRankingHashTags() 
-        };
-
+        if (Map.size<Text, Nat>(hashTagsMap) > 2){ updateRankingHashTags() };
         switch event {
             case (#NewPost(post)) {
-                print("Extrayendo hashtags del post");
                 for(hashtag in post.hashTags.vals()){
                     let normalizedHashTag = normalizeHashTag(hashtag);
                     let updateCounter: Nat = pushHashTagToMapCounter(normalizedHashTag);
-                    print("\tHashTag: " # normalizedHashTag # "\tContador -> " # Nat.toText(updateCounter));
                     var index = 0;
                     var inserted = false;
                 };
@@ -239,6 +216,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         print("In putEventFunction");  
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
+        putHashTags(event);
         switch myEvents {
             case null {
                 print("Inicializando mi lista de eventos y registrando evento");
@@ -283,48 +261,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         };
         ignore Map.put<Principal, [Event]>(events, phash, caller, Buffer.toArray(tempBufferEvent))
     };
-
-    // public shared ({ caller }) func pushReactionToPostPreview(postId: Nat, reaction: Reaction, user: Principal ): async Bool{
-    //     print("Agregando reaccion al PostPreview");
-    //     assert(await isUserActorClass(caller));
-    //     print("El caller es un actor class: Ok");
-    //     switch (Map.get<Principal, [Event]>(events, phash, user)) {
-    //         case null {
-    //             false
-    //         };
-    //         case (?userEvents) {
-    //             let tempBufferEvent = Buffer.fromArray<Event>([]);
-    //             for (e in userEvents.vals()){
-    //                 switch e {
-    //                     case (#NewPost(p)){
-    //                         if(p.postId == postId) {
-    //                             switch reaction {
-    //                                 case (#Like) {
-    //                                     let likes = p.likes + 1;
-    //                                     let eventUpdated = #NewPost(
-    //                                         { p with likes }
-    //                                     );
-    //                                     tempBufferEvent.add(eventUpdated)
-    //                                 };
-    //                                 case (#Dislike) {
-    //                                     let disLikes = p.disLikes + 1;
-    //                                     let eventUpdated = #NewPost(
-    //                                         { p with disLikes }
-    //                                     );
-    //                                     tempBufferEvent.add(eventUpdated)
-    //                                 };
-    //                                 case _ {tempBufferEvent.add(e)}
-    //                             }      
-    //                         }
-    //                     };
-    //                     case _ {tempBufferEvent.add(e)}
-    //                 }
-    //             };
-    //             ignore Map.put<Principal, [Event]>(events, phash, user, Buffer.toArray<Event>(tempBufferEvent));
-    //             false
-    //         }
-    //     }
-    // };
 
     public shared ({ caller }) func removeEvent(_date: Int) {
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
@@ -447,7 +383,17 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         };
     };
 
-    func updateFeedForUser(u: Principal, followeds: [Principal]) {
+    func updateFeedForUser(u: Principal, followeds: [Principal]): Feed {
+        let feed = Map.get<Principal, Feed>(personlizedFeeds, phash, u);
+        switch feed {
+            case (?feed) {
+                if ( not (now() > feed.lastUpdateFeed + feedUpdateRefreshTime * 1_000_000_000)) {
+                    return feed;
+                };
+            };
+            case _ { };
+        };
+        print("Actualizando feed personalizado");
         let bufferPreviews = Buffer.fromArray<PostPreview>([]);
         for(f in followeds.vals()){
             for(event in getEventsFromUser(f).vals()){
@@ -462,7 +408,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             }
         };
         let feedUpdate = {arr = Buffer.toArray(bufferPreviews); lastUpdateFeed = now()};
-        ignore Map.put<Principal, Feed>(personlizedFeeds, phash, u, feedUpdate)
+        ignore Map.put<Principal, Feed>(personlizedFeeds, phash, u, feedUpdate);
+        feedUpdate
     };
 
 
@@ -472,37 +419,15 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         switch user {
             case (?user) {
                 let followeds = await user.actorClass.getFolloweds();
-                var myRawFeed = Map.get<Principal, Feed>(personlizedFeeds, phash, caller); 
-                if(followeds.size() > 0) {
-                    switch myRawFeed {
-                        case null { 
-                            updateFeedForUser(caller, followeds);
-                            print("Inicializando el feed Personalizado")
-                        };
-                        case (?myRawFeed) {
-                            if( now() >= myRawFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000){ 
-                                updateFeedForUser(caller, followeds);
-                                print("Actualizando el feed Personalizado")
-                            } 
-                        }
-                    };
-                };
-                myRawFeed := Map.get<Principal, Feed>(personlizedFeeds, phash, caller);
-
-                switch myRawFeed {
-                    case null { getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)};
-                    case (?myRawFeed) {
-
-                        if (myRawFeed.arr.size() > page * qtyPerPage){
-                            {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
-                            with hasNext = true};
-                        } else {
-                            let bias = myRawFeed.arr.size()/qtyPerPage;
-                            print("Get My Feed: " # Nat.toText(page - bias));
-                            getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
-                        };
-                    }
-                };     
+                let myRawFeed = updateFeedForUser(caller, followeds);
+                if (myRawFeed.arr.size() > page * qtyPerPage){
+                    {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
+                    with hasNext = true};
+                } else {
+                    let bias = myRawFeed.arr.size()/qtyPerPage;
+                    print("Get My Feed: " # Nat.toText(page - bias));
+                    getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
+                };           
             };
             case _ {
                 getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)
