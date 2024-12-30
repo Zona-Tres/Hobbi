@@ -35,6 +35,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     type PaginateFeed = Types.Feed;
     type PostPreview = Types.PostPreview;
     type Feed = {arr: [PostPreview]; lastUpdateFeed: Int};
+    type Reaction = Types.Reaction;
 
     type CanisterID = Principal;
     type UserPreviewInfo = Types.UserPreviewInfo;
@@ -260,17 +261,48 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, updteEventList); 
                 true;
             }
-        }
+        };
     };
    
-    // public shared ({ caller }) func pushReactionToPostPreview(): async Bool{
-    //     assert(Set.has<Principal>(usersCanister, phash, caller));
-    //     let eventOfUser = switch (Map.get<Principal, [Event]>(events, phash, caller)) {
-    //         case null {
-
-    //         }
-    //     }
-    // };
+    public shared ({ caller }) func pushReactionToPostPreview(postId: Nat, reaction: Reaction, user: Principal ): async Bool{
+        assert(await isUserActorClass(caller));
+        let eventOfUser = switch (Map.get<Principal, [Event]>(events, phash, caller)) {
+            case null {
+                false
+            };
+            case (?userEvents) {
+                let tempBufferEvent = Buffer.fromArray<Event>([]);
+                for (e in userEvents.vals()){
+                    switch e {
+                        case (#NewPost(p)){
+                            if(p.postId == postId) {
+                                switch reaction {
+                                    case (#Like) {
+                                        let likes = p.likes + 1;
+                                        let eventUpdated = #NewPost(
+                                            { p with likes }
+                                        );
+                                        tempBufferEvent.add(eventUpdated)
+                                    };
+                                    case (#Dislike) {
+                                        let disLikes = p.disLikes + 1;
+                                        let eventUpdated = #NewPost(
+                                            { p with disLikes }
+                                        );
+                                        tempBufferEvent.add(eventUpdated)
+                                    };
+                                    case _ {tempBufferEvent.add(e)}
+                                }      
+                            }
+                        };
+                        case _ {tempBufferEvent.add(e)}
+                    }
+                };
+                ignore Map.put<Principal, [Event]>(events, phash, caller, Buffer.toArray<Event>(tempBufferEvent));
+                false
+            }
+        }
+    };
 
     public shared ({ caller }) func removeEvent(_date: Int) {
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
@@ -361,12 +393,12 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     
   ////////////////////////////////////////    Getters functions       /////////////////////////////////////////////
 
-    public shared query ({ caller }) func getMyCanisterId(): async Principal{
+    public shared query ({ caller }) func getMyCanisterId(): async Text{
         let user = Map.get<Principal, Profile>(users, phash, caller);
         switch user {
-            case null { assert false; NULL_ADDRESS};
+            case null {""};
             case (?user){
-                Principal.fromActor(user.actorClass);
+                Principal.toText(Principal.fromActor(user.actorClass));
             }
         }
     };

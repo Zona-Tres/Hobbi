@@ -81,6 +81,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         getPrincipalFromCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
         removeEvent: shared (Int) -> async ();
+        pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
     };
 
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
@@ -560,6 +561,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             receiveReaction: shared (PostID, Reaction )-> async Bool;
         };
         let response = await remoteUserCanister.receiveReaction(postId, r);
+        // No anda ... Probar
+        ignore await HOBBI_CANISTER.pushReactionToPostPreview(postId, r, userClass);
         ignore emitEvent(#React({reaction = r; postId; user = userClass})); //Mis seguidores sabran de mis reacciones sobre otros post :D
         response;
     };

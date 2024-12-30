@@ -19,6 +19,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     type UpdatableDataPost = UserTypes.UpdatableDataPost;
     public type PostPreview = GlobalTypes.PostPreview;
     public type PostResponse = UserTypes.PostResponse;
+    public type Reaction = GlobalTypes.Reaction;
     type Feed = GlobalTypes.Feed;
 
   /////////////////////////////////////////  Variables generales  /////////////////////////////////////
