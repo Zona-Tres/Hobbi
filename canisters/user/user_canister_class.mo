@@ -80,8 +80,10 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         getUserCanisterId: shared (Principal) -> async ?Principal;
         getPrincipalFromCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
+        putEvent: shared (Event) -> async Bool;
         removeEvent: shared (Int) -> async ();
         pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
+        updateReactions: shared ({postId: Nat; likes: Nat; disLikes: Nat}) -> ();
     };
 
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
@@ -367,7 +369,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             disLikes = 0;
         };
         
-        ignore emitEvent(#NewPost(newPostEvent));
+        ignore HOBBI_CANISTER.putEvent(#NewPost(newPostEvent));
         lastPostID;     
     };
 
@@ -439,12 +441,12 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   /////////////////////// Intercomunicacion con el canister principal //////////////////////////////
 
-    func emitEvent(event: Event): async Bool {
-        let remoteMainCanister = actor(Principal.toText(HOBBI)): actor{
-            putEvent: shared (Event) -> async Bool
-        };
-        await remoteMainCanister.putEvent(event);
-    };
+    // func emitEvent(event: Event): async Bool {
+    //     let remoteMainCanister = actor(Principal.toText(HOBBI)): actor{
+    //         putEvent: shared (Event) -> async Bool
+    //     };
+    //     await remoteMainCanister.putEvent(event);
+    // };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
   ////////////////////////////////// Follow & favorites ////////////////////////////////////////////
@@ -555,21 +557,23 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
   
   ////////////////////////////////////////////// Reactions /////////////////////////////////////////
 
-    public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
-        //Revisar acceso
-        let remoteUserCanister = actor(Principal.toText(userClass)): actor{
+    public shared ({caller}) func sendReaction({postId: PostID; canisterId: Principal; reaction: Reaction}):async Bool {
+        assert(isOwner(caller));
+        let remoteUserCanister = actor(Principal.toText(canisterId)): actor{
             receiveReaction: shared (PostID, Reaction )-> async Bool;
         };
-        let response = await remoteUserCanister.receiveReaction(postId, r);
-        // No anda ... Probar
-        ignore await HOBBI_CANISTER.pushReactionToPostPreview(postId, r, userClass);
-        ignore emitEvent(#React({reaction = r; postId; user = userClass})); //Mis seguidores sabran de mis reacciones sobre otros post :D
+        print("enviado reaccion al UserCanisterClass remoto");
+        let response = await remoteUserCanister.receiveReaction(postId, reaction);
+
+        ignore HOBBI_CANISTER.putEvent(#React({reaction = reaction; postId; user = canisterId})); 
         response;
     };
 
-    public shared ({caller}) func receiveReaction(id: PostID, r: Reaction):async Bool {
-
-        let post = Map.get<PostID, Post>(posts, nhash, id);
+    public shared ({caller}) func receiveReaction(postId: PostID, r: Reaction):async Bool {
+        print("Recibiendo reaccion en el UserCanisterClass remoto");
+        assert(await HOBBI_CANISTER.isUserActorClass(caller));
+        print("El caller es un UserCanisterClass: Ok");
+        let post = Map.get<PostID, Post>(posts, nhash, postId);
         switch post{
             case null { return false};
             case (?post){              
@@ -577,19 +581,27 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     case (#Like) {
                         ignore Set.put<Principal>(post.likes, phash, caller);
                         ignore Set.remove<Principal>(post.disLikes, phash, caller);
-                        return true;
                     };
                     case (#Dislike) {
                         ignore Set.put<Principal>(post.disLikes, phash, caller);
+                        ignore Set.remove<Principal>(post.likes, phash, caller);  
+                    };
+                    case (#Clear) {
                         ignore Set.remove<Principal>(post.likes, phash, caller);
-                        return true;
+                        ignore Set.remove<Principal>(post.disLikes, phash, caller);
                     };
                     case (#Custom(_customReact)) {
                         //TODO Ver qué hacer con las reacciones custom
-                        return true
                     }
                 };
-                
+                HOBBI_CANISTER.updateReactions(
+                    {
+                        postId;
+                        likes = Set.size(post.likes); 
+                        disLikes = Set.size(post.disLikes)
+                    }
+                );
+                true
             }
         }      
     };

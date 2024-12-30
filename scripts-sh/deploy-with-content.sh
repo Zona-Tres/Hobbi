@@ -1,11 +1,11 @@
 #!/bin/bash
-dfx identity new deployerHobbi
-dfx identity use deployerHobbi
+dfx identity new 0000deployerHobbi
+dfx identity use 0000deployerHobbi
 dfx deploy hobbi
 
 # Usuario Peter Capusoto
-dfx identity new peterCapusoto
-dfx identity use peterCapusoto
+dfx identity new 0001Test
+dfx identity use 0001Test
 dfx canister call hobbi signUp '(record {
     name="Peter Capusoto"; 
     email=null; 
@@ -14,19 +14,51 @@ dfx canister call hobbi signUp '(record {
     thumbnail = opt blob "11/22/33/44";
 })'
 
-export peterCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
-# Define los valores dinámicos
-titles=("Mi primer posteo" "Mi segundo posteo" "Mi tercer posteo")
-bodies=("Este es el cuerpo del primer posteo" "Este es el segundo cuerpo" "Aquí está el tercero")
-hashTagsSets=("vec {\"Arte\"; \"Cultura\"}" "vec {\"Tecnología\"; \"Ciencia\"}" "vec {\"Poe\"; \"Terror\"}")
+export i0001CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+titles=(
+  "El verdadero poder del mate"
+  "Cuando los fideos se rebelan"
+  "La épica batalla contra el despertador"
+  "El arte de hablar con la heladera"
+  "Los héroes anónimos del asado"
+  "Cuando el WiFi decide tomarse vacaciones"
+  "El misticismo del pan duro en la mesa"
+  "Manual para sobrevivir a un lunes"
+  "La conspiración detrás del papel higiénico"
+  "Reflexiones profundas en el baño"
+)
+bodies=(
+  "Un buen mate no arregla la vida, pero al menos te da algo caliente mientras todo se cae a pedazos."
+  "Los fideos no se cocinan solos, pero parece que se divierten viéndote buscar el colador."
+  "El despertador no odia tus sueños, solo odia que existas."
+  "Hablar con la heladera no es raro, lo raro es cuando te responde."
+  "El asado no se quema solo, necesita la ayuda de un genio con una birra en la mano."
+  "El WiFi siempre se corta justo cuando estás por enviar ese meme que cambiaría el mundo."
+  "El pan duro es como un amigo de la infancia: difícil de masticar, pero imposible de tirar."
+  "Un lunes es como la resaca de una fiesta que no disfrutaste."
+  "El papel higiénico siempre desaparece cuando más lo necesitás. Coincidencia... no lo creo."
+  "En el baño, uno encuentra la paz, la inspiración y a veces... la iluminación filosófica."
+)
+hashTagsSets=(
+  "vec {\"Humor\"; \"Mate\"; \"Sobrevivir\"}"
+  "vec {\"Comida\"; \"Fideos\"; \"Colador\"}"
+  "vec {\"Despertador\"; \"Sueños\"; \"Drama\"}"
+  "vec {\"Heladera\"; \"Diálogos\"; \"Reflexiones\"}"
+  "vec {\"Asado\"; \"Héroes\"; \"Birra\"}"
+  "vec {\"WiFi\"; \"Meme\"; \"Conexión\"}"
+  "vec {\"PanDuro\"; \"Amistad\"; \"Recuerdos\"}"
+  "vec {\"Lunes\"; \"Sobrevivir\"; \"Resaca\"}"
+  "vec {\"PapelHigiénico\"; \"Conspiración\"; \"Urgencia\"}"
+  "vec {\"Baño\"; \"Filosofía\"; \"Inspiración\"}"
+)
 
 for i in "${!titles[@]}"; do
   title="${titles[i]}"
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $peterCID createPost "(
+  dfx canister call $i0001CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";
@@ -42,8 +74,8 @@ done
 
 # Usuario Alejandro Dolina
 
-dfx identity new alejandroDolina
-dfx identity use alejandroDolina
+dfx identity new 0002Test
+dfx identity use 0002Test
 dfx canister call hobbi signUp '(record {
     name="Alejandro Dolina"; 
     email=null; 
@@ -51,7 +83,7 @@ dfx canister call hobbi signUp '(record {
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
-export alejandroCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+export i0002CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 titles=(
   "El misterio de las cosas simples"
   "La melancolía de los relojes detenidos"
@@ -88,8 +120,7 @@ for i in "${!titles[@]}"; do
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $alejandroCID createPost "(
+  dfx canister call $i0002CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";
@@ -104,9 +135,9 @@ for i in "${!titles[@]}"; do
 done
 
 
-# Musica
-dfx identity new fede
-dfx identity use fede
+# Chopin
+dfx identity new 0003Test
+dfx identity use 0003Test
 dfx canister call hobbi signUp '(record {
     name="Fedeico Chopin"; 
     email=null; 
@@ -114,7 +145,7 @@ dfx canister call hobbi signUp '(record {
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
-export fedeCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+export i0003CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
 titles=(
   "El alma de las cuerdas vibrantes"
@@ -158,8 +189,7 @@ for i in "${!titles[@]}"; do
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $fedeCID createPost "(
+  dfx canister call $i0003CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";
@@ -173,9 +203,9 @@ for i in "${!titles[@]}"; do
   )"
 done
 
-# Videojuegos
-dfx identity new gamer
-dfx identity use gamer
+# Gamer
+dfx identity new 0004Test
+dfx identity use 0004Test
 dfx canister call hobbi signUp '(record {
     name="Juan Gamer"; 
     email=null; 
@@ -183,7 +213,7 @@ dfx canister call hobbi signUp '(record {
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
-export gamerCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+export i0004CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
 titles=(
   "Exploradores de mundos virtuales"
@@ -226,8 +256,7 @@ for i in "${!titles[@]}"; do
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $gamerCID createPost "(
+  dfx canister call $i0004CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";
@@ -241,9 +270,9 @@ for i in "${!titles[@]}"; do
   )"
 done
 
-#Cine
-dfx identity new alfred
-dfx identity use alfred
+# Hitchkoock
+dfx identity new 0005Test
+dfx identity use 0005Test
 dfx canister call hobbi signUp '(record {
     name="Alfred Hitchkook"; 
     email=null; 
@@ -251,7 +280,7 @@ dfx canister call hobbi signUp '(record {
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
-export alfredCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+export i0005CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
 titles=(
   "La magia detrás de la pantalla"
@@ -294,8 +323,7 @@ for i in "${!titles[@]}"; do
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $alfredCID createPost "(
+  dfx canister call $i0005CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";
@@ -311,8 +339,8 @@ done
 
 
 # Tecnologia
-dfx identity new apple
-dfx identity use apple
+dfx identity new 0006Test
+dfx identity use 0006Test
 dfx canister call hobbi signUp '(record {
     name="Apple"; 
     email=null; 
@@ -320,7 +348,7 @@ dfx canister call hobbi signUp '(record {
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
-export appleCID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+export i0006CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 titles=(
   "El futuro está en nuestras manos"
   "Innovaciones que cambian el mundo"
@@ -363,8 +391,7 @@ for i in "${!titles[@]}"; do
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
   
-  # Ejecuta el comando con los valores dinámicos
-  dfx canister call $appleCID createPost "(
+  dfx canister call $i0006CID createPost "(
     record {
       access = variant { Public };
       title = \"$title\";

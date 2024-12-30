@@ -34,6 +34,7 @@ module {
     public type Reaction = {
         #Like;
         #Dislike;
+        #Clear;
         #Custom: Text //Emogi
     };
 

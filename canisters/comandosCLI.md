@@ -18,7 +18,7 @@ ver info de Alice
 
 cear Post
 ```
-dfx canister call br5f7-7uaaa-aaaaa-qaaca-cai createPost '(record {
+dfx canister call by6od-j4aaa-aaaaa-qaadq-cai createPost '(record {
     access = variant{Public};
     title ="Mi terceer Posteo en Hobbi. Soy Usuario LEV";
     hashTags = vec {"Poe"; "Terror"};

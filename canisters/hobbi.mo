@@ -56,7 +56,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     stable let users = Map.new<Principal, Profile>(); 
     stable let communities = Map.new<Principal, Community>(); 
-    stable let principalByCID = Map.new<Principal, Principal>();   //Control y verificacion de procedencia de llamadas
+    stable let principalByCID = Map.new<UserClassCanisterId, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
     
@@ -104,8 +104,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
-    public query func isUserActorClass(p: Principal):async Bool {
-        Map.has<Principal, Principal>(principalByCID, phash, p);
+    public query func isUserActorClass(p: CanisterID):async Bool {
+        Map.has<UserClassCanisterId, Principal>(principalByCID, phash, p);
     };
 
     func isUser(p: Principal): Bool{
@@ -236,8 +236,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        print("In putEventFunction");
-        
+        print("In putEventFunction");  
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         switch myEvents {
@@ -263,46 +262,69 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             }
         };
     };
-   
-    public shared ({ caller }) func pushReactionToPostPreview(postId: Nat, reaction: Reaction, user: Principal ): async Bool{
+
+    public shared ({ caller }) func updateReactions( {postId: Nat; likes: Nat; disLikes: Nat}): async () {
+        print("Actualizando reacciones del PostPreview; Llamada desde canister " # Principal.toText(caller));
         assert(await isUserActorClass(caller));
-        let eventOfUser = switch (Map.get<Principal, [Event]>(events, phash, caller)) {
-            case null {
-                false
-            };
-            case (?userEvents) {
-                let tempBufferEvent = Buffer.fromArray<Event>([]);
-                for (e in userEvents.vals()){
-                    switch e {
-                        case (#NewPost(p)){
-                            if(p.postId == postId) {
-                                switch reaction {
-                                    case (#Like) {
-                                        let likes = p.likes + 1;
-                                        let eventUpdated = #NewPost(
-                                            { p with likes }
-                                        );
-                                        tempBufferEvent.add(eventUpdated)
-                                    };
-                                    case (#Dislike) {
-                                        let disLikes = p.disLikes + 1;
-                                        let eventUpdated = #NewPost(
-                                            { p with disLikes }
-                                        );
-                                        tempBufferEvent.add(eventUpdated)
-                                    };
-                                    case _ {tempBufferEvent.add(e)}
-                                }      
-                            }
-                        };
-                        case _ {tempBufferEvent.add(e)}
-                    }
+        print(Principal.toText(caller) # " es un UserActorClass");
+        let callerEvents = getEventsFromUser(caller);
+        let tempBufferEvent = Buffer.fromArray<Event>([]);
+        for (e in callerEvents.vals()){
+            switch e {
+                case (#NewPost(p)){
+                    if(p.postId == postId) {
+                        tempBufferEvent.add(#NewPost({p with likes; disLikes}))
+                    } else {
+                        tempBufferEvent.add(e)
+                    };
                 };
-                ignore Map.put<Principal, [Event]>(events, phash, caller, Buffer.toArray<Event>(tempBufferEvent));
-                false
+                case _ {tempBufferEvent.add(e)}
             }
-        }
+        };
+        ignore Map.put<Principal, [Event]>(events, phash, caller, Buffer.toArray(tempBufferEvent))
     };
+
+    // public shared ({ caller }) func pushReactionToPostPreview(postId: Nat, reaction: Reaction, user: Principal ): async Bool{
+    //     print("Agregando reaccion al PostPreview");
+    //     assert(await isUserActorClass(caller));
+    //     print("El caller es un actor class: Ok");
+    //     switch (Map.get<Principal, [Event]>(events, phash, user)) {
+    //         case null {
+    //             false
+    //         };
+    //         case (?userEvents) {
+    //             let tempBufferEvent = Buffer.fromArray<Event>([]);
+    //             for (e in userEvents.vals()){
+    //                 switch e {
+    //                     case (#NewPost(p)){
+    //                         if(p.postId == postId) {
+    //                             switch reaction {
+    //                                 case (#Like) {
+    //                                     let likes = p.likes + 1;
+    //                                     let eventUpdated = #NewPost(
+    //                                         { p with likes }
+    //                                     );
+    //                                     tempBufferEvent.add(eventUpdated)
+    //                                 };
+    //                                 case (#Dislike) {
+    //                                     let disLikes = p.disLikes + 1;
+    //                                     let eventUpdated = #NewPost(
+    //                                         { p with disLikes }
+    //                                     );
+    //                                     tempBufferEvent.add(eventUpdated)
+    //                                 };
+    //                                 case _ {tempBufferEvent.add(e)}
+    //                             }      
+    //                         }
+    //                     };
+    //                     case _ {tempBufferEvent.add(e)}
+    //                 }
+    //             };
+    //             ignore Map.put<Principal, [Event]>(events, phash, user, Buffer.toArray<Event>(tempBufferEvent));
+    //             false
+    //         }
+    //     }
+    // };
 
     public shared ({ caller }) func removeEvent(_date: Int) {
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);   
