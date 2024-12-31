@@ -427,14 +427,19 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         switch user {
             case (?user) {
                 let followeds = await user.actorClass.getFolloweds();
+                let followedsSet = Set.fromIter<UserClassCanisterId>(followeds.vals(), phash);
                 let myRawFeed = updateFeedForUser(caller, followeds);
                 if (myRawFeed.arr.size() > page * qtyPerPage){
                     {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
                     with hasNext = true};
                 } else {
                     let bias = myRawFeed.arr.size()/qtyPerPage;
-                    print("Get My Feed: " # Nat.toText(page - bias));
-                    getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
+                    // TODO Omitir posts incluidos en el feed personalizado
+                    let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
+                        generalFeed.arr,
+                        func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
+                    );
+                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias, qtyPerPage)  
                 };           
             };
             case _ {
