@@ -1,11 +1,11 @@
 #!/bin/bash
-dfx identity new 0000deployerHobbi
-dfx identity use 0000deployerHobbi
+dfx identity new 0000TestUser0
+dfx identity use 0000TestUser0
 dfx deploy hobbi
 
 # Usuario Peter Capusoto
-dfx identity new 0001Test
-dfx identity use 0001Test
+dfx identity new 0000TestUser1
+dfx identity use 0000TestUser1
 dfx canister call hobbi signUp '(record {
     name="Peter Capusoto"; 
     email=null; 
@@ -74,8 +74,8 @@ done
 
 # Usuario Alejandro Dolina
 
-dfx identity new 0002Test
-dfx identity use 0002Test
+dfx identity new 0000TestUser2
+dfx identity use 0000TestUser2
 dfx canister call hobbi signUp '(record {
     name="Alejandro Dolina"; 
     email=null; 
@@ -136,8 +136,8 @@ done
 
 
 # Chopin
-dfx identity new 0003Test
-dfx identity use 0003Test
+dfx identity new 0000TestUser3
+dfx identity use 0000TestUser3
 dfx canister call hobbi signUp '(record {
     name="Fedeico Chopin"; 
     email=null; 
@@ -204,8 +204,8 @@ for i in "${!titles[@]}"; do
 done
 
 # Gamer
-dfx identity new 0004Test
-dfx identity use 0004Test
+dfx identity new 0000TestUser4
+dfx identity use 0000TestUser4
 dfx canister call hobbi signUp '(record {
     name="Juan Gamer"; 
     email=null; 
@@ -271,8 +271,8 @@ for i in "${!titles[@]}"; do
 done
 
 # Hitchkoock
-dfx identity new 0005Test
-dfx identity use 0005Test
+dfx identity new 0000TestUser5
+dfx identity use 0000TestUser5
 dfx canister call hobbi signUp '(record {
     name="Alfred Hitchkook"; 
     email=null; 
@@ -339,8 +339,8 @@ done
 
 
 # Tecnologia
-dfx identity new 0006Test
-dfx identity use 0006Test
+dfx identity new 0000TestUser6
+dfx identity use 0000TestUser6
 dfx canister call hobbi signUp '(record {
     name="Apple"; 
     email=null; 
