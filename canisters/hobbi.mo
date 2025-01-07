@@ -4,6 +4,7 @@ import Set "mo:map/Set";
 import { phash; thash; nhash } "mo:map/Map";
 import User "./user/user_canister_class";
 import Community "./community/community_canister_class";
+// import CommunityTypes = "./community/types";
 import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
@@ -16,6 +17,7 @@ import Text "mo:base/Text";
 import Char "mo:base/Char";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
+import Blob "mo:base/Blob";
 import Rand "mo:random/Rand";
 import ManagerCanister "./interfaces/ic-management-interface";
 
@@ -221,18 +223,15 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        print("In putEventFunction");  
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         putHashTags(event);
         switch myEvents {
             case null {
-                print("Inicializando mi lista de eventos y registrando evento");
                 ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, [event]);
                 true;
             };
             case (?eventsList) {
-                print("Actualizando mi lista de eventos");
                 var updteEventList: [Event] = []; 
                 if(eventsList.size() == maxEventsPerUser){
                     updteEventList := Prim.Array_tabulate<Event>(
@@ -420,7 +419,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         feedUpdate
     };
 
-
     public shared ({ caller }) func getMyFeed({page: Nat; qtyPerPage: Nat}): async PaginateFeed {
         updateGeneralFeed();
         let user = Map.get<Principal, Profile>(users, phash, caller);
@@ -434,7 +432,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     with hasNext = true};
                 } else {
                     let bias = myRawFeed.arr.size()/qtyPerPage;
-                    // TODO Omitir posts incluidos en el feed personalizado
                     let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
                         generalFeed.arr,
                         func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
@@ -487,13 +484,15 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
-    public shared ({ caller }) func createCommunity(name: Text /*, dataTransaction:{to: Account; amount: Nat} */): async {#Ok: Principal; #Err: Text} {
+    public shared ({ caller }) func createCommunity({name: Text; description: Text}): async {#Ok: Principal; #Err: Text} {
         if(not isUser(caller)) {return #Err("Caller is not User")};
         //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
         let params = {
-            name; 
+            name;
+            description;
             admins = [caller]; 
-            dateCreation = now() 
+            dateCreation = now();
+            indexer_canister = Principal.fromActor(indexerUserCanister);
         };
         // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
         Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
@@ -501,8 +500,28 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         let communityPID = Principal.fromActor(community);
         ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
         // TODO Agregar referencia a la comunidad en el user Actor class del admin
-        #Ok(communityPID);
 
+        //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
+        let communityPreview: Types.CommunityPreviewInfo = {
+            params with
+            logo = Blob.fromArray([0]);
+            membersQty = 0;
+            postsLastWeek = 0;
+            canisterId = communityPID;
+            visibility = true;
+        };
+        ignore await indexerUserCanister.putCommunity(communityPreview);
+        //////////////////////////////////////////////////////////////////////////////////
+
+        #Ok(communityPID);
+    };
+
+    public query func getCommunitiesCID(): async [CanisterID]{
+        Iter.toArray(Map.keys<Principal, Community>(communities))
+    };
+
+    public shared ({ caller }) func getPaginateCommunities(args: {page: Nat; qtyPerPage: Nat}): async Types.ResponsePaginateCommunities{
+        await indexerUserCanister.getPaginateCommunitiesPreview(args)
     };
 
   ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////

@@ -80,6 +80,23 @@ module {
         followers: Nat;
         recentPosts: Nat;
     };
+
+    public type CommunityPreviewInfo = {
+        visibility: Bool;
+        canisterId: Principal;
+        name: Text;
+        logo: Blob;
+        dateCreation: Int;
+        membersQty: Nat;
+        postsLastWeek: Nat;
+
+    };
+
+    public type ResponsePaginateCommunities = {
+        #Ok: {arr: [CommunityPreviewInfo]; hasNext: Bool};
+        #Err: Text;
+    };
+
     public type SignInResult = {
         #Ok: UserInfo;
         #Err;

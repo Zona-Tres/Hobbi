@@ -2,7 +2,8 @@ import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 import GlobalTypes "../types";
 import Buffer "mo:base/Buffer";
-
+import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 
 shared ({ caller }) actor class UserIndexerCanister() = This {
 
@@ -14,6 +15,8 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
     let canisterIdsUser = Map.new<Principal, CanisterId>();
 
     let userPreviews = Map.new<CanisterId, UserPreviewInfo>();
+
+    let communitiesInfo = Map.new<CanisterId, GlobalTypes.CommunityPreviewInfo>();
 
     // Los followers se identifican por su Canister Id
     // Los followeds se identifican por su Principal Id
@@ -78,5 +81,61 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
 
     func getUserPreview(u: CanisterId): ?UserPreviewInfo{
         Map.get<CanisterId, UserPreviewInfo>(userPreviews, phash, u)
-    }
+    };
+
+    public shared query ({ caller }) func getPublicDataUser(p: Principal): async ?{name: Text; photo: Blob}{
+        let canisterId = Map.get<Principal, CanisterId>(canisterIdsUser, phash, p);
+        switch (canisterId) {
+            case null {null};
+            case ( ?canisterId ) {
+                let user = getUserPreview(canisterId);
+                switch user {
+                    case null { null };
+                    case ( ?user ){
+                        ?{name = user.name;
+                        photo = switch (user.thumbnail) {
+                            case null {"00/00"};
+                            case (?photo) { photo}
+                        }} 
+                    }
+                } 
+            }
+        }
+    };
+
+  ///////////////////// Communities ///////////////////////////////
+    
+    public shared ({ caller }) func putCommunity(community: GlobalTypes.CommunityPreviewInfo): async {#Ok; #Err: Text}{
+        if(caller != HOBBI_CANISTER_ID){ return #Err("Caller is not Hobbi Canister") };
+        ignore Map.put<CanisterId, GlobalTypes.CommunityPreviewInfo>(communitiesInfo, phash, community.canisterId, community);
+        #Ok
+    };
+
+    public shared ({ caller }) func updateCommunity(community: GlobalTypes.CommunityPreviewInfo): async {#Ok; #Err: Text}{
+        if(caller != community.canisterId){ return #Err("Caller is not comunity canister id") };
+        ignore Map.put<CanisterId, GlobalTypes.CommunityPreviewInfo>(communitiesInfo, phash, community.canisterId, community);
+        #Ok
+    };
+
+    public shared query ({ caller }) func getPaginateCommunitiesPreview({page: Nat; qtyPerPage: Nat}): async GlobalTypes.ResponsePaginateCommunities{
+        let startSubArray = page * qtyPerPage;
+        let communitiesArray = Array.filter<GlobalTypes.CommunityPreviewInfo>(
+            Iter.toArray<GlobalTypes.CommunityPreviewInfo>(Map.vals(communitiesInfo)),
+            func x = x.visibility
+        );
+        let size = communitiesArray.size();
+        if (size <= startSubArray) { return #Err("Error. Number of Page") };
+
+        let sizeSubArray = if(size >= startSubArray + qtyPerPage) { qtyPerPage }  else { size % qtyPerPage };
+        let arr = Array.subArray(
+            communitiesArray,
+            startSubArray,
+            sizeSubArray
+        );
+        #Ok({arr; hasNext = size > startSubArray + qtyPerPage});
+    };
+
+    public shared query({ caller }) func getCommunityInfo(p: Principal): async ?GlobalTypes.CommunityPreviewInfo{
+        Map.get<Principal, GlobalTypes.CommunityPreviewInfo>(communitiesInfo, phash, p)
+    };
 }

@@ -513,7 +513,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
-
     
     public shared ({ caller }) func addFavorite(p: Principal): async {#Ok; #Err: Text} {
         if(not isOwner(caller)) { return #Err("The caller is not the owner")};
@@ -621,6 +620,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     case (?post) {
                         let date = Time.now();
                         lastCommentId += 1;
+                        //TODO agregar nombre del autor del comentario
                         let comment: Comment = {
                             commentId = lastCommentId;
                             date;
