@@ -8,7 +8,7 @@ c=$(dfx canister call hobbi createCommunity '(
 )')
 
 communityCID=$(echo "$c" | grep -oP '(?<=principal ")[^"]+')
-echo "Nueva comunidad omunidad creada en $communityCID "
+echo "Nueva comunidad creada en $communityCID "
 
 
 dfx identity use 0000TestUser1

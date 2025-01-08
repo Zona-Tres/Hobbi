@@ -16,6 +16,13 @@ dfx canister call hobbi signUp '(record {
 
 export i0001CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
+dfx canister call $i0001CID editProfile '(record {
+  name="Peter Capusoto"; 
+  email=null; 
+  bio="Biografía de Peter Capusoto";
+  interests = vec {"Humor"; "Comedia"; "Filosofia"; "teatro"}
+})'
+
 titles=(
   "El verdadero poder del mate"
   "Cuando los fideos se rebelan"
@@ -84,6 +91,14 @@ dfx canister call hobbi signUp '(record {
     thumbnail = opt blob "11/22/33/44";
 })'
 export i0002CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0002CID editProfile '(record {
+  name="Alejandro Dolina"; 
+  email=null; 
+  bio="Biografía de Alejandro Dolina";
+  interests = vec {"Humor"; "Filosofia"; "teatro"; "Música"; "Literatura"}
+})'
+
 titles=(
   "El misterio de las cosas simples"
   "La melancolía de los relojes detenidos"
@@ -146,6 +161,13 @@ dfx canister call hobbi signUp '(record {
     thumbnail = opt blob "11/22/33/44";
 })'
 export i0003CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0003CID editProfile '(record {
+  name="Fedeico Chopin"; 
+  email=null; 
+  bio="Biografía de Fedeico Chopi"; 
+  interests = vec {"Música"; "Piano"}
+})'
 
 titles=(
   "El alma de las cuerdas vibrantes"
@@ -214,6 +236,12 @@ dfx canister call hobbi signUp '(record {
     thumbnail = opt blob "11/22/33/44";
 })'
 export i0004CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+dfx canister call $i0004CID editProfile '(record {
+  name="Juan Gamer"; 
+  email=null; 
+  bio="Biografía de Juan Gamer"; 
+  interests = vec {"Juegos"; "PS4"; "Tecnologia"}
+})'
 
 titles=(
   "Exploradores de mundos virtuales"
@@ -282,6 +310,13 @@ dfx canister call hobbi signUp '(record {
 })'
 export i0005CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
+dfx canister call $i0005CID editProfile '(record {
+  name="Alfred Hitchkook"; 
+  email=null; 
+  bio="Biografía de Alfred Hitchkook";
+  interests = vec {"Cine"; "Teatro"; "Terror"}
+})'
+
 titles=(
   "La magia detrás de la pantalla"
   "Historias que dejan huella"
@@ -349,6 +384,14 @@ dfx canister call hobbi signUp '(record {
     thumbnail = opt blob "11/22/33/44";
 })'
 export i0006CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0006CID editProfile '(record {
+  name="Apple"; 
+  email=null; 
+  bio="Biografía de Apple"; 
+  interests = vec {"Tecnologia"; "Informatica"}
+})'
+
 titles=(
   "El futuro está en nuestras manos"
   "Innovaciones que cambian el mundo"
