@@ -49,6 +49,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable var email: ?Text = init.email;
     stable var bio: Text = init.bio;
     stable var avatar: ?Blob = init.avatar;
+    stable var thumbnail = init.thumbnail;
     stable var coverImage: ?Blob = null;
     stable var interests: [Text] = [];
     stable var verified = false; // Para verificacion de email mediante el envio de un código
@@ -74,6 +75,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     let rand = Rand.Rand();
     stable var lastPostID = 0;
     stable var lastCommentId = 0;
+    stable var counterPostLastWeek: [Int] = [0]; //timestamp de los posteos
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
 
     let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
@@ -90,7 +92,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         updateFollowers: shared (Nat) -> ();
         updateFolloweds: shared (Nat) -> ();
         getFollowedsPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
-        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo]
+        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
+        updateUser: shared (GlobalTypes.UserPreviewInfo) -> ();
+        getUsersWithInterests: shared ([Text]) -> async [GlobalTypes.UserPreviewInfo];
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -139,6 +143,18 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
+    };
+
+    func extractUserPreviewInfo(): GlobalTypes.UserPreviewInfo {
+        counterPostLastWeek := Array.filter<Int>(counterPostLastWeek, func x = x < Time.now() + 7*26*60*60*1000000000);
+        let userDataPreview: GlobalTypes.UserPreviewInfo = {
+            name;
+            thumbnail;
+            userCanisterId = Principal.fromActor(this);
+            followers = Set.size(followers);
+            recentPosts = counterPostLastWeek.size();
+            interests;
+        };
     };
   ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
@@ -310,15 +326,19 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
 
-    public shared ({ caller }) func loadAvatar(_avatar: Blob): async {#Err; #Ok} {
+    public shared ({ caller }) func loadAvatar({_avatar: Blob; _thumbnail: Blob}): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := ?_avatar;
+        thumbnail := ?_thumbnail;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         #Ok;
     };
 
     public shared ({ caller }) func removeAvatar(): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := null;
+        thumbnail := null;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         #Ok;
     };
     public shared ({ caller }) func loadCoverImage(image: Blob): async {#Err; #Ok} {
@@ -335,6 +355,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         bio := data.bio;
         name := data.name;
         interests := data.interests;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         dataUser();
     };
 

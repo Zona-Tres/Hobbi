@@ -1,9 +1,11 @@
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 import GlobalTypes "../types";
+import Utils "../utils";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
+import Nat "mo:base/Nat";
 
 shared ({ caller }) actor class UserIndexerCanister() = This {
 
@@ -64,6 +66,17 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         }
     };
 
+    public shared ({ caller }) func updateUser(data: UserPreviewInfo): async Bool{
+        let userPreview = Map.get<CanisterId, UserPreviewInfo>(userPreviews, phash, caller);
+        switch userPreview {
+            case null { false };
+            case (?userPreview) {
+                ignore Map.put<CanisterId, UserPreviewInfo>(userPreviews, phash, caller, data);
+                true
+            }
+        }
+    };
+
     public query func getFollowedsPreview(usersCIDs: [CanisterId]): async [UserPreviewInfo] {
         // TODO devolver una paginacion: 20 previsualizaciones mas un booleano que indique si hay mas
         let bufferPreviews = Buffer.fromArray<UserPreviewInfo>([]);
@@ -101,6 +114,36 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
                 } 
             }
         }
+    };
+
+  ///////////////////// Common Interests Warning O(n * n) //////////////////////////
+    
+    func commonElementQty(a: [Text], b: [Text]): Nat {
+        var count = 0;
+        for (x in a.vals()){
+            for (y in b.vals()){
+                if( Utils.normalizeText(x) == Utils.normalizeText(y) ) count += 1;
+            }
+        };
+        count
+    };
+
+    public shared ({ caller }) func getUsersWithInterests(intrstArray: [Text]): async [UserPreviewInfo]{
+        let bufferResult = Buffer.fromArray<(UserPreviewInfo, Nat)>([]);
+        let arrayUsers = Iter.toArray<UserPreviewInfo>(Map.vals(userPreviews));
+        var qtyUsers = 0;
+        var index = arrayUsers.size();
+        while (index > 0 and qtyUsers <= 5) {
+            let qtyCommonInterest =  commonElementQty(arrayUsers[index - 1].interests, intrstArray);
+            if (qtyCommonInterest > 0) {
+                bufferResult.add(arrayUsers[index - 1], qtyCommonInterest);
+                qtyUsers += 1;
+            };
+            index -= 1;
+        };
+        var result = Buffer.toArray<(UserPreviewInfo, Nat)>(bufferResult);
+        result := Array.sort<(UserPreviewInfo, Nat)>(result, func (a, b) = if(a.1 > b.1) {#greater} else {#less});
+        Array.map<(UserPreviewInfo, Nat),UserPreviewInfo>(result, func x = x.0);
     };
 
   ///////////////////// Communities ///////////////////////////////

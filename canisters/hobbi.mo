@@ -11,6 +11,7 @@ import Principal "mo:base/Principal";
 import { now } "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Types "types";
+import Utils "utils";
 import { print } "mo:base/Debug";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
@@ -151,22 +152,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         }
     };
 
-    func normalizeHashTag(hashtag: Text): Text {
-        var result: Text = "";
-        for(c in Text.toIter(hashtag)){
-            let cUpper = Prim.charToUpper(c);
-            result #= switch cUpper {
-                case ('Á' or 'À') { "A" };
-                case ('É' or 'È') { "E" };
-                case ('Í' or 'Ì') { "I" };
-                case ('Ó' or 'Ò') { "O" };
-                case ('Ú' or 'Ù') { "U"};
-                case n { Char.toText(n) };
-            }
-        };
-        result   
-    };
-
     func updateRankingHashTags() {  //TODO revisar otras opciones menos costosas computacionalmente
         if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 10_000_000_000)){
             return
@@ -193,7 +178,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         switch event {
             case (#NewPost(post)) {
                 for(hashtag in post.hashTags.vals()){
-                    let normalizedHashTag = normalizeHashTag(hashtag);
+                    let normalizedHashTag = Utils.normalizeText(hashtag);
                     let updateCounter: Nat = pushHashTagToMapCounter(normalizedHashTag);
                     var index = 0;
                     var inserted = false;
@@ -205,7 +190,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     func decrementHashTags(_hashTags: [Text]) {
         for(hashtag in _hashTags.vals()){
-            let normHashTag = normalizeHashTag(hashtag);
+            let normHashTag = Utils.normalizeText(hashtag);
             let oldValue = Map.get<Text, Nat>(hashTagsMap, thash, normHashTag);
             switch oldValue{
                 case(?value){
@@ -335,6 +320,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             userCanisterId = Principal.fromActor(actorClass);
             followers = 0;
             recentPosts = 0;
+            interests: [Text] = [];
         };
         ignore await indexerUserCanister.putUser(caller, Principal.fromActor(actorClass), userDataPreview);
         Principal.fromActor(actorClass);
@@ -465,7 +451,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
-                        switch (Array.find<Text>(post.hashTags , func x = normalizeHashTag(x) == normalizeHashTag(h))){
+                        switch (Array.find<Text>(post.hashTags , func x = Utils.normalizeText(x) == Utils.normalizeText(h))){
                             case null {};
                             case _ { postPreviewBuffer.add(post)}
                         }

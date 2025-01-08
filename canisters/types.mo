@@ -79,6 +79,7 @@ module {
         userCanisterId: Principal;
         followers: Nat;
         recentPosts: Nat;
+        interests: [Text];
     };
 
     public type CommunityPreviewInfo = {
