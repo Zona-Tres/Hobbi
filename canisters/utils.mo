@@ -8,6 +8,7 @@ module {
         for(c in Text.toIter(hashtag)){
             let cUpper = Prim.charToUpper(c);
             result #= switch cUpper {
+                case (' ') {""};
                 case ('Á' or 'À') { "A" };
                 case ('É' or 'È') { "E" };
                 case ('Í' or 'Ì') { "I" };
