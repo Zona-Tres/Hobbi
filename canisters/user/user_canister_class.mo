@@ -724,5 +724,4 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         #Ok(communities);
     };
 
-
 }
