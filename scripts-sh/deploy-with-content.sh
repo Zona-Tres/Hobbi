@@ -448,6 +448,380 @@ for i in "${!titles[@]}"; do
   )"
 done
 
+#----------------------------
+dfx identity new 0000TestUser7
+dfx identity use 0000TestUser7
+dfx canister call hobbi signUp '(record {
+    name="Motoko Kusanagi"; 
+    email=null; 
+    bio="Biografía de Motoko Kusanagi"; 
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0007CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
 
+dfx canister call $i0007CID editProfile '(record {
+  name="Motoko Kusanagi"; 
+  email=null; 
+  bio="Biografía de Motoko Kusanagi"; 
+  interests = vec {"Tecnologia"; "Combate"; "Artes Marciales"; "Cine"}
+})'
+
+titles=(
+  "¿Quié eres?"
+  "¿Artificial?"
+  "Ética"
+)
+bodies=(
+  "¿Qué determina que seas tú y no otra persona? Es la suma de tus experiencias, recuerdos y pensamientos lo que forma tu identidad, pero ¿qué pasaría si esos recuerdos fueran manipulados?"
+  "No es que me importe si soy artificial o no. Lo que me importa es si puedo sentirme viva."
+  "El avance tecnológico siempre supera a la ética. El problema es cómo vivir con las consecuencias."
+)
+hashTagsSets=(
+  "vec {\"Recuerdos\"; \"Experiencias\"; \"Manipulación\"}"
+  "vec {\"IA\"; \"Sentiminetos\"}"
+  "vec {\"Ética\"; \"Tecnologia\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0007CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+
+#----------------------------------
+dfx identity new 0000TestUser8
+dfx identity use 0000TestUser8
+dfx canister call hobbi signUp '(record {
+    name="Chavo del Ocho"; 
+    email=null; 
+    bio="Biografía del Chavo"; 
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0008CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0008CID editProfile '(record {
+ name="Chavo del Ocho"; 
+    email=null; 
+    bio="Biografía del Chavo"; 
+  interests = vec {"Comida"; "Jugar"; "Teatro"}
+})'
+
+titles=(
+  "La Vecindad"
+  "La Tortita de Jamón"
+  "El Señor Barriga"
+)
+bodies=(
+  "Vivir en una vecindad no es fácil, pero es el lugar donde he aprendido lo que significa la amistad y la paciencia (aunque a veces Don Ramón me gane en eso)."
+  "¿Qué haría yo sin mis tortas de jamón? Son más que un alimento; son un sueño que me ayuda a seguir adelante."
+  "¿Qué harías si alguien te cobrara siempre la renta, pero sabes que no tienes cómo pagar? Bueno, al menos yo siempre tengo un plan (aunque no funcione)."
+)
+hashTagsSets=(
+  "vec {\"Vecindad\"; \"Amistad\"; \"DonRamon\"}"
+  "vec {\"Comida\"; \"Sueños\"; \"TortaDeJamón\"}"
+  "vec {\"Renta\"; \"Problemas\"; \"Ingenio\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0008CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+#---------------------
+dfx identity new 0000TestUser9
+dfx identity use 0000TestUser9
+dfx canister call hobbi signUp '(record {
+    name="Superman"; 
+    email=null; 
+    bio="Biografía de Superman"; 
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0009CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0009CID editProfile '(record {
+ name="Chavo del Ocho"; 
+    email=null; 
+    bio="Biografía del Chavo"; 
+  interests = vec {"Comida"; "Jugar"; "Teatro"}
+})'
+
+titles=(
+  "El Hombre de Acero"
+  "La Tierra y Krypton"
+  "La Responsabilidad de un Héroe"
+)
+bodies=(
+  "No soy solo Clark Kent ni solo Superman. Soy un puente entre dos mundos, y cada uno de ellos me ha moldeado de formas únicas."
+  "Aunque mi hogar original fue Krypton, la Tierra es mi verdadera casa. Es aquí donde encontré amor, propósito y una causa por la que luchar."
+  "Tener poderes increíbles no es lo difícil; lo complicado es decidir cuándo usarlos y cómo no perderme a mí mismo en el proceso."
+)
+hashTagsSets=(
+  "vec {\"Superman\"; \"ClarkKent\"; \"Héroe\"}"
+  "vec {\"Tierra\"; \"Krypton\"; \"Identidad\"}"
+  "vec {\"Poder\"; \"Responsabilidad\"; \"Humanidad\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0009CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+#---------------------
+dfx identity new 0000TestUser10
+dfx identity use 0000TestUser10
+dfx canister call hobbi signUp '(record {
+    name="Juanjo Domínguez"; 
+    email=null; 
+    bio="Biografía del Juanjo Domínguez ,Músico ;  
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0010CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0010CID editProfile '(record {
+    name="Juanjo Domínguez"; 
+    email=null; 
+    bio="Biografía del Juanjo Domínguez ,Músico ; 
+  interests = vec {"Guitarra"; "Musica"; "Composicion"}
+})'
+
+titles=(
+  "Mi Primera Guitarra"
+  "El Poder de la Música"
+  "Improvisación"
+)
+bodies=(
+  "Nunca olvidaré el día en que tuve mi primera guitarra. No era perfecta, pero fue el inicio de un sueño que todavía sigo construyendo."
+  "La música no es solo sonido; es emoción, conexión y una forma de entender el mundo. Cada acorde cuenta una historia."
+  "Improvisar es como hablar con el alma. No sabes qué vas a decir, pero sabes que será auténtico."
+)
+hashTagsSets=(
+  "vec {\"Música\"; \"Guitarra\"; \"PrimerosPasos\"}"
+  "vec {\"Arte\"; \"Emoción\"; \"Conexión\"}"
+  "vec {\"Improvisación\"; \"Autenticidad\"; \"Creación\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0010CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+
+#---------------------
+dfx identity new 0000TestUser11
+dfx identity use 0000TestUser11
+dfx canister call hobbi signUp '(record {
+    name="Mariana Muñiz"; 
+    email=null; 
+    bio="Biografía del Mariana Muñiz"  ;  
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0011CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0011CID editProfile '(record {
+    name="Mariana Muñiz"; 
+    email=null; 
+    bio="Biografía del Mariana Muñiz"; 
+  interests = vec {"Coleccionismo"; "Muñecas"; "musica"}
+})'
+
+titles=(
+  "Mi Primer Muñeca"
+  "El Arte de Coleccionar"
+  "Cuidando Tesoros"
+)
+bodies=(
+  "Todo empezó con una sola muñeca que mi abuela me regaló. Ahora mi colección cuenta historias de diferentes épocas y culturas."
+  "Coleccionar no es acumular; es preservar historia, arte y un pedacito de la infancia en cada pieza."
+  "Cada muñeca de mi colección es como un tesoro. Las cuido, las limpio y las exhibo como si fueran joyas."
+)
+hashTagsSets=(
+  "vec {\"Muñecas\"; \"Historia\"; \"Infancia\"}"
+  "vec {\"Arte\"; \"Colección\"; \"Pasión\"}"
+  "vec {\"Tesoros\"; \"Cuidados\"; \"Coleccionismo\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0011CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+
+#---------------------
+dfx identity new 0000TestUser12
+dfx identity use 0000TestUser12
+dfx canister call hobbi signUp '(record {
+    name="José Robles"; 
+    email=null; 
+    bio="Biografía del José Robles" ;  
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0012CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0012CID editProfile '(record {
+    name="José Robles"; 
+    email=null; 
+    bio="Biografía del José Robles";
+  interests = vec {"Star Wars"; "Coleccionismo"; "Figuras"}
+})'
+
+titles=(
+  "Una Galaxia Muy Lejana"
+  "La Fuerza"
+  "Personajes Inolvidables"
+)
+bodies=(
+  "Desde que vi la primera película, supe que el universo de Star Wars sería parte de mi vida. Cada nave, planeta y batalla es un mundo por descubrir."
+  "La Fuerza no es solo un poder; es un concepto que me inspira a buscar el equilibrio en mi propia vida."
+  "Luke, Leia, Vader… los personajes de Star Wars no son solo íconos. Son reflejos de nuestras luchas y aspiraciones."
+)
+hashTagsSets=(
+  "vec {\"StarWars\"; \"Galaxia\"; \"Aventuras\"}"
+  "vec {\"LaFuerza\"; \"Equilibrio\"; \"Inspiración\"}"
+  "vec {\"Personajes\"; \"Leyendas\"; \"Saga\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0012CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
+
+#---------------------
+dfx identity new 0000TestUser13
+dfx identity use 0000TestUser13
+dfx canister call hobbi signUp '(record {
+    name="Laura Sánchez"; 
+    email=null; 
+    bio="Biografía del Laura Sánchezs";  
+    avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
+    thumbnail = opt blob "11/22/33/44";
+})'
+export i0013CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
+
+dfx canister call $i0013CID editProfile '(record {
+    name="Laura Sánchez"; 
+    email=null; 
+    bio="Biografía del Laura Sánchezs";
+  interests = vec {"Terror"; "Cine"}
+})'
+
+titles=(
+  "Los 80 y el Cine"
+  "Clásicos que Perduran"
+  "Regreso al Futuro"
+)
+bodies=(
+  "Los años 80 fueron una época mágica para el cine. Esos colores, esas historias… simplemente inolvidables."
+  "Las películas de los 80 tienen algo especial: son atemporales. No importa cuánto pase el tiempo, siempre hay algo que aprender o disfrutar en ellas."
+  "‘Regreso al Futuro’ no es solo una película; es un viaje a una era donde todo parecía posible."
+)
+hashTagsSets=(
+  "vec {\"Cine80\"; \"Nostalgia\"; \"Magia\"}"
+  "vec {\"Clásicos\"; \"Atemporal\"; \"Historias\"}"
+  "vec {\"RegresoAlFuturo\"; \"ViajesEnElTiempo\"; \"CulturaPop\"}"
+)
+
+for i in "${!titles[@]}"; do
+  title="${titles[i]}"
+  body="${bodies[i]}"
+  hashTags="${hashTagsSets[i]}"
+  
+  dfx canister call $i0013CID createPost "(
+    record {
+      access = variant { Public };
+      title = \"$title\";
+      hashTags = $hashTags;
+      body = \"$body\";
+      image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
+      imagePreview = opt blob \"11/22/33/44\";
+      image_url = null;
+      media_type = variant { Game }
+    }
+  )"
+done
 
 

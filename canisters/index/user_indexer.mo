@@ -1,11 +1,14 @@
+import Prim "mo:⛔";
 import Map "mo:map/Map";
-import { phash } "mo:map/Map";
+import Set "mo:map/Set";
+import { phash; nhash } "mo:map/Map";
 import GlobalTypes "../types";
 import Utils "../utils";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Nat "mo:base/Nat";
+import Rand "mo:random/Rand";
 
 shared ({ caller }) actor class UserIndexerCanister() = This {
 
@@ -13,6 +16,7 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
     type CanisterId = Principal;
 
     stable let HOBBI_CANISTER_ID = caller;
+    let random = Rand.Rand();
 
     let canisterIdsUser = Map.new<Principal, CanisterId>();
 
@@ -128,22 +132,37 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         count
     };
 
-    public shared ({ caller }) func getUsersWithInterests(intrstArray: [Text]): async [UserPreviewInfo]{
-        let bufferResult = Buffer.fromArray<(UserPreviewInfo, Nat)>([]);
+    public shared ({ caller }) func getUsersWithInterests(interestsInput: [Text]): async [UserPreviewInfo]{
+        let qtyUsersReturn = 5;
+        let usersIndexesResultMap = Map.new<Nat, Nat>(); // Index, cantidad de coincidencias
+
         let arrayUsers = Iter.toArray<UserPreviewInfo>(Map.vals(userPreviews));
         var qtyUsers = 0;
         var index = arrayUsers.size();
-        while (index > 0 and qtyUsers <= 5) {
-            let qtyCommonInterest =  commonElementQty(arrayUsers[index - 1].interests, intrstArray);
+        random.setRange(0, index);
+        while (index > 0 and qtyUsers <= qtyUsersReturn) {
+            let qtyCommonInterest =  commonElementQty(arrayUsers[index - 1].interests, interestsInput);
             if (qtyCommonInterest > 0) {
-                bufferResult.add(arrayUsers[index - 1], qtyCommonInterest);
-                qtyUsers += 1;
+                if(arrayUsers[index - 1].userCanisterId != caller){
+                    ignore Map.put<Nat,Nat>(usersIndexesResultMap, nhash, index - 1, qtyCommonInterest);
+                    qtyUsers += 1;  
+                }
             };
             index -= 1;
         };
-        var result = Buffer.toArray<(UserPreviewInfo, Nat)>(bufferResult);
-        result := Array.sort<(UserPreviewInfo, Nat)>(result, func (a, b) = if(a.1 > b.1) {#greater} else {#less});
-        Array.map<(UserPreviewInfo, Nat),UserPreviewInfo>(result, func x = x.0);
+        if (arrayUsers.size() >= 5) {
+            while (qtyUsers < qtyUsersReturn ) {
+                var indexRand = await random.next();
+                while(Map.has<Nat, Nat>(usersIndexesResultMap, nhash, indexRand) or arrayUsers[indexRand].userCanisterId == caller) { 
+                    indexRand := await random.next() 
+                };
+                ignore Map.put<Nat, Nat>(usersIndexesResultMap, nhash, indexRand, 0);
+                qtyUsers += 1;
+            };
+        };
+        let entries = Map.toArray<Nat, Nat>(usersIndexesResultMap);
+
+        Prim.Array_tabulate<UserPreviewInfo>( qtyUsersReturn, func x = arrayUsers[entries[x].0] )
     };
 
   ///////////////////// Communities ///////////////////////////////

@@ -86,6 +86,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         removeEvent: shared (Int) -> async ();
         pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
         updateReactions: shared ({postId: Nat; likes: Nat; disLikes: Nat}) -> ();
+        
     };
 
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
@@ -94,7 +95,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         getFollowedsPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
         getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
         updateUser: shared (GlobalTypes.UserPreviewInfo) -> ();
-        getUsersWithInterests: shared ([Text]) -> async [GlobalTypes.UserPreviewInfo];
+        // getUsersWithInterests: shared ([Text]) -> async [GlobalTypes.UserPreviewInfo];
+        getUsersWithInterests: query ([Text]) -> async [GlobalTypes.UserPreviewInfo];
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -230,6 +232,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func getHiddenUsers():async [Principal] {
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(hiddenUsers);
+    };
+
+    public shared ({ caller }) func getRecommendedUsers(): async [GlobalTypes.UserPreviewInfo]{
+        assert(isOwner(caller) or isHobbi(caller));
+        await INDEXER_CANISTER.getUsersWithInterests(interests);
     };
 
     // type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
@@ -679,7 +686,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     index += 1;
                 };
                 #Err;
-
             }
         }
     };
