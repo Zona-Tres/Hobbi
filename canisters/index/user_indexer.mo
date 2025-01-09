@@ -100,7 +100,7 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
         Map.get<CanisterId, UserPreviewInfo>(userPreviews, phash, u)
     };
 
-    public shared query ({ caller }) func getPublicDataUser(p: Principal): async ?{name: Text; photo: Blob}{
+    public shared query ({ caller }) func getPublicDataUser(p: Principal): async ?{name: Text; photo: Blob; canisterId: Principal}{
         let canisterId = Map.get<Principal, CanisterId>(canisterIdsUser, phash, p);
         switch (canisterId) {
             case null {null};
@@ -109,11 +109,14 @@ shared ({ caller }) actor class UserIndexerCanister() = This {
                 switch user {
                     case null { null };
                     case ( ?user ){
-                        ?{name = user.name;
-                        photo = switch (user.thumbnail) {
-                            case null {"00/00"};
-                            case (?photo) { photo}
-                        }} 
+                        ?{
+                            name = user.name;
+                            photo = switch (user.thumbnail) {
+                                case null {"00/00"};
+                                case (?photo) { photo}
+                            };
+                            canisterId
+                        } 
                     }
                 } 
             }

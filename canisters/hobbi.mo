@@ -108,7 +108,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         Set.has<Principal>(admins, phash, p);
     };
 
-    func isCommunity(p: Principal ): Bool {
+    func _isCommunity(p: Principal ): Bool {
         Map.has<Principal, Community>(communities, phash, p)
     };
 
@@ -369,7 +369,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     };
 
     public shared query ({ caller })  func getNameUser(u: Principal): async ?Text {
-        if(not isCommunity(caller)) { return null };
+        if(not _isCommunity(caller)) { return null };
         switch (Map.get<Principal, Profile>(users, phash, u)){
             case null { null };
             case ( ?user ) { ?user.name}
@@ -508,6 +508,10 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     public shared ({ caller }) func getPaginateCommunities(args: {page: Nat; qtyPerPage: Nat}): async Types.ResponsePaginateCommunities{
         await indexerUserCanister.getPaginateCommunitiesPreview(args)
+    };
+
+    public query func isCommunity(c: Principal): async Bool {
+        _isCommunity(c);
     };
 
   ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////

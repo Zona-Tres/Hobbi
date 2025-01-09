@@ -62,6 +62,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable let blockedUsers = Set.new<Principal>();
     stable let blockerUsers = Set.new<Principal>();
     stable let hiddenUsers = Set.new<Principal>();
+    stable var communities: [Principal] = [];
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
@@ -86,6 +87,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         removeEvent: shared (Int) -> async ();
         pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
         updateReactions: shared ({postId: Nat; likes: Nat; disLikes: Nat}) -> ();
+        isCommunity: shared Principal -> async Bool;
         
     };
 
@@ -708,7 +710,19 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         }
     };
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////// Communities ////////////////////////////////////////////
+    public shared ({ caller }) func addCommunity(): async (){
+        assert ( await HOBBI_CANISTER.isCommunity(caller));
+        communities := Prim.Array_tabulate<Principal>(
+            communities.size(),
+            func i = if(i == 0) {caller} else {communities[i - 1]}
+        )
+    };
+
+    public shared ({ caller }) func getMyCommunities(): async {#Ok: [Principal]; #Err: Text}{
+        if(not isOwner(caller)) {return #Err("Caller is not owner")};
+        #Ok(communities);
+    };
 
 
 }

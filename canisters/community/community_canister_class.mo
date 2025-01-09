@@ -196,6 +196,15 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
 
   ////////////////////////////////////   Users Management    //////////////////////////////////////////
 
+    func safeApproveMember(userCanisterId: Principal, owner: Principal, newMember: Member): async () {
+        let remoteNewMember = actor(Principal.toText(userCanisterId)): actor {
+            addCommunity: shared () -> ()
+        };
+        remoteNewMember.addCommunity();
+        ignore Map.put<Principal, Member>(members, phash, owner, newMember);
+
+    };
+
     public shared ({ caller }) func joinCommunity(): async {#Ok: Text; #Err: Text} {
         let dataUser = await INDEXER_CANISTER.getPublicDataUser(caller);
         if (isMember(caller)) { return #Err("Caller is already a member")};
@@ -212,6 +221,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
                     ignore Map.put<Principal, Member>(membersRequsts, phash, caller, newMember);
                     return #Ok("Application for admission received")
                 } else {
+                    ignore safeApproveMember(dataUser.canisterId, caller, newMember);
                     ignore Map.put<Principal, Member>(members, phash, caller, newMember);
                     ignore updateIndexer();
                     return #Ok("Welcome to the community")
