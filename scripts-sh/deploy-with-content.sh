@@ -614,7 +614,7 @@ dfx identity use 0000TestUser10
 dfx canister call hobbi signUp '(record {
     name="Juanjo Domínguez"; 
     email=null; 
-    bio="Biografía del Juanjo Domínguez ,Músico ;  
+    bio="Biografía del Juanjo Domínguez , Músico" ;  
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'

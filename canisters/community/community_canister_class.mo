@@ -76,7 +76,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
         visibilityContent or isMember(p) or isAdmin(p);  
     };
 
-    func getPostPreview(post: Post): PostPreview {
+    func getPostPreview(post: Post, autorPhoto: ?Blob): PostPreview {
         return {
             hashTags = post.hashTags;
             access = #Public;
@@ -90,6 +90,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
             date = post.metadata.date;
             likes = Set.size<Principal>(post.likes);
             disLikes = Set.size<Principal>(post.disLikes);
+            autorPhoto
         };
     };
 
@@ -278,7 +279,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
                 };    
                 
                 ignore Map.put<Nat, Post>(posts, nhash, lastPostId, post);
-                let postPreview = getPostPreview(post);
+                let postPreview = getPostPreview(post, ?member.photo);
                 postPreviewArray := Prim.Array_tabulate<PostPreview>(
                     postPreviewArray.size() + 1, 
                     func i = if(i == postPreviewArray.size()) {postPreview} else {postPreviewArray[i]}

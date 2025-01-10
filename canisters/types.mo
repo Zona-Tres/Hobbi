@@ -48,6 +48,7 @@ module {
         hashTags: [Text];
         access: Access;
         autor: Principal;
+        autorPhoto: ?Blob;
         userName: Text; 
         postId: Nat;
         title: Text;

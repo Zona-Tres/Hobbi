@@ -144,6 +144,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 likes = Set.size(postArray[i].1.likes);
                 disLikes = Set.size(postArray[i].1.disLikes);
                 userName = name;
+                autorPhoto = thumbnail;
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
@@ -397,6 +398,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             date;
             likes = 0;
             disLikes = 0;
+            autorPhoto = thumbnail;
         };
         
         ignore HOBBI_CANISTER.putEvent(#NewPost(newPostEvent));
