@@ -117,6 +117,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             interests;
             followers =  Set.size(followers);
             followeds = Set.size(followeds);
+            callerIsFollower = false;
         };
     };
     func isBlockedUser(p: Principal): Bool {
@@ -205,7 +206,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             canisterID =  Principal.fromActor(this);
             followers = Set.size(followers);
             followeds = Set.size(followeds);
-            }
+            callerIsFollower = Set.has<Principal>(followers, phash, caller)
+        }
     };
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
