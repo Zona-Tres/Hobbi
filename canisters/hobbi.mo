@@ -23,7 +23,7 @@ import Rand "mo:random/Rand";
 import ManagerCanister "./interfaces/ic-management-interface";
 
 shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
-  ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
+  ///////////////////////////////////////////////         Tipos              //////////////////////////////////////
     type Profile = {
         principal: Principal;
         actorClass: User.User;
