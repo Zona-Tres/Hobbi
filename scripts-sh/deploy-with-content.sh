@@ -11,7 +11,7 @@ dfx canister call hobbi signUp '(record {
     email=null; 
     bio="Biografía de Peter Capusoto"; 
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
-    thumbnail = opt blob "11/22/33/44";
+    thumbnail = opt blob "fotominiaturadepetercapusoto";
 })'
 
 export i0001CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2}')
@@ -60,11 +60,24 @@ hashTagsSets=(
   "vec {\"Baño\"; \"Filosofía\"; \"Inspiración\"}"
 )
 
+imageUrls=(
+  "https://i0.wp.com/www.brasasysabores.com/wp-content/uploads/2016/12/El-mate-argentino-el-emblema-de-un-pai%CC%81s-1.jpg?resize=682%2C675&ssl=1"
+  "https://media.istockphoto.com/id/1336410437/photo/lady-cooking-a-healthy-italian-spaghetti-with-smashed-pork-at-home.jpg?s=2048x2048&w=is&k=20&c=L0gYzFRcO9TDgR13AIe2nIiHcM2cR9WB5_8ykxqvPTI="
+  "https://media.istockphoto.com/id/1332616480/photo/shot-of-a-young-man-reaching-for-his-alarm-clock-after-waking-up-in-bed-at-home.jpg?s=2048x2048&w=is&k=20&c=lzKpC-8mjhFatxfiSS9Gz6qkUDvmqsnsv1m4Ij9WhJ4="
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh3rEILrfnM_Mgm1ePTaRNtAcKZWfIp7D0N3H_wLzv5Niur8NYuKauQxlIWEtJwagJulk"
+  "https://media.istockphoto.com/id/1222188073/es/foto/sobrecocido-negro-costillas-de-barbacoa-en-la-parrilla-de-carb%C3%B3n.jpg?s=2048x2048&w=is&k=20&c=fprgkBoBWpvCK2L-o8z98V2HGW8amDQ9aqJu_sEN4ZM="
+  "https://conecta.tec.mx/sites/default/files/inline-images/estafador-de-tinder-redes-sociales-emociones.webp"
+  "https://mvsnoticias.com/u/fotografias/m/2024/8/31/f768x1-645740_645867_5050.jpg"
+  "https://cdn.prod.website-files.com/6340630bc206e31341770199/66f510673b132f7ab6945edc_666c1098105524ff84f08266_63443d5d125a185ae14bf525_efectos%252520de%252520la%252520droga%252520alcohol.jpeg"
+  "https://cdn1.img.sputniknews.africa/img/104315/58/1043155843_0:0:1920:1219_1440x900_80_0_1_03ee6015b3e295d56fe0c6a536b1a5fe.jpg.webp?source-sid=not_sputnik_photo"
+  "https://imagenes.20minutos.es/files/image_640_auto/uploads/imagenes/2022/11/01/water-620x359.jpeg"
+)
+
 for i in "${!titles[@]}"; do
   title="${titles[i]}"
   body="${bodies[i]}"
   hashTags="${hashTagsSets[i]}"
-  
+  prev="${imageUrls[i]}"
   dfx canister call $i0001CID createPost "(
     record {
       access = variant { Public };
@@ -72,8 +85,8 @@ for i in "${!titles[@]}"; do
       hashTags = $hashTags;
       body = \"$body\";
       image = opt blob \"11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/\";
-      imagePreview = opt blob \"11/22/33/44\";
-      image_url = null;
+      imagePreview = opt blob \"imagenminiaturacargadaporelusuario\";
+      image_url = opt \"$prev\";
       media_type = variant { Game }
     }
   )"
@@ -623,7 +636,7 @@ export i0010CID=$(dfx canister call hobbi getMyCanisterId | awk -F'"' '{print $2
 dfx canister call $i0010CID editProfile '(record {
     name="Juanjo Domínguez"; 
     email=null; 
-    bio="Biografía del Juanjo Domínguez ,Músico ; 
+    bio="Biografía del Juanjo Domínguez ,Músico" ; 
   interests = vec {"Guitarra"; "Musica"; "Composicion"}
 })'
 

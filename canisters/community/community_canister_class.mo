@@ -198,6 +198,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
   ////////////////////////////////////   Users Management    //////////////////////////////////////////
 
     func safeApproveMember(userCanisterId: Principal, owner: Principal, newMember: Member): async () {
+        // Revisar
         let remoteNewMember = actor(Principal.toText(userCanisterId)): actor {
             addCommunity: shared () -> ()
         };

@@ -471,35 +471,45 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
     public shared ({ caller }) func createCommunity({name: Text; description: Text}): async {#Ok: Principal; #Err: Text} {
-        if(not isUser(caller)) {return #Err("Caller is not User")};
-        //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
-        let params = {
-            name;
-            description;
-            admins = [caller]; 
-            dateCreation = now();
-            indexer_canister = Principal.fromActor(indexerUserCanister);
-        };
-        // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
-        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
-        let community = await Community.Community(params);
-        let communityPID = Principal.fromActor(community);
-        ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
-        // TODO Agregar referencia a la comunidad en el user Actor class del admin
+        switch (Map.get<Principal, Profile>(users, phash, caller)) {
+            case null {return #Err("Caller is not User")};
+            case ( ?user ) {
+                //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
+                let params = {
+                    name;
+                    description;
+                    admins = [caller]; 
+                    dateCreation = now();
+                    indexer_canister = Principal.fromActor(indexerUserCanister);
+                };
+                // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
+                Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+                let community = await Community.Community(params);
+                let communityPID = Principal.fromActor(community);
+                ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
+                // TODO Agregar referencia a la comunidad en el user Actor class del admin
 
-        //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
-        let communityPreview: Types.CommunityPreviewInfo = {
-            params with
-            logo = Blob.fromArray([0]);
-            membersQty = 0;
-            postsLastWeek = 0;
-            canisterId = communityPID;
-            visibility = true;
-        };
-        ignore await indexerUserCanister.putCommunity(communityPreview);
-        //////////////////////////////////////////////////////////////////////////////////
+                //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
+                let communityPreview: Types.CommunityPreviewInfo = {
+                    params with
+                    logo = Blob.fromArray([0]);
+                    membersQty = 0;
+                    postsLastWeek = 0;
+                    canisterId = communityPID;
+                    visibility = true;
+                };
+                ignore await indexerUserCanister.putCommunity(communityPreview);
+                // ignore user.actorClass.addCommunity(communityPID);
+                //////////////////////////////////////////////////////////////////////////////////
 
-        #Ok(communityPID);
+                #Ok(communityPID);
+
+
+            }            
+        };
+
+        
+        
     };
 
     public query func getCommunitiesCID(): async [CanisterID]{

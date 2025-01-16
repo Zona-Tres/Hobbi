@@ -545,6 +545,16 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
+
+    public shared ({ caller }) func isFollowed(p: Principal): async Bool {
+        assert(isOwner(caller));
+        Set.has<Principal>(followeds, phash, p)
+    };
+
+    public shared ({ caller }) func isFollower(p: Principal): async Bool {
+        assert(isOwner(caller));
+        Set.has<Principal>(followers, phash, p)
+    };
     
     public shared ({ caller }) func addFavorite(p: Principal): async {#Ok; #Err: Text} {
         if(not isOwner(caller)) { return #Err("The caller is not the owner")};
