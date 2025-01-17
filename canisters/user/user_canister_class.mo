@@ -117,6 +117,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             interests;
             followers =  Set.size(followers);
             followeds = Set.size(followeds);
+            postQty = Map.size(posts);
             callerIsFollower = false;
         };
     };
@@ -206,7 +207,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             canisterID =  Principal.fromActor(this);
             followers = Set.size(followers);
             followeds = Set.size(followeds);
-            callerIsFollower = Set.has<Principal>(followers, phash, caller)
+            callerIsFollower = Set.has<Principal>(followers, phash, caller);
+            postQty = Map.size(posts);
         }
     };
 
