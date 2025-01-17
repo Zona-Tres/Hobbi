@@ -52,7 +52,7 @@ const client = createClient({
   },
   providers: [
     // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
-    new InternetIdentity({ providerUrl: "http://by6od-j4aaa-aaaaa-qaadq-cai.localhost:8000/" }),
+    new InternetIdentity({ providerUrl: "http://avqkn-guaaa-aaaaa-qaaea-cai.localhost:8000/" }),
     new NFID(),
   ],
   globalProviderConfig: {

@@ -173,7 +173,7 @@ function CreateProfile() {
       // Enviar los datos del perfil
       await hobbi.signUp(profileData).then((result) => {
         if (result) {
-         navigate(`/myprofile`) 
+         navigate(`/feed`) 
         }
       })
     } catch (e) {

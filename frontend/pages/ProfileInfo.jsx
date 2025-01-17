@@ -40,6 +40,7 @@ export default function ProfileInfo() {
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getPublicInfo()
+            debugger
             if (response) {
                 const responsePost = await actor.getPaginatePost({
                     qtyPerPage: 10,
@@ -56,6 +57,14 @@ export default function ProfileInfo() {
         try {
             const actor = await crearActorParaBucket(id);
             const response = await actor.followMe();
+        } catch (e) {
+            console.error(e)
+        }
+    }
+    const handleUnFollowme = async () => {
+        try {
+            const actor = await crearActorParaBucket(id);
+            const response = await actor.unFollowMe();
         } catch (e) {
             console.error(e)
         }
@@ -155,7 +164,7 @@ export default function ProfileInfo() {
                         <div className="flex gap-3 mt-3">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                                    123K
+                                    {Number(myinfo.followers)}
                                 </span>
                                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                                     Follower
@@ -163,7 +172,7 @@ export default function ProfileInfo() {
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                                    5.5M
+                                    {Number(myinfo.followeds)}
                                 </span>
                                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                                     Following
@@ -232,12 +241,16 @@ export default function ProfileInfo() {
                                 <span className="text-xl font-bold text-[#FFFFFF]">
                                     {myinfo.name}
                                 </span>
-                                <div className="flex justify-center items-center text-[#B577F7] border border-[#B577F7] h-8 w-20 rounded-lg ml-60 cursor-pointer " onClick={handleFollowme}>Seguir</div>
+                                {myinfo.callerIsFollower ?
+                                    <div className="flex justify-center items-center text-[#B577F7] border border-[#B577F7] h-8 w-20 rounded-lg ml-60 cursor-pointer " onClick={handleUnFollowme}>Seguido</div> :
+                                    <div className="flex justify-center items-center text-[#B577F7] border border-[#B577F7] h-8 w-20 rounded-lg ml-60 cursor-pointer " onClick={handleFollowme}>Seguir</div>
+                                }
+
                             </div>
                             <span className="text-sm font-medium text-[#B577F7] mt-2">
-                                120 Seguidos
+                                {Number(myinfo.followeds)} Seguidos
                                 <span className="text-sm font-medium text-[#B577F7] ml-4">
-                                    234 Seguidores
+                                    {Number(myinfo.followers)} Seguidores
                                 </span>
                             </span>
                         </div>

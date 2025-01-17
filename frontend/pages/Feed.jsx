@@ -64,6 +64,7 @@ export default function Feed() {
                     qtyPerPage: 10,
                     page: 0,
                 });
+                debugger
                 if (response) {
                     setPostList(response.arr)
                 }
@@ -170,7 +171,7 @@ export default function Feed() {
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
-                    <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
+                    <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
                             <span className="text-md font-bold text-[#B577F7]">
@@ -180,7 +181,7 @@ export default function Feed() {
                         <div className="flex gap-3 mt-3">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                                    {myinfo.followers}
+                                    {Number(myinfo.followers)}
                                 </span>
                                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                                     Follower
@@ -188,7 +189,7 @@ export default function Feed() {
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                                {myinfo.followeds}
+                                    {Number(myinfo.followeds)}
                                 </span>
                                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                                     Following
