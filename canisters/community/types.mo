@@ -4,23 +4,26 @@ module {
         admins: [Principal];
         dateCreation: Int;
         name: Text;
+        description: Text;
+        indexer_canister: Principal;
     };
 
     public type CommunityConfig = {
-        seo: [Text]; // Para indexar en motores de busqueda del canister Hobbi
+        hashTags: [Text]; 
         visibility: Bool; 
         visibilityContent: Bool;
         accessUnderApprobal: Bool;    
     };
 
     public type CommunityVisualSettings = {
-        logo: ?Blob;
-        coverImage: ?Blob;
+        logo: Blob;
+        coverImage: Blob;
         // css: ?Text;
     };
 
     public type CommunityInfo = CommunityVisualSettings  and {
         name: Text;
+        description: Text;
         dateCreation: Int;
         manifest: Text;
         membersQty: Nat;

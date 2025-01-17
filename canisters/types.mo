@@ -48,6 +48,7 @@ module {
         hashTags: [Text];
         access: Access;
         autor: Principal;
+        autorPhoto: ?Blob;
         userName: Text; 
         postId: Nat;
         title: Text;
@@ -79,7 +80,25 @@ module {
         userCanisterId: Principal;
         followers: Nat;
         recentPosts: Nat;
+        interests: [Text];
     };
+
+    public type CommunityPreviewInfo = {
+        visibility: Bool;
+        canisterId: Principal;
+        name: Text;
+        logo: Blob;
+        dateCreation: Int;
+        membersQty: Nat;
+        postsLastWeek: Nat;
+
+    };
+
+    public type ResponsePaginateCommunities = {
+        #Ok: {arr: [CommunityPreviewInfo]; hasNext: Bool};
+        #Err: Text;
+    };
+
     public type SignInResult = {
         #Ok: UserInfo;
         #Err;

@@ -12,6 +12,10 @@
       "main": "canisters/community/community_canister_class.mo",
       "type": "motoko"
     },
+    "indexer_no_deploy": {
+      "main": "canisters/index/user_indexer.mo",
+      "type": "motoko"
+    },
     "outcall": {
       "main": "canisters/outcall/main.mo",
       "type": "motoko"

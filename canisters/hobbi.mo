@@ -4,23 +4,26 @@ import Set "mo:map/Set";
 import { phash; thash; nhash } "mo:map/Map";
 import User "./user/user_canister_class";
 import Community "./community/community_canister_class";
+// import CommunityTypes = "./community/types";
 import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
 import { now } "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Types "types";
+import Utils "utils";
 import { print } "mo:base/Debug";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Char "mo:base/Char";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
+import Blob "mo:base/Blob";
 import Rand "mo:random/Rand";
 import ManagerCanister "./interfaces/ic-management-interface";
 
 shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
-  ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
+  ///////////////////////////////////////////////         Tipos              //////////////////////////////////////
     type Profile = {
         principal: Principal;
         actorClass: User.User;
@@ -105,7 +108,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         Set.has<Principal>(admins, phash, p);
     };
 
-    func isCommunity(p: Principal ): Bool {
+    func _isCommunity(p: Principal ): Bool {
         Map.has<Principal, Community>(communities, phash, p)
     };
 
@@ -149,22 +152,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         }
     };
 
-    func normalizeHashTag(hashtag: Text): Text {
-        var result: Text = "";
-        for(c in Text.toIter(hashtag)){
-            let cUpper = Prim.charToUpper(c);
-            result #= switch cUpper {
-                case ('Á' or 'À') { "A" };
-                case ('É' or 'È') { "E" };
-                case ('Í' or 'Ì') { "I" };
-                case ('Ó' or 'Ò') { "O" };
-                case ('Ú' or 'Ù') { "U"};
-                case n { Char.toText(n) };
-            }
-        };
-        result   
-    };
-
     func updateRankingHashTags() {  //TODO revisar otras opciones menos costosas computacionalmente
         if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 10_000_000_000)){
             return
@@ -191,7 +178,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         switch event {
             case (#NewPost(post)) {
                 for(hashtag in post.hashTags.vals()){
-                    let normalizedHashTag = normalizeHashTag(hashtag);
+                    let normalizedHashTag = Utils.normalizeText(hashtag);
                     let updateCounter: Nat = pushHashTagToMapCounter(normalizedHashTag);
                     var index = 0;
                     var inserted = false;
@@ -203,7 +190,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     func decrementHashTags(_hashTags: [Text]) {
         for(hashtag in _hashTags.vals()){
-            let normHashTag = normalizeHashTag(hashtag);
+            let normHashTag = Utils.normalizeText(hashtag);
             let oldValue = Map.get<Text, Nat>(hashTagsMap, thash, normHashTag);
             switch oldValue{
                 case(?value){
@@ -221,18 +208,15 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        print("In putEventFunction");  
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
         putHashTags(event);
         switch myEvents {
             case null {
-                print("Inicializando mi lista de eventos y registrando evento");
                 ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, [event]);
                 true;
             };
             case (?eventsList) {
-                print("Actualizando mi lista de eventos");
                 var updteEventList: [Event] = []; 
                 if(eventsList.size() == maxEventsPerUser){
                     updteEventList := Prim.Array_tabulate<Event>(
@@ -336,6 +320,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             userCanisterId = Principal.fromActor(actorClass);
             followers = 0;
             recentPosts = 0;
+            interests: [Text] = [];
         };
         ignore await indexerUserCanister.putUser(caller, Principal.fromActor(actorClass), userDataPreview);
         Principal.fromActor(actorClass);
@@ -384,7 +369,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     };
 
     public shared query ({ caller })  func getNameUser(u: Principal): async ?Text {
-        if(not isCommunity(caller)) { return null };
+        if(not _isCommunity(caller)) { return null };
         switch (Map.get<Principal, Profile>(users, phash, u)){
             case null { null };
             case ( ?user ) { ?user.name}
@@ -420,7 +405,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         feedUpdate
     };
 
-
     public shared ({ caller }) func getMyFeed({page: Nat; qtyPerPage: Nat}): async PaginateFeed {
         updateGeneralFeed();
         let user = Map.get<Principal, Profile>(users, phash, caller);
@@ -434,7 +418,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     with hasNext = true};
                 } else {
                     let bias = myRawFeed.arr.size()/qtyPerPage;
-                    // TODO Omitir posts incluidos en el feed personalizado
                     let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
                         generalFeed.arr,
                         func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
@@ -468,7 +451,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
             for(event in eventList.vals()){
                 switch event {
                     case(#NewPost(post)){
-                        switch (Array.find<Text>(post.hashTags , func x = normalizeHashTag(x) == normalizeHashTag(h))){
+                        switch (Array.find<Text>(post.hashTags , func x = Utils.normalizeText(x) == Utils.normalizeText(h))){
                             case null {};
                             case _ { postPreviewBuffer.add(post)}
                         }
@@ -487,22 +470,58 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
-    public shared ({ caller }) func createCommunity(name: Text /*, dataTransaction:{to: Account; amount: Nat} */): async {#Ok: Principal; #Err: Text} {
-        if(not isUser(caller)) {return #Err("Caller is not User")};
-        //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
-        let params = {
-            name; 
-            admins = [caller]; 
-            dateCreation = now() 
-        };
-        // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
-        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
-        let community = await Community.Community(params);
-        let communityPID = Principal.fromActor(community);
-        ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
-        // TODO Agregar referencia a la comunidad en el user Actor class del admin
-        #Ok(communityPID);
+    public shared ({ caller }) func createCommunity({name: Text; description: Text}): async {#Ok: Principal; #Err: Text} {
+        switch (Map.get<Principal, Profile>(users, phash, caller)) {
+            case null {return #Err("Caller is not User")};
+            case ( ?user ) {
+                //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
+                let params = {
+                    name;
+                    description;
+                    admins = [caller]; 
+                    dateCreation = now();
+                    indexer_canister = Principal.fromActor(indexerUserCanister);
+                };
+                // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
+                Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+                let community = await Community.Community(params);
+                let communityPID = Principal.fromActor(community);
+                ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
+                // TODO Agregar referencia a la comunidad en el user Actor class del admin
 
+                //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
+                let communityPreview: Types.CommunityPreviewInfo = {
+                    params with
+                    logo = Blob.fromArray([0]);
+                    membersQty = 0;
+                    postsLastWeek = 0;
+                    canisterId = communityPID;
+                    visibility = true;
+                };
+                ignore await indexerUserCanister.putCommunity(communityPreview);
+                // ignore user.actorClass.addCommunity(communityPID);
+                //////////////////////////////////////////////////////////////////////////////////
+
+                #Ok(communityPID);
+
+
+            }            
+        };
+
+        
+        
+    };
+
+    public query func getCommunitiesCID(): async [CanisterID]{
+        Iter.toArray(Map.keys<Principal, Community>(communities))
+    };
+
+    public shared ({ caller }) func getPaginateCommunities(args: {page: Nat; qtyPerPage: Nat}): async Types.ResponsePaginateCommunities{
+        await indexerUserCanister.getPaginateCommunitiesPreview(args)
+    };
+
+    public query func isCommunity(c: Principal): async Bool {
+        _isCommunity(c);
     };
 
   ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////

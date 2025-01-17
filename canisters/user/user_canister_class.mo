@@ -49,6 +49,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable var email: ?Text = init.email;
     stable var bio: Text = init.bio;
     stable var avatar: ?Blob = init.avatar;
+    stable var thumbnail = init.thumbnail;
     stable var coverImage: ?Blob = null;
     stable var interests: [Text] = [];
     stable var verified = false; // Para verificacion de email mediante el envio de un código
@@ -61,6 +62,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable let blockedUsers = Set.new<Principal>();
     stable let blockerUsers = Set.new<Principal>();
     stable let hiddenUsers = Set.new<Principal>();
+    stable var communities: [Principal] = [];
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
@@ -74,6 +76,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     let rand = Rand.Rand();
     stable var lastPostID = 0;
     stable var lastCommentId = 0;
+    stable var counterPostLastWeek: [Int] = [0]; //timestamp de los posteos
     private var verificationCodes = {email = 0; phone = 0}; //Agregar o quitar a gusto
 
     let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
@@ -84,13 +87,18 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         removeEvent: shared (Int) -> async ();
         pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
         updateReactions: shared ({postId: Nat; likes: Nat; disLikes: Nat}) -> ();
+        isCommunity: shared Principal -> async Bool;
+        
     };
 
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
         updateFollowers: shared (Nat) -> ();
         updateFolloweds: shared (Nat) -> ();
         getFollowedsPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
-        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo]
+        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
+        updateUser: shared (GlobalTypes.UserPreviewInfo) -> ();
+        // getUsersWithInterests: shared ([Text]) -> async [GlobalTypes.UserPreviewInfo];
+        getUsersWithInterests: query ([Text]) -> async [GlobalTypes.UserPreviewInfo];
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -109,6 +117,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             interests;
             followers =  Set.size(followers);
             followeds = Set.size(followeds);
+            callerIsFollower = false;
         };
     };
     func isBlockedUser(p: Principal): Bool {
@@ -136,9 +145,22 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 likes = Set.size(postArray[i].1.likes);
                 disLikes = Set.size(postArray[i].1.disLikes);
                 userName = name;
+                autorPhoto = thumbnail;
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
+    };
+
+    func extractUserPreviewInfo(): GlobalTypes.UserPreviewInfo {
+        counterPostLastWeek := Array.filter<Int>(counterPostLastWeek, func x = x < Time.now() + 7*26*60*60*1000000000);
+        let userDataPreview: GlobalTypes.UserPreviewInfo = {
+            name;
+            thumbnail;
+            userCanisterId = Principal.fromActor(this);
+            followers = Set.size(followers);
+            recentPosts = counterPostLastWeek.size();
+            interests;
+        };
     };
   ////////////////////////// Verificaciones opcionales de usuario //////////////////////////////////
     // Posible caso de uso: cuando un usuario pierde el acceso a su identidad en ICP 
@@ -184,7 +206,8 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             canisterID =  Principal.fromActor(this);
             followers = Set.size(followers);
             followeds = Set.size(followeds);
-            }
+            callerIsFollower = Set.has<Principal>(followers, phash, caller)
+        }
     };
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
@@ -214,6 +237,11 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func getHiddenUsers():async [Principal] {
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(hiddenUsers);
+    };
+
+    public shared ({ caller }) func getRecommendedUsers(): async [GlobalTypes.UserPreviewInfo]{
+        assert(isOwner(caller) or isHobbi(caller));
+        await INDEXER_CANISTER.getUsersWithInterests(interests);
     };
 
     // type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
@@ -310,15 +338,19 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   ////////////////////////////////////// Setters ///////////////////////////////////////////////////
 
-    public shared ({ caller }) func loadAvatar(_avatar: Blob): async {#Err; #Ok} {
+    public shared ({ caller }) func loadAvatar({_avatar: Blob; _thumbnail: Blob}): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := ?_avatar;
+        thumbnail := ?_thumbnail;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         #Ok;
     };
 
     public shared ({ caller }) func removeAvatar(): async {#Err; #Ok} {
         if(not isOwner(caller)) { return #Err};
         avatar := null;
+        thumbnail := null;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         #Ok;
     };
     public shared ({ caller }) func loadCoverImage(image: Blob): async {#Err; #Ok} {
@@ -335,6 +367,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         bio := data.bio;
         name := data.name;
         interests := data.interests;
+        INDEXER_CANISTER.updateUser(extractUserPreviewInfo());
         dataUser();
     };
 
@@ -367,6 +400,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
             date;
             likes = 0;
             disLikes = 0;
+            autorPhoto = thumbnail;
         };
         
         ignore HOBBI_CANISTER.putEvent(#NewPost(newPostEvent));
@@ -514,7 +548,16 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         true
     };
 
-    
+    public shared query ({ caller }) func isFollowed(p: Principal): async Bool {
+        assert(isOwner(caller));
+        Set.has<Principal>(followeds, phash, p)
+    };
+
+    public shared query ({ caller }) func isFollower(p: Principal): async Bool {
+        assert(isOwner(caller));
+        Set.has<Principal>(followers, phash, p)
+    };
+
     public shared ({ caller }) func addFavorite(p: Principal): async {#Ok; #Err: Text} {
         if(not isOwner(caller)) { return #Err("The caller is not the owner")};
         if(not (await HOBBI_CANISTER.isUserActorClass(p))){
@@ -621,6 +664,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     case (?post) {
                         let date = Time.now();
                         lastCommentId += 1;
+                        //TODO agregar nombre del autor del comentario
                         let comment: Comment = {
                             commentId = lastCommentId;
                             date;
@@ -658,7 +702,6 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     index += 1;
                 };
                 #Err;
-
             }
         }
     };
@@ -681,7 +724,18 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         }
     };
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////// Communities ////////////////////////////////////////////
+    public shared ({ caller }) func addCommunity(): async (){
+        assert ( await HOBBI_CANISTER.isCommunity(caller));
+        communities := Prim.Array_tabulate<Principal>(
+            communities.size(),
+            func i = if(i == 0) {caller} else {communities[i - 1]}
+        )
+    };
 
+    public shared ({ caller }) func getMyCommunities(): async {#Ok: [Principal]; #Err: Text}{
+        if(not isOwner(caller)) {return #Err("Caller is not owner")};
+        #Ok(communities);
+    };
 
 }
