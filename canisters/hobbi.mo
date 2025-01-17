@@ -3,6 +3,7 @@ import Set "mo:map/Set";
 
 import { phash; thash; nhash } "mo:map/Map";
 import User "./user/user_canister_class";
+import Community "./community/community_canister_class";
 import UserIndexerCanister "./index/user_indexer";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
@@ -16,8 +17,9 @@ import Char "mo:base/Char";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Rand "mo:random/Rand";
+import ManagerCanister "./interfaces/ic-management-interface";
 
-actor {
+shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   ///////////////////////////////////////////////        Tipoos              //////////////////////////////////////
     type Profile = {
         principal: Principal;
@@ -28,9 +30,12 @@ actor {
         globalNotifications: [Types.Notification]; // Ver si es mejor una lista de id de notificaciones
     };
 
+    type Community = Community.Community;
+
     type PaginateFeed = Types.Feed;
     type PostPreview = Types.PostPreview;
     type Feed = {arr: [PostPreview]; lastUpdateFeed: Int};
+    type Reaction = Types.Reaction;
 
     type CanisterID = Principal;
     type UserPreviewInfo = Types.UserPreviewInfo;
@@ -42,30 +47,20 @@ actor {
 
     let NULL_ADDRESS = Principal.fromText("aaaaa-aa");
     var maxFeedGeneralPost = 200;
-    var feedUpdateRefreshTime = 1; // En minutos
-    var rankingUpdateRefresh = 1; //en minutos
+    var feedUpdateRefreshTime = 25; // En segundos
+    var rankingUpdateRefresh = 25; //en segundos
     var maxEventsPerUser = 20;
     // var lastUpdateFeed = 0;
 
     let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
 
-    stable let users = Map.new<Principal, Profile>();     //PrincipalID =>  User actorClass
-    stable let usersCanister = Set.new<Principal>();   //Control y verificacion de procedencia de llamadas
+    stable let users = Map.new<Principal, Profile>(); 
+    stable let communities = Map.new<Principal, Community>(); 
+    stable let principalByCID = Map.new<UserClassCanisterId, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
 
     
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
-
-    // public func getEvents():async [Event]{
-    //     let b = Buffer.fromArray<Event>([]);
-    //     for (el in Map.vals<UserClassCanisterId, [Event]>(events)){
-    //         for(e in el.vals()){
-    //             b.add(e)
-    //         }
-    //     };
-    //     Buffer.toArray(b) 
-    // };
-
     stable var rankingQtyHahsTags = 10;
     stable let hashTagsMap = Map.new<Text, Nat>();
     stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
@@ -92,13 +87,14 @@ actor {
         // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
         Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
         indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
+        await ManagerCanister.addController(Principal.fromActor(indexerUserCanister), DEPLOYER_HOBBI);
         print("Canister indexer desplegado en " # Principal.toText(Principal.fromActor(indexerUserCanister)))
     };
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
-    public query func isUserActorClass(p: Principal):async Bool {
-        Set.has<Principal>(usersCanister, phash, p);
+    public query func isUserActorClass(p: CanisterID):async Bool {
+        Map.has<UserClassCanisterId, Principal>(principalByCID, phash, p);
     };
 
     func isUser(p: Principal): Bool{
@@ -109,8 +105,12 @@ actor {
         Set.has<Principal>(admins, phash, p);
     };
 
+    func isCommunity(p: Principal ): Bool {
+        Map.has<Principal, Community>(communities, phash, p)
+    };
+
     func updateGeneralFeed() {
-        if ( not (now() > generalFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000)) {
+        if ( not (now() > generalFeed.lastUpdateFeed + feedUpdateRefreshTime * 1_000_000_000)) {
             return
         };
         print("Actualizando el feed general");
@@ -151,25 +151,29 @@ actor {
 
     func normalizeHashTag(hashtag: Text): Text {
         var result: Text = "";
-        for(c in Text.toIter(hashtag)){ 
-            result #= Char.toText((Prim.charToUpper(c)));
+        for(c in Text.toIter(hashtag)){
+            let cUpper = Prim.charToUpper(c);
+            result #= switch cUpper {
+                case ('Á' or 'À') { "A" };
+                case ('É' or 'È') { "E" };
+                case ('Í' or 'Ì') { "I" };
+                case ('Ó' or 'Ò') { "O" };
+                case ('Ú' or 'Ù') { "U"};
+                case n { Char.toText(n) };
+            }
         };
         result   
     };
 
     func updateRankingHashTags() {  //TODO revisar otras opciones menos costosas computacionalmente
-        if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 60_000_000_000)){
+        if(not (now() > rankingHashTag.lastUpdate + rankingUpdateRefresh * 10_000_000_000)){
             return
         };
-
-        print("In updateRankingHashTags Function");
-        var arrayHashTagsCounter = Map.toArray(hashTagsMap);
-             
+        var arrayHashTagsCounter = Map.toArray(hashTagsMap);    
         arrayHashTagsCounter := Array.sort<(Text,Nat)>(
             arrayHashTagsCounter, 
             func (a, b) = if (a.1 < b.1){#greater} else {#less}
         );
-        print("HashTagsMap" # debug_show(arrayHashTagsCounter));
         let size = if (rankingQtyHahsTags >= arrayHashTagsCounter.size()){
             arrayHashTagsCounter.size()
         } else {
@@ -180,23 +184,15 @@ actor {
             arr; 
             lastUpdate = now()
         };
-        print("Out updateRankingHashTags Function");
     };
 
     func putHashTags(event: Event) {
-        print("In putHashTags Function");
-        print("HashTagMap size: " # Nat.toText((Map.size<Text, Nat>(hashTagsMap))));
-        if (Map.size<Text, Nat>(hashTagsMap) > 2){ 
-            updateRankingHashTags() 
-        };
-
+        if (Map.size<Text, Nat>(hashTagsMap) > 2){ updateRankingHashTags() };
         switch event {
             case (#NewPost(post)) {
-                print("Extrayendo hashtags del post");
                 for(hashtag in post.hashTags.vals()){
                     let normalizedHashTag = normalizeHashTag(hashtag);
                     let updateCounter: Nat = pushHashTagToMapCounter(normalizedHashTag);
-                    print("\tHashTag: " # normalizedHashTag # "\tContador -> " # Nat.toText(updateCounter));
                     var index = 0;
                     var inserted = false;
                 };
@@ -225,10 +221,10 @@ actor {
 
     public shared ({ caller }) func putEvent(event: Event):async Bool {
         assert(await isUserActorClass(caller));
-        print("In putEvetFunction");
-        putHashTags(event);
+        print("In putEventFunction");  
 
         let myEvents = Map.get<UserClassCanisterId, [Event]>(events, phash, caller);
+        putHashTags(event);
         switch myEvents {
             case null {
                 print("Inicializando mi lista de eventos y registrando evento");
@@ -250,7 +246,28 @@ actor {
                 ignore Map.put<UserClassCanisterId, [Event]>(events, phash, caller, updteEventList); 
                 true;
             }
-        }
+        };
+    };
+
+    public shared ({ caller }) func updateReactions( {postId: Nat; likes: Nat; disLikes: Nat}): async () {
+        print("Actualizando reacciones del PostPreview; Llamada desde canister " # Principal.toText(caller));
+        assert(await isUserActorClass(caller));
+        print(Principal.toText(caller) # " es un UserActorClass");
+        let callerEvents = getEventsFromUser(caller);
+        let tempBufferEvent = Buffer.fromArray<Event>([]);
+        for (e in callerEvents.vals()){
+            switch e {
+                case (#NewPost(p)){
+                    if(p.postId == postId) {
+                        tempBufferEvent.add(#NewPost({p with likes; disLikes}))
+                    } else {
+                        tempBufferEvent.add(e)
+                    };
+                };
+                case _ {tempBufferEvent.add(e)}
+            }
+        };
+        ignore Map.put<Principal, [Event]>(events, phash, caller, Buffer.toArray(tempBufferEvent))
     };
 
     public shared ({ caller }) func removeEvent(_date: Int) {
@@ -301,6 +318,8 @@ actor {
             owner = caller; 
             indexerUserCanister = Principal.fromActor(indexerUserCanister)
         });
+        // Add dfx deployer hobby as a controller for the user actor class to facilitate future updates
+        await ManagerCanister.addController(Principal.fromActor(actorClass), DEPLOYER_HOBBI);
         let newUser: Profile = {
             principal = caller;
             actorClass; 
@@ -310,7 +329,7 @@ actor {
             openCauses = [];
         };
         ignore Map.put(users, phash, caller, newUser); //TODO Creo que con la implementación del indexerUser ya no es necesario
-        ignore Set.put(usersCanister, phash, Principal.fromActor(actorClass));
+        ignore Map.put(principalByCID, phash, Principal.fromActor(actorClass), caller);
         let userDataPreview: UserPreviewInfo = {
             name = data.name;
             thumbnail = data.thumbnail;
@@ -340,12 +359,12 @@ actor {
     
   ////////////////////////////////////////    Getters functions       /////////////////////////////////////////////
 
-    public shared query ({ caller }) func getMyCanisterId(): async Principal{
+    public shared query ({ caller }) func getMyCanisterId(): async Text{
         let user = Map.get<Principal, Profile>(users, phash, caller);
         switch user {
-            case null { assert false; NULL_ADDRESS};
+            case null {""};
             case (?user){
-                Principal.fromActor(user.actorClass);
+                Principal.toText(Principal.fromActor(user.actorClass));
             }
         }
     };
@@ -360,7 +379,29 @@ actor {
         } 
     };
 
-    func updateFeedForUser(u: Principal, followeds: [Principal]) {
+    public query func getPrincipalFromCanisterId(cID: CanisterID): async ?Principal {
+        Map.get<Principal, Principal>(principalByCID, phash, cID)
+    };
+
+    public shared query ({ caller })  func getNameUser(u: Principal): async ?Text {
+        if(not isCommunity(caller)) { return null };
+        switch (Map.get<Principal, Profile>(users, phash, u)){
+            case null { null };
+            case ( ?user ) { ?user.name}
+        };
+    };
+
+    func updateFeedForUser(u: Principal, followeds: [Principal]): Feed {
+        let feed = Map.get<Principal, Feed>(personlizedFeeds, phash, u);
+        switch feed {
+            case (?feed) {
+                if ( not (now() > feed.lastUpdateFeed + feedUpdateRefreshTime * 1_000_000_000)) {
+                    return feed;
+                };
+            };
+            case _ { };
+        };
+        print("Actualizando feed personalizado");
         let bufferPreviews = Buffer.fromArray<PostPreview>([]);
         for(f in followeds.vals()){
             for(event in getEventsFromUser(f).vals()){
@@ -375,7 +416,8 @@ actor {
             }
         };
         let feedUpdate = {arr = Buffer.toArray(bufferPreviews); lastUpdateFeed = now()};
-        ignore Map.put<Principal, Feed>(personlizedFeeds, phash, u, feedUpdate)
+        ignore Map.put<Principal, Feed>(personlizedFeeds, phash, u, feedUpdate);
+        feedUpdate
     };
 
 
@@ -385,37 +427,20 @@ actor {
         switch user {
             case (?user) {
                 let followeds = await user.actorClass.getFolloweds();
-                var myRawFeed = Map.get<Principal, Feed>(personlizedFeeds, phash, caller); 
-                if(followeds.size() > 0) {
-                    switch myRawFeed {
-                        case null { 
-                            updateFeedForUser(caller, followeds);
-                            print("Inicializando el feed Personalizado")
-                        };
-                        case (?myRawFeed) {
-                            if( now() >= myRawFeed.lastUpdateFeed + feedUpdateRefreshTime * 60 * 1_000_000_000){ 
-                                updateFeedForUser(caller, followeds);
-                                print("Actualizando el feed Personalizado")
-                            } 
-                        }
-                    };
-                };
-                myRawFeed := Map.get<Principal, Feed>(personlizedFeeds, phash, caller);
-
-                switch myRawFeed {
-                    case null { getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)};
-                    case (?myRawFeed) {
-
-                        if (myRawFeed.arr.size() > page * qtyPerPage){
-                            {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
-                            with hasNext = true};
-                        } else {
-                            let bias = myRawFeed.arr.size()/qtyPerPage;
-                            print("Get My Feed: " # Nat.toText(page - bias));
-                            getPaginateElements<PostPreview>(generalFeed.arr, page - bias, qtyPerPage)  
-                        };
-                    }
-                };     
+                let followedsSet = Set.fromIter<UserClassCanisterId>(followeds.vals(), phash);
+                let myRawFeed = updateFeedForUser(caller, followeds);
+                if (myRawFeed.arr.size() > page * qtyPerPage){
+                    {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
+                    with hasNext = true};
+                } else {
+                    let bias = myRawFeed.arr.size()/qtyPerPage;
+                    // TODO Omitir posts incluidos en el feed personalizado
+                    let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
+                        generalFeed.arr,
+                        func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
+                    );
+                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias, qtyPerPage)  
+                };           
             };
             case _ {
                 getPaginateElements<PostPreview>(generalFeed.arr, page, qtyPerPage)
@@ -460,8 +485,28 @@ actor {
         rankingHashTag.arr
     };
   
-  /////////////////////////////////////// Reportar Post o Comentario //////////////////////////////////////////////
-    
+  ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
+
+    public shared ({ caller }) func createCommunity(name: Text /*, dataTransaction:{to: Account; amount: Nat} */): async {#Ok: Principal; #Err: Text} {
+        if(not isUser(caller)) {return #Err("Caller is not User")};
+        //if( not verifiedTransaction(dataTransaction){ return #Err: "Transaction error"};
+        let params = {
+            name; 
+            admins = [caller]; 
+            dateCreation = now() 
+        };
+        // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
+        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+        let community = await Community.Community(params);
+        let communityPID = Principal.fromActor(community);
+        ignore Map.put<Principal, Community>(communities, phash, communityPID, community);
+        // TODO Agregar referencia a la comunidad en el user Actor class del admin
+        #Ok(communityPID);
+
+    };
+
+  ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////
+ 
     public shared ({ caller }) func report(report: Report): async {#Ok: Text; #Err}{
         let informer = Map.get<Principal, Profile>(users, phash, caller);
         let accused = Map.get<CanisterID, Profile>(users, phash, report.accused);
@@ -585,10 +630,10 @@ actor {
     //             };              
     //         }
     //     };
-    // }
+    // };
+    // TODO. Aceptar o rechazar acusación y finalmente informar resolución
 }
 
-    // TODO. Aceptar o rechazar acusación y finalmente informar resolución
     
 
 

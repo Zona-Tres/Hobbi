@@ -7,6 +7,8 @@ import portada from "/images/portada.svg"
 import CustomConnectButton from "../components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
+import useStore from "../store/useStore"
+import crearActorParaBucket from "../hooks/crearActorParaBucket"
 
 export default function Friends() {
   const { id } = useParams()
@@ -15,8 +17,13 @@ export default function Friends() {
   const [nft] = useCanister("nft")
   const [post] = useCanister("post")
   const { principal } = useConnect()
-
-  const firstLoad = useRef(true)
+  const setCanisterId = useStore((state) => state.setCanisterId)
+    const setUsername = useStore((state) => state.setUsername)
+    const setMyInfo = useStore((state) => state.setMyInfo)
+    const canisterId = useStore((state) => state.canisterId)
+    const username = useStore((state) => state.username)
+    const myinfo = useStore((state) => state.myinfo)
+  const firstLoad = useRef(true);
   const [nftMetadata, setNftMetadata] = useState({})
   const [loading, setLoading] = useState(false)
   const [postList, setPostList] = useState([])
@@ -30,7 +37,37 @@ export default function Friends() {
     setSelected(index)
     navigate(url)
   }
+  const handleFollowers = async (actor) => {
+    try {
+        const response = await actor.getFollowersPreview()
+        if (response) {
+            setMyInfo(response)
+        }
+    } catch (e) {
+        console.error(e)
+    }
+}
+  useEffect(() => {
+    const fetchData = async () => {
+        setLoading(true);
 
+        try {
+            const actor = await crearActorParaBucket(canisterId);
+            handleFollowers(actor);
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (firstLoad.current) {
+        fetchData()
+        firstLoad.current = false
+    }
+}, [ setCanisterId, setUsername, username, canisterId])
+console.log(username,myinfo,canisterId)
   return (
     <>
       <Seo
@@ -50,7 +87,7 @@ export default function Friends() {
           </div>
           <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 p-8">
             <span className="text-md font-bold text-[#B577F7]">
-              @Corpuzville
+              @{username}
             </span>
             <div className="flex gap-3 mt-3">
               <div className="flex flex-col gap-1">

@@ -3,9 +3,9 @@ deploy canister hobbi
 signUp usuario. Args: Nombre, opcional email, bio, opcional foto, provisoriamente fee
 ```
 dfx canister call hobbi signUp '(record {
-    name="Usuario LEV"; 
+    name="Usuario BBB"; 
     email=null; 
-    bio="Biografía de Usuario LEV"; 
+    bio="Biografía de Usuario BBB"; 
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
@@ -18,7 +18,7 @@ ver info de Alice
 
 cear Post
 ```
-dfx canister call br5f7-7uaaa-aaaaa-qaaca-cai createPost '(record {
+dfx canister call by6od-j4aaa-aaaaa-qaadq-cai createPost '(record {
     access = variant{Public};
     title ="Mi terceer Posteo en Hobbi. Soy Usuario LEV";
     hashTags = vec {"Poe"; "Terror"};

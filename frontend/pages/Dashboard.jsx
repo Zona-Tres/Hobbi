@@ -64,7 +64,7 @@ export default function Dashboard() {
           }
 
           const newCanisterId = result.Ok.userCanisterId.toText();
-          setCanisterId(newCanisterId); 
+          setCanisterId(newCanisterId);
 
           const actor = await crearActorParaBucket(newCanisterId);
           handlePublicInfo(actor);
@@ -155,7 +155,7 @@ export default function Dashboard() {
             <div className="flex gap-3 mt-3">
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                  123K
+                  {Number(myinfo.followers)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Follower
@@ -163,7 +163,7 @@ export default function Dashboard() {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                  5.5M
+                  {Number(myinfo.followeds)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Following
@@ -232,9 +232,9 @@ export default function Dashboard() {
                 {myinfo.name}
               </span>
               <span className="text-sm font-medium text-[#B577F7] mt-2">
-                120 Seguidos
+                {Number(myinfo.followeds)} Seguidos
                 <span className="text-sm font-medium text-[#B577F7] ml-4">
-                  234 Seguidores
+                  {Number(myinfo.followers)} Seguidores
                 </span>
               </span>
             </div>
@@ -343,9 +343,9 @@ export default function Dashboard() {
                     {item.body}
                   </span>
                   <div className="flex gap-3 ">
-                  {item.hashTags.length > 1 && (
-                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                  )}
+                    {item.hashTags.length > 1 && (
+                      item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
+                    )}
                   </div>
                 </div>
               </div>

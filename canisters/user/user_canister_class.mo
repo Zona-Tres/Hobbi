@@ -10,6 +10,10 @@ import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Prim "mo:⛔";
 import { print } "mo:base/Debug";
+
+// TODO usuarios favoritos
+// TODO hashtags favoritos
+// TODO usuarios sugeridos
   
 shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = this {
 
@@ -53,13 +57,14 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     stable let posts = Map.new<PostID, Post>();
     stable let followers = Set.new<Principal>(); //los follower se identifican por su Principal id
     stable let followeds = Set.new<UserClassCanisterId>(); //Los seguidos se identifican por su canister id
+    stable let favorites = Set.new<UserClassCanisterId>(); //Los favoritos se identifican por su canister id
     stable let blockedUsers = Set.new<Principal>();
     stable let blockerUsers = Set.new<Principal>();
     stable let hiddenUsers = Set.new<Principal>();
 
     // stable let postReacteds = Map.new<PostID, Reaction>();
     // TODO Implementar lista de actividad reciente, reacciones, posteos, comentarios.
-    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreviewExtended]} = {previews = []; lastUpdate = 0};
+    var tempPostPreviews: {lastUpdate: Int; previews: [PostPreview]} = {previews = []; lastUpdate = 0};
     var previewsRefreshTime = 1 * 60 * 1_000_000_000; // 1 minuto 
     // TODO implementar lista de notificaciones, likes dislikes comentarios, nuevo seguidor
 
@@ -73,13 +78,19 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     let HOBBI_CANISTER = actor(Principal.toText(HOBBI)) : actor {
         getUserCanisterId: shared (Principal) -> async ?Principal;
+        getPrincipalFromCanisterId: shared (Principal) -> async ?Principal;
         isUserActorClass: shared (Principal) -> async Bool;
+        putEvent: shared (Event) -> async Bool;
         removeEvent: shared (Int) -> async ();
+        pushReactionToPostPreview: shared (Nat, Reaction, Principal) -> async Bool;
+        updateReactions: shared ({postId: Nat; likes: Nat; disLikes: Nat}) -> ();
     };
 
     let INDEXER_CANISTER = actor(Principal.toText(init.indexerUserCanister)): actor {
         updateFollowers: shared (Nat) -> ();
         updateFolloweds: shared (Nat) -> ();
+        getFollowedsPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo];
+        getFollowersPreview: shared ([Principal]) -> async [GlobalTypes.UserPreviewInfo]
     };
 
   ///////////////////////////////// Funciones privadas /////////////////////////////////////////////
@@ -108,9 +119,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.has<Principal>(blockerUsers, phash, p);
     };
 
-    func extractPostPreviewExtended(){
+    func extractPostPreview(){
         let postArray = Map.toArray<PostID, Post>(posts);
-        let previews = Prim.Array_tabulate<PostPreviewExtended>(
+        let previews = Prim.Array_tabulate<PostPreview>(
             postArray.size(),
             func i = {
                 hashTags = postArray[i].1.hashTags;
@@ -122,6 +133,9 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 date = postArray[i].1.metadata.date;
                 body = postArray[i].1.metadata.body;
                 image_url = postArray[i].1.metadata.image_url;
+                likes = Set.size(postArray[i].1.likes);
+                disLikes = Set.size(postArray[i].1.disLikes);
+                userName = name;
             }
         );
         tempPostPreviews := {lastUpdate = Time.now(); previews}
@@ -175,7 +189,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
     public shared query ({ caller }) func getFolloweds(): async [UserClassCanisterId] {
         assert(isOwner(caller) or isHobbi(caller));
-        Set.toArray<UserClassCanisterId>(followeds)
+        Set.toArray<UserClassCanisterId>(followeds);
     };
 
     public shared query ({ caller }) func getFollowers(): async [Principal]{
@@ -183,16 +197,30 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         Set.toArray<Principal>(followers);
     };
 
+    public shared ({ caller }) func getFollowedsPreview(): async [GlobalTypes.UserPreviewInfo and {isFavorite: Bool}] {
+        assert(isOwner(caller) or isHobbi(caller));
+        let result = await INDEXER_CANISTER.getFollowedsPreview(Set.toArray(followeds));
+        Prim.Array_tabulate<GlobalTypes.UserPreviewInfo and {isFavorite: Bool}>(
+            result.size(),
+            func x = {result[x] with isFavorite = _isFavorite(result[x].userCanisterId)}
+        )
+    };
+
+    public shared ({ caller }) func getFollowersPreview(): async [GlobalTypes.UserPreviewInfo]{
+        assert(isOwner(caller) or isHobbi(caller));
+        await INDEXER_CANISTER.getFollowersPreview(Set.toArray(followers));
+    };
+
     public shared ({ caller }) func getHiddenUsers():async [Principal] {
         assert(isOwner(caller) or isHobbi(caller));
         Set.toArray<Principal>(hiddenUsers);
     };
 
-    type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
+    // type PostPreviewExtended = PostPreview and {body: Text; image_url: ?Text };
 
-    public shared ({ caller }) func getPaginatePost({page: Nat; qtyPerPage: Nat}): async {arr: [PostPreviewExtended]; hasNext: Bool}{
+    public shared ({ caller }) func getPaginatePost({page: Nat; qtyPerPage: Nat}): async {arr: [PostPreview]; hasNext: Bool}{
         if( Time.now() > tempPostPreviews.lastUpdate + previewsRefreshTime ){
-            extractPostPreviewExtended();
+            extractPostPreview();
         };
         if(tempPostPreviews.previews.size() >= page * qtyPerPage) {
             let (length: Nat, hasNext: Bool) = if (tempPostPreviews.previews.size() >= (page + 1)  * qtyPerPage){
@@ -201,7 +229,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                 (tempPostPreviews.previews.size() % qtyPerPage, false)
             };
 
-            let arr = Array.subArray<PostPreviewExtended>(
+            let arr = Array.subArray<PostPreview>(
                 tempPostPreviews.previews, page * qtyPerPage, length);
             {arr; hasNext}
         } else {
@@ -327,16 +355,21 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         };
         ignore Map.put<PostID, Post>(posts, nhash, lastPostID, newPost);
         let newPostEvent = {
-            autor = Principal.fromActor(this); 
+            autor = Principal.fromActor(this);
+            userName = name;
             postId = newPost.id;
             access = init.access;
+            body = init.body;
+            image_url = init.image_url;
             hashTags = init.hashTags;
             title = newPost.metadata.title;
             photoPreview = newPost.metadata.imagePreview;
             date;
+            likes = 0;
+            disLikes = 0;
         };
         
-        ignore emitEvent(#NewPost(newPostEvent));
+        ignore HOBBI_CANISTER.putEvent(#NewPost(newPostEvent));
         lastPostID;     
     };
 
@@ -408,26 +441,61 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
 
   /////////////////////// Intercomunicacion con el canister principal //////////////////////////////
 
-    func emitEvent(event: Event): async Bool {
-        let remoteMainCanister = actor(Principal.toText(HOBBI)): actor{
-            putEvent: shared (Event) -> async Bool
-        };
-        await remoteMainCanister.putEvent(event);
-    };
+    // func emitEvent(event: Event): async Bool {
+    //     let remoteMainCanister = actor(Principal.toText(HOBBI)): actor{
+    //         putEvent: shared (Event) -> async Bool
+    //     };
+    //     await remoteMainCanister.putEvent(event);
+    // };
 
   ////////////////////////// Intercomunicacion con otros usuarios //////////////////////////////////
-  //////////////////////////////////////// Follow //////////////////////////////////////////////////
+  ////////////////////////////////// Follow & favorites ////////////////////////////////////////////
+
+    func identifyCaller(p: Principal): async {userCID: ?Principal; userPrincipal: ?Principal }{
+        if(Principal.toText(p).size() != 27){
+            {userCID = await HOBBI_CANISTER.getUserCanisterId(p); userPrincipal= ?p}; 
+        } else {
+            {userCID = ?p; userPrincipal = await HOBBI_CANISTER.getPrincipalFromCanisterId(p)};        
+        };
+    };
+
     public shared ({ caller }) func followMe(): async Bool {
-        let callerActorClassId = await HOBBI_CANISTER.getUserCanisterId(caller);
-        switch callerActorClassId {
+        let {userCID; userPrincipal} = await identifyCaller(caller);
+        print(debug_show(userCID, userPrincipal));
+        switch userCID {
             case null { false };
-            case (?callerActorClassId) {
-                let remoteCaller = actor(Principal.toText(callerActorClassId)): actor {
+            case (?canisterID) {
+                let remoteCaller = actor(Principal.toText(canisterID)): actor {
                     followBack: shared () -> async Bool
                 };
-                ignore Set.put<Principal>(followers, phash, caller);
-                INDEXER_CANISTER.updateFollowers(Set.size(followers));
-                await remoteCaller.followBack();
+                switch userPrincipal {
+                    case null { false };
+                    case (?userPrincipal) {
+                        ignore Set.put<Principal>(followers, phash, userPrincipal);
+                        INDEXER_CANISTER.updateFollowers(Set.size(followers));
+                        await remoteCaller.followBack();
+                    }
+                }    
+            }
+        }
+    };
+
+    public shared ({ caller }) func unFollowMe(): async Bool{
+        let {userCID; userPrincipal} = await identifyCaller(caller);
+        switch userCID {
+            case null { false };
+            case (?userCID) {
+                let remoteCaller = actor(Principal.toText(userCID)): actor {
+                    unFollowBack: shared () -> async Bool
+                };
+                switch userPrincipal {
+                    case null { false };
+                    case (?userPrincipal) {
+                        ignore Set.remove<Principal>(followers, phash, userPrincipal);
+                        INDEXER_CANISTER.updateFollowers(Set.size(followers));
+                        await remoteCaller.unFollowBack();
+                    }
+                }    
             }
         }
     };
@@ -438,22 +506,74 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
         true
     };
+
+    public shared ({ caller }) func unFollowBack(): async Bool {
+        assert(await HOBBI_CANISTER.isUserActorClass(caller));
+        ignore Set.remove<Principal>(followeds, phash, caller);
+        INDEXER_CANISTER.updateFolloweds(Set.size(followeds));
+        true
+    };
+
+    
+    public shared ({ caller }) func addFavorite(p: Principal): async {#Ok; #Err: Text} {
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
+        if(not (await HOBBI_CANISTER.isUserActorClass(p))){
+            return #Err("The principal provided does not correspond to a User Actor Class")
+        };
+        let remoteUser = actor(Principal.toText(p)): actor {
+            followMe: shared () -> async Bool
+        };
+        if(await remoteUser.followMe()){
+           ignore Set.put<Principal>(favorites, phash, p);
+            #Ok 
+        } else {
+            #Err("Unexpected error")
+        }     
+    };
+
+    public shared ({ caller }) func removeFavorite(p: Principal): async {#Ok; #Err: Text}{
+        if(not isOwner(caller)) { return #Err("The caller is not the owner")};
+        Set.delete<Principal>(favorites, phash, p);
+        #Ok
+    };
+
+    func _isFavorite(p: Principal): Bool {Set.has<Principal>(favorites, phash, p)};
+
+    public shared query ({ caller }) func isFavorite(p: Principal): async Bool{
+        if(not isOwner(caller)) { return false};
+        _isFavorite(p)
+    };
+    
+    public shared ({ caller }) func getFavoritesPreview(): async [GlobalTypes.UserPreviewInfo]{
+        if(not isOwner(caller)) { return []};
+        await INDEXER_CANISTER.getFollowedsPreview(Set.toArray(favorites));
+    };
+
+    public shared query ({ caller }) func getFavorites(): async [Principal]{
+        if(not isOwner(caller)) { return []};
+        Set.toArray(favorites);
+    };
+
   
   ////////////////////////////////////////////// Reactions /////////////////////////////////////////
 
-    public shared ({caller}) func sendReaction(postId: PostID, userClass: Principal, r: Reaction):async Bool {
-
-        let remoteUserCanister = actor(Principal.toText(userClass)): actor{
+    public shared ({caller}) func sendReaction({postId: PostID; canisterId: Principal; reaction: Reaction}):async Bool {
+        assert(isOwner(caller));
+        let remoteUserCanister = actor(Principal.toText(canisterId)): actor{
             receiveReaction: shared (PostID, Reaction )-> async Bool;
         };
-        let response = await remoteUserCanister.receiveReaction(postId, r);
-        ignore emitEvent(#React({reaction = r; postId; user = userClass})); //Mis seguidores sabran de mis reacciones sobre otros post :D
+        print("enviado reaccion al UserCanisterClass remoto");
+        let response = await remoteUserCanister.receiveReaction(postId, reaction);
+
+        ignore HOBBI_CANISTER.putEvent(#React({reaction = reaction; postId; user = canisterId})); 
         response;
     };
 
-    public shared ({caller}) func receiveReaction(id: PostID, r: Reaction):async Bool {
-
-        let post = Map.get<PostID, Post>(posts, nhash, id);
+    public shared ({caller}) func receiveReaction(postId: PostID, r: Reaction):async Bool {
+        print("Recibiendo reaccion en el UserCanisterClass remoto");
+        assert(await HOBBI_CANISTER.isUserActorClass(caller));
+        print("El caller es un UserCanisterClass: Ok");
+        let post = Map.get<PostID, Post>(posts, nhash, postId);
         switch post{
             case null { return false};
             case (?post){              
@@ -461,19 +581,27 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
                     case (#Like) {
                         ignore Set.put<Principal>(post.likes, phash, caller);
                         ignore Set.remove<Principal>(post.disLikes, phash, caller);
-                        return true;
                     };
                     case (#Dislike) {
                         ignore Set.put<Principal>(post.disLikes, phash, caller);
+                        ignore Set.remove<Principal>(post.likes, phash, caller);  
+                    };
+                    case (#Clear) {
                         ignore Set.remove<Principal>(post.likes, phash, caller);
-                        return true;
+                        ignore Set.remove<Principal>(post.disLikes, phash, caller);
                     };
                     case (#Custom(_customReact)) {
                         //TODO Ver qué hacer con las reacciones custom
-                        return true
                     }
                 };
-                
+                HOBBI_CANISTER.updateReactions(
+                    {
+                        postId;
+                        likes = Set.size(post.likes); 
+                        disLikes = Set.size(post.disLikes)
+                    }
+                );
+                true
             }
         }      
     };
