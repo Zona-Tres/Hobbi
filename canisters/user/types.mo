@@ -86,6 +86,7 @@ module {
         followeds: Nat;
         interests: [Text];
         callerIsFollower: Bool;
+        postQty: Nat;
     };
     
     public type FullDataUser = PublicDataUser and {
