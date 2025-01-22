@@ -64,7 +64,6 @@ export default function Feed() {
                     qtyPerPage: 10,
                     page: 0,
                 });
-                debugger
                 if (response) {
                     setPostList(response.arr)
                 }
@@ -152,8 +151,6 @@ export default function Feed() {
         }
     }
 
-    console.log(postList, '-----postList-----');
-
     return (
         <>
             <Seo
@@ -197,7 +194,7 @@ export default function Feed() {
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                                    12K
+                                    {Number(myinfo.postQty)}
                                 </span>
                                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                                     Post
@@ -209,10 +206,10 @@ export default function Feed() {
                     <div className="flex flex-col gap-4 ml-5 mt-8">
                         <div
                             className="flex gap-4 hover:cursor-pointer"
-                            onClick={() => handleClick("/inicio", 1)}
+                            onClick={() => handleClick("/feed", 1)}
                         >
                             <div
-                                className={`flex items-center justify-center h-6 w-6 rounded-md ${selected === 1 ? "bg-[#B577F7]" : "bg-[#0E1425]"
+                                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/feed" ? "bg-[#B577F7]" : "bg-[#0E1425]"
                                     }`}
                             >
                                 <svg
@@ -232,10 +229,41 @@ export default function Feed() {
                                 </svg>
                             </div>
                             <span
-                                className={`text-base font-bold ${selected === 1 ? "text-[#B577F7]" : "text-[#505CE6]"
+                                className={`text-base font-bold ${location.pathname === "/feed" ?"text-[#B577F7]" : "text-[#505CE6]"
                                     }`}
                             >
                                 Inicio
+                            </span>
+                        </div>
+                        <div
+                            className="flex gap-4 hover:cursor-pointer"
+                            onClick={() => handleClick("/friends", 3)}
+                        >
+                            <div
+                                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/friends" ? "bg-[#B577F7]" : "bg-[#0E1425]"
+                                    }`}
+                            >
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
+                                        stroke={selected === 3 ? "#B577F7" : "#505CE6"}
+                                        strokeWidth="1.125"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                            <span
+                                className={`text-base font-bold ${location.pathname === "/friends" ? "text-[#B577F7]" : "text-[#505CE6]"
+                                    }`}
+                            >
+                                Contactos
                             </span>
                         </div>
                     </div>
@@ -364,7 +392,7 @@ export default function Feed() {
                                         item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
                                     )}
                                 </div>
-                                <img src={item.image_url[0]} width="40px" />
+                                <img className="mt-3 rounded-md" src={item.image_url[0]} width="100px" />
                             </div>
                         ))}
                     <CustomConnectButton />

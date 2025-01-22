@@ -8,6 +8,7 @@ import CustomConnectButton from "../components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
 import useStore from "../store/useStore"
+import Avatar from "../components/Avatar"
 import crearActorParaBucket from "../hooks/crearActorParaBucket"
 
 export default function Friends() {
@@ -18,17 +19,18 @@ export default function Friends() {
   const [post] = useCanister("post")
   const { principal } = useConnect()
   const setCanisterId = useStore((state) => state.setCanisterId)
-    const setUsername = useStore((state) => state.setUsername)
-    const setMyInfo = useStore((state) => state.setMyInfo)
-    const canisterId = useStore((state) => state.canisterId)
-    const username = useStore((state) => state.username)
-    const myinfo = useStore((state) => state.myinfo)
+  const setUsername = useStore((state) => state.setUsername)
+  const setMyInfo = useStore((state) => state.setMyInfo)
+  const canisterId = useStore((state) => state.canisterId)
+  const username = useStore((state) => state.username)
+  const myinfo = useStore((state) => state.myinfo)
   const firstLoad = useRef(true);
   const [nftMetadata, setNftMetadata] = useState({})
   const [loading, setLoading] = useState(false)
-  const [postList, setPostList] = useState([])
+  const [followers, setFollowers] = useState([])
+  const [followeds, setFolloweds] = useState([])
   const [selected, setSelected] = useState(1)
-
+  const [activeTab, setActiveTab] = useState("followers");
   useEffect(() => {
     setLoading(true)
   }, [])
@@ -39,35 +41,56 @@ export default function Friends() {
   }
   const handleFollowers = async (actor) => {
     try {
-        const response = await actor.getFollowersPreview()
-        if (response) {
-            setMyInfo(response)
-        }
+      const response = await actor.getFollowersPreview()
+      if (response) {
+        setFollowers(response)
+      }
     } catch (e) {
-        console.error(e)
+      console.error(e)
     }
-}
+  }
+  const handleFolloweds = async (actor) => {
+    try {
+      const response = await actor.getFollowedsPreview()
+      if (response) {
+        setFolloweds(response)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  const handlePublicInfo = async (actor) => {
+    try {
+      const response = await actor.getMyInfo()
+      if (response) {
+        setMyInfo(response)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
-        setLoading(true);
+      setLoading(true);
 
-        try {
-            const actor = await crearActorParaBucket(canisterId);
-            handleFollowers(actor);
-
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+      try {
+        const actor = await crearActorParaBucket(canisterId);
+        handleFollowers(actor);
+        handleFolloweds(actor)
+        handlePublicInfo(actor);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     };
 
     if (firstLoad.current) {
-        fetchData()
-        firstLoad.current = false
+      fetchData()
+      firstLoad.current = false
     }
-}, [ setCanisterId, setUsername, username, canisterId])
-console.log(username,myinfo,canisterId)
+  }, [setCanisterId, setUsername, username, canisterId])
   return (
     <>
       <Seo
@@ -85,14 +108,17 @@ console.log(username,myinfo,canisterId)
           <div className="h-[86px] flex items-center justify-start pl-10">
             <LogoDark />
           </div>
-          <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 p-8">
-            <span className="text-md font-bold text-[#B577F7]">
-              @{username}
-            </span>
+          <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
+            <div className="flex justify-start gap-4 items-center">
+              <Avatar avatarData={myinfo.avatar} />
+              <span className="text-md font-bold text-[#B577F7]">
+                @{myinfo.name}
+              </span>
+            </div>
             <div className="flex gap-3 mt-3">
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                  123K
+                  {Number(myinfo.followers)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Follower
@@ -100,7 +126,7 @@ console.log(username,myinfo,canisterId)
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                  5.5M
+                  {Number(myinfo.followeds)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Following
@@ -108,7 +134,7 @@ console.log(username,myinfo,canisterId)
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                  12K
+                  {Number(myinfo.postQty)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Post
@@ -120,12 +146,11 @@ console.log(username,myinfo,canisterId)
           <div className="flex flex-col gap-4 ml-5 mt-8">
             <div
               className="flex gap-4 hover:cursor-pointer"
-              onClick={() => handleClick("/inicio", 1)}
+              onClick={() => handleClick("/feed", 1)}
             >
               <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 1 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
+                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/feed" ? "bg-[#B577F7]" : "bg-[#0E1425]"
+                  }`}
               >
                 <svg
                   width="16"
@@ -136,7 +161,7 @@ console.log(username,myinfo,canisterId)
                 >
                   <path
                     d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                    stroke={selected === 1 ? "#F7EFFF" : "#505CE6"}
+                    stroke={location.pathname === "/feed" ? "#F7EFFF" : "#505CE6"}
                     strokeWidth="1.125"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -144,22 +169,19 @@ console.log(username,myinfo,canisterId)
                 </svg>
               </div>
               <span
-                className={`text-base font-bold ${
-                  selected === 1 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
+                className={`text-base font-bold ${location.pathname === "/feed" ? "text-[#B577F7]" : "text-[#505CE6]"
+                  }`}
               >
                 Inicio
               </span>
             </div>
-
             <div
               className="flex gap-4 hover:cursor-pointer"
-              onClick={() => handleClick("/comunidades", 2)}
+              onClick={() => handleClick("/friends", 3)}
             >
               <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 2 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
+                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/friends" ? "bg-[#B577F7]" : "bg-[#0E1425]"
+                  }`}
               >
                 <svg
                   width="16"
@@ -170,7 +192,7 @@ console.log(username,myinfo,canisterId)
                 >
                   <path
                     d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                    stroke={selected === 2 ? "#B577F7" : "#505CE6"}
+                    stroke={location.pathname === "/friends" ? "#B577F7" : "#505CE6"}
                     strokeWidth="1.125"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -178,241 +200,99 @@ console.log(username,myinfo,canisterId)
                 </svg>
               </div>
               <span
-                className={`text-base font-bold ${
-                  selected === 2 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
+                className={`text-base font-bold ${location.pathname === "/friends" ? "text-[#B577F7]" : "text-[#505CE6]"
+                  }`}
               >
-                Comunidades
-              </span>
-            </div>
-
-            <div
-              className="flex gap-4 hover:cursor-pointer"
-              onClick={() => handleClick("/amigos", 3)}
-            >
-              <div
-                className={`flex items-center justify-center h-6 w-6 rounded-md ${
-                  selected === 3 ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                }`}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                    stroke={selected === 3 ? "#B577F7" : "#505CE6"}
-                    strokeWidth="1.125"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <span
-                className={`text-base font-bold ${
-                  selected === 3 ? "text-[#B577F7]" : "text-[#505CE6]"
-                }`}
-              >
-                Amigos
+                Contactos
               </span>
             </div>
           </div>
         </div>
-        <div className="flex flex-col px-7 py-11 ">
-          <span className="text-xl font-bold text-[#FDFCFF]">Contactos</span>
-          <div className="flex flex-wrap p-5 gap-7 ">
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
+        <div className="flex flex-col px-7 py-11 w-full ">
+          <span className="text-xl font-bold text-[#FDFCFF]">Amigos</span>
+          <div className="flex justify-center w-full flex-col items-center">
+            {/* Tabs */}
+            <div className=" w-60 flex gap-5 mb-5 mt-5 bg-[#121D2F] h-14 rounded-md px-5 items-center justify-center">
+              <div
+                className={`w-24 h-8 text-center cursor-pointer ${activeTab === "followers"
+                  ? "bg-[#B577F7] text-white"
+                  : "bg-[#121D2F] text-white"
+                  } rounded-md`}
+                onClick={() => setActiveTab("followers")}
               >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
+                Seguidores
+              </div>
+              <div
+                className={`w-24 h-8 text-center cursor-pointer ${activeTab === "followeds"
+                  ? "bg-[#B577F7] text-white"
+                  : "bg-[#121D2F] text-white"
+                  } rounded-md`}
+                onClick={() => setActiveTab("followeds")}
+              >
+                Seguidos
+              </div>
             </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
-            </div>
-            <div className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center">
-              <span className="text-base font-bold text-[#E1C9FB] mt-6">
-                @user_name
-              </span>
-              <span className="text-sm font-medium text-[#B577F7] mt-1">
-                124K Followers
-              </span>
-              <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                2 publicaciones nuevas
-              </span>
-              <button
-                type="submit"
-                className="h-7 w-16 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4"
-              >
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  Ver perfil
-                </span>
-              </button>
+
+            <div className="flex flex-wrap gap-7">
+              {activeTab === "followers" &&
+                followers.length > 0 &&
+                followers.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center"
+                  >
+                    <Avatar avatarData={item.thumbnail} />
+                    <span className="text-base font-bold text-[#E1C9FB] mt-6">
+                      @{item.name}
+                    </span>
+                    <span className="text-sm font-medium text-[#B577F7] mt-1">
+                      {Number(item.followers)} Followers
+                    </span>
+                    <span className="text-xs font-medium text-[#FE8F28] mt-4">
+                      {Number(item.recentPosts)} publicaciones nuevas
+                    </span>
+                    <button
+                      onClick={() =>
+                        (window.location.href = `/profile/${item.userCanisterId.toText()}`)
+                      }
+                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                    >
+                      <span className="text-sm font-medium text-[#FDFCFF]">
+                        Ver perfil
+                      </span>
+                    </button>
+                  </div>
+                ))}
+
+              {activeTab === "followeds" &&
+                followeds.length > 0 &&
+                followeds.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col w-40 h-52 bg-[#0E1425] rounded-2xl items-center"
+                  >
+                    <Avatar avatarData={item.thumbnail} />
+                    <span className="text-base font-bold text-[#E1C9FB] mt-6">
+                      @{item.name}
+                    </span>
+                    <span className="text-sm font-medium text-[#B577F7] mt-1">
+                      {Number(item.followers)} Followers
+                    </span>
+                    <span className="text-xs font-medium text-[#FE8F28] mt-4">
+                      {Number(item.recentPosts)} publicaciones nuevas
+                    </span>
+                    <button
+                      onClick={() =>
+                        (window.location.href = `/profile/${item.userCanisterId.toText()}`)
+                      }
+                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                    >
+                      <span className="text-sm font-medium text-[#FDFCFF]">
+                        Ver perfil
+                      </span>
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
           <CustomConnectButton />
