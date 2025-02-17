@@ -103,6 +103,8 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
             membersQty = Map.size(members);
             postsLastWeek = getPostQtyfromRange(now() - 7*24*60*60*1000000000, now());
             canisterId = Principal.fromActor(This);
+            lastActivity = postPreviewArray[postPreviewArray.size() - 1 ].date;
+            description ;
         };
         await INDEXER_CANISTER.updateCommunity(communityPreview)
     };

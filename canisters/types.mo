@@ -88,7 +88,9 @@ module {
         logo : Blob;
         dateCreation : Int;
         membersQty : Nat;
-        postsLastWeek : Nat
+        postsLastWeek : Nat;
+        description: Text;
+        lastActivity: Int;
     };
 
     public type ResponsePaginateCommunities = {

@@ -503,6 +503,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     postsLastWeek = 0;
                     canisterId = communityPID;
                     visibility = true;
+                    lastActivity = now();
                 };
                 ignore await indexerUserCanister.putCommunity(communityPreview);
                 // ignore user.actorClass.addCommunity(communityPID);
