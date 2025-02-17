@@ -477,6 +477,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 let params = {
                     name;
                     description;
+                    logo;
                     admins = [caller]; 
                     dateCreation = now();
                     indexer_canister = Principal.fromActor(indexerUserCanister);

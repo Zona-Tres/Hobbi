@@ -37,7 +37,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     stable var description = params.description;
     stable let dateCreation = params.dateCreation;
     stable var manifest = "";
-    stable var logo: Blob = "0";
+    stable var logo: Blob = params.logo;
     stable var coverImage: Blob = "0";
     
   ////////////////////////////////////////  Variables operativas //////////////////////////////////////
