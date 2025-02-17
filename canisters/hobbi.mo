@@ -69,7 +69,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
     stable var generalFeed: Feed = {arr = []; lastUpdateFeed = 0};
     stable let personlizedFeeds = Map.new<Principal, Feed>();
-
     
 
     stable let causes = Map.new<Nat, Cause>();
@@ -470,7 +469,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
-    public shared ({ caller }) func createCommunity({name: Text; description: Text}): async {#Ok: Principal; #Err: Text} {
+    public shared ({ caller }) func createCommunity({name: Text; description: Text; logo: Blob}): async {#Ok: Principal; #Err: Text} {
         switch (Map.get<Principal, Profile>(users, phash, caller)) {
             case null {return #Err("Caller is not User")};
             case ( ?user ) {
@@ -492,7 +491,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
                 let communityPreview: Types.CommunityPreviewInfo = {
                     params with
-                    logo = Blob.fromArray([0]);
+                    logo;
                     membersQty = 0;
                     postsLastWeek = 0;
                     canisterId = communityPID;
@@ -503,18 +502,14 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 //////////////////////////////////////////////////////////////////////////////////
 
                 #Ok(communityPID);
-
-
             }            
-        };
-
-        
-        
+        };     
     };
 
     public query func getCommunitiesCID(): async [CanisterID]{
         Iter.toArray(Map.keys<Principal, Community>(communities))
     };
+
 
     public shared ({ caller }) func getPaginateCommunities(args: {page: Nat; qtyPerPage: Nat}): async Types.ResponsePaginateCommunities{
         await indexerUserCanister.getPaginateCommunitiesPreview(args)
@@ -523,6 +518,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     public query func isCommunity(c: Principal): async Bool {
         _isCommunity(c);
     };
+
+    
 
   ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////
  

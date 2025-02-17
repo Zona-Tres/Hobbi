@@ -17,7 +17,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
   //////////////////////////////////////////         Types         ////////////////////////////////////
     public type Publisher = {principal: Principal; name: Text};
     public type Post = UserTypes.Post and {publisher: Member};
-    public type PostDataInit = UserTypes. PostDataInit;
+    public type PostDataInit = UserTypes.PostDataInit;
     type UpdatableDataPost = UserTypes.UpdatableDataPost;
     public type PostPreview = GlobalTypes.PostPreview;
     public type PostResponse = UserTypes.PostResponse;
