@@ -10,8 +10,10 @@ import { Seo } from "../components/utils/seo"
 import useStore from "../store/useStore"
 import crearActorParaBucket from "../hooks/crearActorParaBucket"
 import Avatar from "../components/Avatar"
+import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
+import Navigation from "../components/Navigation"
 
 export default function Feed() {
     const { id } = useParams()
@@ -150,7 +152,7 @@ export default function Feed() {
             console.error(e)
         }
     }
-
+console.log(postList,'postList')
     return (
         <>
             <Seo
@@ -202,71 +204,7 @@ export default function Feed() {
                             </div>
                         </div>
                     </div>
-
-                    <div className="flex flex-col gap-4 ml-5 mt-8">
-                        <div
-                            className="flex gap-4 hover:cursor-pointer"
-                            onClick={() => handleClick("/feed", 1)}
-                        >
-                            <div
-                                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/feed" ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                                    }`}
-                            >
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                                        stroke={selected === 1 ? "#F7EFFF" : "#505CE6"}
-                                        strokeWidth="1.125"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </div>
-                            <span
-                                className={`text-base font-bold ${location.pathname === "/feed" ?"text-[#B577F7]" : "text-[#505CE6]"
-                                    }`}
-                            >
-                                Inicio
-                            </span>
-                        </div>
-                        <div
-                            className="flex gap-4 hover:cursor-pointer"
-                            onClick={() => handleClick("/friends", 3)}
-                        >
-                            <div
-                                className={`flex items-center justify-center h-6 w-6 rounded-md ${location.pathname === "/friends" ? "bg-[#B577F7]" : "bg-[#0E1425]"
-                                    }`}
-                            >
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M0.6875 8.00012L7.40338 1.28424C7.73288 0.954733 8.26712 0.954733 8.59662 1.28424L15.3125 8.00012M2.375 6.31262V13.9064C2.375 14.3724 2.75276 14.7501 3.21875 14.7501H6.3125V11.0939C6.3125 10.6279 6.69026 10.2501 7.15625 10.2501H8.84375C9.30974 10.2501 9.6875 10.6279 9.6875 11.0939V14.7501H12.7812C13.2472 14.7501 13.625 14.3724 13.625 13.9064V6.31262M5.1875 14.7501H11.375"
-                                        stroke={selected === 3 ? "#B577F7" : "#505CE6"}
-                                        strokeWidth="1.125"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </div>
-                            <span
-                                className={`text-base font-bold ${location.pathname === "/friends" ? "text-[#B577F7]" : "text-[#505CE6]"
-                                    }`}
-                            >
-                                Contactos
-                            </span>
-                        </div>
-                    </div>
+                    <Navigation />
                 </div>
 
                 <div className="flex flex-col py-16 px-8">

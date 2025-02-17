@@ -14,6 +14,7 @@ import Feed from "./pages/Feed"
 import Home from "./pages/Home"
 import Dashboard from "./pages/Dashboard"
 import Friends from './pages/Friends'
+import Communities from './pages/Communities'
 import NotFound from "./pages/NotFound"
 import ErrorBoundary from "./pages/ErrorBoundary"
 import CreateProfile from "./pages/CreateProfile"
@@ -30,6 +31,7 @@ function App() {
       <Route path="/connect" element={<Connect2Hobbi />} />
       <Route path="/myprofile" element={<Dashboard />} />
       <Route path="/friends" element={<Friends />} />
+      <Route path="/communities" element={<Communities />} />
       <Route path="/profile/:id" element={<ProfileInfo />} />
       <Route path="/feed" element={<Feed />} />
       {/* Protected Routes */}
