@@ -353,7 +353,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         }
     };
 
-    public query func getUserCanisterId(u: Principal): async ?Principal {
+    public shared query ({ caller }) func getUserCanisterIdByOwner(u: Principal): async ?Principal {
+        assert(isAdmin(caller));
         let user = Map.get<Principal, Profile>(users, phash, u);
         switch user {
             case null { null };
@@ -361,6 +362,11 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 ?Principal.fromActor(user.actorClass)
             }
         } 
+    };
+
+    public shared query ({ caller }) func gerUserCanisterIdsForUpdate(): async [Principal] {
+        assert(isAdmin(caller));
+        Iter.toArray(Map.keys<UserClassCanisterId, Principal>(principalByCID))
     };
 
     public query func getPrincipalFromCanisterId(cID: CanisterID): async ?Principal {
