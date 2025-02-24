@@ -1,3 +1,40 @@
+#### Deploy instructions:
+Instalar el gestor de paquetes mops:
+``` npm i -g ic-mops ```
+
+posiblemente se requiera activar los permisos
+```chmod +x "$(npm root -g)/ic-mops/dist/bin/mops.js"```
+
+```bash
+npm install
+mops init 
+mops install
+dfx start --background --clean
+# Generate declarations
+dfx generate nft
+dfx generate outcall
+dfx generate post
+dfx generate hobbi
+# Deploy canisters
+dfx deploy outcall
+dfx deploy post
+dfx deploy nft --argument '(
+  principal "mzmaa-q3hlw-35cz4-amqr5-uyvqn-erfwd-3gsnw-hxe2m-kal3j-tbn3e-vqe",
+  record {
+    logo = record {
+      logo_type = "NFT_logo/png";
+      data = "";
+    };
+    name = "HobbiTest";
+    symbol = "HOB";
+    maxLimit = 50;
+  }
+)'
+dfx deploy hobbi
+dfx deploy internet_identity
+dfx deploy assets
+```
+
 [![Logo](https://github.com/Zona-Tres/Hobbi/assets/54418646/9ca31b21-3bcb-43ed-b12b-8278bec83c38)](https://hobbi.me)
 # Hobbi, the web3 social platform
 

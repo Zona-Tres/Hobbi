@@ -1,7 +1,19 @@
 {
   "canisters": {
-    "nft": {
-      "main": "canisters/nft/main.mo",
+    "hobbi": {
+      "main": "canisters/hobbi.mo",
+      "type": "motoko"
+    },
+    "user_no_deploy": {
+      "main": "canisters/user/user_canister_class.mo",
+      "type": "motoko"
+    },
+    "community_no_deploy": {
+      "main": "canisters/community/community_canister_class.mo",
+      "type": "motoko"
+    },
+    "indexer_no_deploy": {
+      "main": "canisters/index/user_indexer.mo",
       "type": "motoko"
     },
     "outcall": {
@@ -12,21 +24,35 @@
       "main": "canisters/post/main.mo",
       "type": "motoko"
     },
+    
+    "icrc1_ledger_canister": {
+      "type": "custom",
+      "candid": "https://raw.githubusercontent.com/dfinity/ic/233c1ee2ef68c1c8800b8151b2b9f38e17b8440a/rs/ledger_suite/icrc1/ledger/ledger.did",
+      "wasm": "https://download.dfinity.systems/ic/233c1ee2ef68c1c8800b8151b2b9f38e17b8440a/canisters/ic-icrc1-ledger.wasm.gz"
+    },
+    
+    "icrc1_index_canister": {
+      "type": "custom",
+      "candid": "https://raw.githubusercontent.com/dfinity/ic/a62848817cec7ae50618a87a526c85d020283fd9/rs/ledger_suite/icrc1/index-ng/index-ng.did",
+      "wasm": "https://download.dfinity.systems/ic/a62848817cec7ae50618a87a526c85d020283fd9/canisters/ic-icrc1-index-ng.wasm.gz"
+    },
+
     "internet_identity": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2023-11-17/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2023-11-17/internet_identity_dev.wasm.gz",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-10-25/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-10-25/internet_identity_dev.wasm.gz",
+      "init_arg": "(opt record { captcha_config = opt record { max_unsolved_captchas= 50:nat64; captcha_trigger = variant {Static = variant {CaptchaDisabled}}}})",
       "remote": {
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
-      }
+      },
+      "frontend": {}
     },
     "assets": {
       "dependencies": [
         "internet_identity",
         "outcall",
-        "nft",
         "post"
       ],
       "frontend": {
@@ -40,7 +66,7 @@
   },
   "defaults": {
     "build": {
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "networks": {
@@ -49,10 +75,11 @@
       "type": "ephemeral"
     },
     "ic": {
-      "providers": ["https://mainnet.dfinity.network"],
+      "providers": [
+        "https://mainnet.dfinity.network"
+      ],
       "type": "persistent"
-    }
+    }   
   },
-  "dfx": "0.15.0",
-  "version": 1
+  "dfx": "0.17.0"
 }
