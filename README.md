@@ -3,7 +3,7 @@ Instalar el gestor de paquetes mops:
 ``` npm i -g ic-mops ```
 
 posiblemente se requiera activar los permisos
-```chmod +x /home/ariel/.nvm/versions/node/v20.12.2/bin/mops```
+```chmod +x "$(npm root -g)/ic-mops/dist/bin/mops.js"```
 
 ```bash
 npm install

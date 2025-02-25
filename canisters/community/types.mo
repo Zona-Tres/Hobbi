@@ -5,6 +5,7 @@ module {
         dateCreation: Int;
         name: Text;
         description: Text;
+        logo: Blob;
         indexer_canister: Principal;
     };
 

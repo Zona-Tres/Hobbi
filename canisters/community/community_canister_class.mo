@@ -17,7 +17,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
   //////////////////////////////////////////         Types         ////////////////////////////////////
     public type Publisher = {principal: Principal; name: Text};
     public type Post = UserTypes.Post and {publisher: Member};
-    public type PostDataInit = UserTypes. PostDataInit;
+    public type PostDataInit = UserTypes.PostDataInit;
     type UpdatableDataPost = UserTypes.UpdatableDataPost;
     public type PostPreview = GlobalTypes.PostPreview;
     public type PostResponse = UserTypes.PostResponse;
@@ -37,7 +37,7 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
     stable var description = params.description;
     stable let dateCreation = params.dateCreation;
     stable var manifest = "";
-    stable var logo: Blob = "0";
+    stable var logo: Blob = params.logo;
     stable var coverImage: Blob = "0";
     
   ////////////////////////////////////////  Variables operativas //////////////////////////////////////
@@ -103,6 +103,8 @@ shared ({ caller = HOBBI }) actor class Community(params: Types.InitCommunityPar
             membersQty = Map.size(members);
             postsLastWeek = getPostQtyfromRange(now() - 7*24*60*60*1000000000, now());
             canisterId = Principal.fromActor(This);
+            lastActivity = postPreviewArray[postPreviewArray.size() - 1 ].date;
+            description ;
         };
         await INDEXER_CANISTER.updateCommunity(communityPreview)
     };

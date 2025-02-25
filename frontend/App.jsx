@@ -53,8 +53,7 @@ const client = createClient({
     hobbi
   },
   providers: [
-    // new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
-    new InternetIdentity({ providerUrl: "http://avqkn-guaaa-aaaaa-qaaea-cai.localhost:8000/" }),
+    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
     new NFID(),
   ],
   globalProviderConfig: {

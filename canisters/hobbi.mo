@@ -69,7 +69,10 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
     stable var generalFeed: Feed = {arr = []; lastUpdateFeed = 0};
     stable let personlizedFeeds = Map.new<Principal, Feed>();
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
     
 
     stable let causes = Map.new<Nat, Cause>();
@@ -354,7 +357,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         }
     };
 
-    public query func getUserCanisterId(u: Principal): async ?Principal {
+    public shared query ({ caller }) func getUserCanisterIdByOwner(u: Principal): async ?Principal {
+        assert(isAdmin(caller));
         let user = Map.get<Principal, Profile>(users, phash, u);
         switch user {
             case null { null };
@@ -362,6 +366,11 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 ?Principal.fromActor(user.actorClass)
             }
         } 
+    };
+
+    public shared query ({ caller }) func gerUserCanisterIdsForUpdate(): async [Principal] {
+        assert(isAdmin(caller));
+        Iter.toArray(Map.keys<UserClassCanisterId, Principal>(principalByCID))
     };
 
     public query func getPrincipalFromCanisterId(cID: CanisterID): async ?Principal {
@@ -470,7 +479,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
-    public shared ({ caller }) func createCommunity({name: Text; description: Text}): async {#Ok: Principal; #Err: Text} {
+    public shared ({ caller }) func createCommunity({name: Text; description: Text; logo: Blob}): async {#Ok: Principal; #Err: Text} {
         switch (Map.get<Principal, Profile>(users, phash, caller)) {
             case null {return #Err("Caller is not User")};
             case ( ?user ) {
@@ -478,6 +487,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 let params = {
                     name;
                     description;
+                    logo;
                     admins = [caller]; 
                     dateCreation = now();
                     indexer_canister = Principal.fromActor(indexerUserCanister);
@@ -492,24 +502,20 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                 //// Indexamos una vista previa inicial de la comunidad en el canister indexer ////
                 let communityPreview: Types.CommunityPreviewInfo = {
                     params with
-                    logo = Blob.fromArray([0]);
+                    logo;
                     membersQty = 0;
                     postsLastWeek = 0;
                     canisterId = communityPID;
                     visibility = true;
+                    lastActivity = now();
                 };
                 ignore await indexerUserCanister.putCommunity(communityPreview);
                 // ignore user.actorClass.addCommunity(communityPID);
                 //////////////////////////////////////////////////////////////////////////////////
 
                 #Ok(communityPID);
-
-
             }            
-        };
-
-        
-        
+        };     
     };
 
     public query func getCommunitiesCID(): async [CanisterID]{
@@ -523,6 +529,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     public query func isCommunity(c: Principal): async Bool {
         _isCommunity(c);
     };
+
+    
 
   ////////////////////////////////////// Reportar Post o Comentario ///////////////////////////////////////////////
  
