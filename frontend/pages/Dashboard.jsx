@@ -312,7 +312,7 @@ export default function Dashboard() {
                     {item.body}
                   </span>
                   <div className="flex gap-3 ">
-                    {item.hashTags.length > 1 && (
+                    {item.hashTags.length > 0 && (
                       item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
                     )}
                   </div>
