@@ -133,9 +133,9 @@ export default function Dashboard() {
   return (
     <>
       <Seo
-        title={`Hobbi.me | Cargando perfil`}
+        title={`Hobbi.me | Loading profile`}
         description={
-          "Reinventa la forma de socializar y se el dueño de tú información en internet."
+          "Reinvent the way you socialize and be the owner of your information on the internet."
         }
         type={"webapp"}
         name={"Hobbi"}
@@ -201,9 +201,9 @@ export default function Dashboard() {
                 {myinfo.name}
               </span>
               <span className="text-sm font-medium text-[#B577F7] mt-2">
-                {Number(myinfo.followeds)} Seguidos
+                {Number(myinfo.followeds)} Following
                 <span className="text-sm font-medium text-[#B577F7] ml-4">
-                  {Number(myinfo.followers)} Seguidores
+                  {Number(myinfo.followers)} Followers
                 </span>
               </span>
             </div>
@@ -213,7 +213,7 @@ export default function Dashboard() {
           </span>
           <div className="flex gap-3 items-center">
             <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
-              Temas
+              Themes
             </span>
             <div className="flex gap-4 mt-3 ml-3">
               <div
@@ -223,7 +223,7 @@ export default function Dashboard() {
                   : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
-                Libros
+                Books
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
@@ -241,7 +241,7 @@ export default function Dashboard() {
                   : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
-                Videojuegos
+                Video Games
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function Dashboard() {
                 type="text"
                 value={textArea}
                 onChange={(e) => setTextArea(e.target.value)}
-                placeholder="Comparte con nosotros"
+                placeholder="Share with us"
                 className="flex-grow bg-transparent focus:outline-none text-gray-700 pl-2"
               />
               {textArea !== "" && (

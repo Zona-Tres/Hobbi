@@ -94,8 +94,8 @@ export default function Feed() {
     const formatBigIntToDate = (bigIntValue) => {
         const milliseconds = Number(bigIntValue / 1000000n);
         const date = new Date(milliseconds);
-        const daysOfWeek = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-        const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
         const dayOfWeek = daysOfWeek[date.getDay()];
         const day = date.getDate().toString().padStart(2, '0');
@@ -156,9 +156,9 @@ console.log(postList,'postList')
     return (
         <>
             <Seo
-                title={`Hobbi.me | Cargando perfil`}
+                title={`Hobbi.me | Loading profile`}
                 description={
-                    "Reinventa la forma de socializar y se el dueño de tú información en internet."
+                    "Reinvent the way you socialize and be the owner of your information on the internet."
                 }
                 type={"webapp"}
                 name={"Hobbi"}
@@ -210,7 +210,7 @@ console.log(postList,'postList')
                 <div className="flex flex-col py-16 px-8">
                     <div className="flex gap-3 items-center">
                         <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
-                            Temas
+                            Themes
                         </span>
                         <div className="flex gap-4 mt-3 ml-3">
                             <div
@@ -220,7 +220,7 @@ console.log(postList,'postList')
                                     : "bg-[#FDFCFF] text-[#4F239E]"
                                     }`}
                             >
-                                Libros
+                                Books
                             </div>
                             <div
                                 onClick={() => setSelectedTheme(2)}
@@ -238,7 +238,7 @@ console.log(postList,'postList')
                                     : "bg-[#FDFCFF] text-[#4F239E]"
                                     }`}
                             >
-                                Videojuegos
+                                Video Games
                             </div>
                         </div>
                     </div>
@@ -271,7 +271,7 @@ console.log(postList,'postList')
                                 type="text"
                                 value={textArea}
                                 onChange={(e) => setTextArea(e.target.value)}
-                                placeholder="Comparte con nosotros"
+                                placeholder="Share with us"
                                 className="flex-grow bg-transparent focus:outline-none text-gray-700 pl-2"
                             />
                             {textArea !== "" && (
@@ -296,7 +296,7 @@ console.log(postList,'postList')
                         </div>
                     </div>
                     <span className="text-sm font-medium text-[#FDFCFF] ml-3 mt-2">
-                        Temas más comentados
+                        Most commented topics
                     </span>
                     <div className="flex gap-3 mt-3 ml-3">
                         {hashtagRankingList.length > 0 && (

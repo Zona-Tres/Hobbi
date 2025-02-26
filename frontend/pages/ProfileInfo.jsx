@@ -160,7 +160,7 @@ export default function ProfileInfo() {
             <Seo
                 title={`Hobbi.me | Profile`}
                 description={
-                    "Reinventa la forma de socializar y se el dueño de tú información en internet."
+                    "Reinvent the way you socialize and be the owner of your information on the internet."
                 }
                 type={"webapp"}
                 name={"Hobbi"}
@@ -234,7 +234,7 @@ export default function ProfileInfo() {
                                         {isLoading ? (
                                             <div className="w-4 h-4 border-2 border-t-[#B577F7] border-[#f3f3f3] rounded-full animate-spin"></div>
                                         ) : (
-                                            'Seguido'
+                                            'Following'
                                         )}
                                     </div>
                                 ) : (
@@ -245,15 +245,15 @@ export default function ProfileInfo() {
                                         {isLoading ? (
                                             <div className="w-4 h-4 border-2 border-t-[#B577F7] border-[#f3f3f3] rounded-full animate-spin"></div>
                                         ) : (
-                                            'Seguir'
+                                            'Follow'
                                         )}
                                     </div>
                                 )}
                             </div>
                             <span className="text-sm font-medium text-[#B577F7] mt-2">
-                                {Number(myinfo.followeds)} Seguidos
+                                {Number(myinfo.followeds)} Following
                                 <span className="text-sm font-medium text-[#B577F7] ml-4">
-                                    {Number(myinfo.followers)} Seguidores
+                                    {Number(myinfo.followers)} Followers
                                 </span>
                             </span>
                         </div>

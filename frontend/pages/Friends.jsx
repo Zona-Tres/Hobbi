@@ -101,7 +101,7 @@ export default function Friends() {
       <Seo
          title={`Hobbi.me | Profile`}
         description={
-          "Reinventa la forma de socializar y se el dueño de tú información en internet."
+          "Reinvent the way you socialize and be the owner of your information on the internet."
         }
         type={"webapp"}
         name={"Hobbi"}
@@ -150,7 +150,7 @@ export default function Friends() {
           <Navigation />
         </div>
         <div className="flex flex-col px-7 py-11 w-full ">
-          <span className="text-xl font-bold text-[#FDFCFF]">Amigos</span>
+          <span className="text-xl font-bold text-[#FDFCFF]">Friends</span>
           <div className="flex justify-center w-full flex-col items-center">
             {/* Tabs */}
             <div className=" w-60 flex gap-5 mb-5 mt-5 bg-[#121D2F] h-14 rounded-md px-5 items-center justify-center">
@@ -161,7 +161,7 @@ export default function Friends() {
                   } rounded-md`}
                 onClick={() => setActiveTab("followers")}
               >
-                Seguidores
+                Followers
               </div>
               <div
                 className={`w-24 h-8 text-center cursor-pointer ${activeTab === "followeds"
@@ -170,7 +170,7 @@ export default function Friends() {
                   } rounded-md`}
                 onClick={() => setActiveTab("followeds")}
               >
-                Seguidos
+                Following
               </div>
             </div>
 
@@ -190,7 +190,7 @@ export default function Friends() {
                       {Number(item.followers)} Followers
                     </span>
                     <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                      {Number(item.recentPosts)} publicaciones nuevas
+                      {Number(item.recentPosts)} new posts
                     </span>
                     <button
                       onClick={() =>
@@ -199,7 +199,7 @@ export default function Friends() {
                       className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
-                        Ver perfil
+                        View profile
                       </span>
                     </button>
                   </div>
@@ -220,7 +220,7 @@ export default function Friends() {
                       {Number(item.followers)} Followers
                     </span>
                     <span className="text-xs font-medium text-[#FE8F28] mt-4">
-                      {Number(item.recentPosts)} publicaciones nuevas
+                      {Number(item.recentPosts)} new posts
                     </span>
                     <button
                       onClick={() =>
@@ -229,7 +229,7 @@ export default function Friends() {
                       className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
-                        Ver perfil
+                        View profile
                       </span>
                     </button>
                   </div>
