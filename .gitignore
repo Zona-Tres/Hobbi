@@ -7,3 +7,4 @@ dist-ssr
 src/declarations
 .deps
 .mops
+.env

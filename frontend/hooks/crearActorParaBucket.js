@@ -11,7 +11,7 @@ const crearActorParaBucket = async (canisterId) => {
   }
 
   const agent = new HttpAgent({
-    host: "http://localhost:8000",  // URL para entorno local
+    host: import.meta.env.VITE_HOST_URL,  
     identity: currentIdentity,
   });
 
