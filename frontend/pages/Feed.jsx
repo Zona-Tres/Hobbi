@@ -210,7 +210,7 @@ console.log(postList,'postList')
                 <div className="flex flex-col py-16 px-8">
                     <div className="flex gap-3 items-center">
                         <span className=" text-xl font-medium text-[#FDFCFF] ml-3">
-                            Themes
+                            Topics
                         </span>
                         <div className="flex gap-4 mt-3 ml-3">
                             <div
