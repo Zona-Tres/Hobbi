@@ -101,7 +101,7 @@ export default function Friends() {
       <Seo
          title={`Hobbi.me | Profile`}
         description={
-          "Reinvent the way you socialize and be the owner of your information on the internet."
+          "Reinvent the way you socialize and own your information on the internet."
         }
         type={"webapp"}
         name={"Hobbi"}
