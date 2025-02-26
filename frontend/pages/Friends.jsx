@@ -98,7 +98,7 @@ export default function Friends() {
   return (
     <>
       <Seo
-        title={`Hobbi.me | Cargando perfil`}
+         title={`Hobbi.me | Profile`}
         description={
           "Reinventa la forma de socializar y se el dueño de tú información en internet."
         }

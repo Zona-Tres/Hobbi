@@ -61,12 +61,11 @@ export default function Communities() {
     useEffect(() => {
         fetchCommunities()
     }, [hobbi])
-console.log(communities,'communities')
     return (
         <>
             <Seo
-                title={`Hobbi.me | Comunidades`}
-                description={"Explora y únete a comunidades con intereses similares"}
+                title={`Hobbi.me | Communities`}
+                description={"Explore and join communities with similar interests"}
                 type={"webapp"}
                 name={"Hobbi"}
                 rel={"https://hobbi.me/communities"}
@@ -117,7 +116,7 @@ console.log(communities,'communities')
                                     (loading || !communityName || !communityDescription) ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                             >
-                                {loading ? 'Creando...' : 'Crear'}
+                                {loading ? 'Creating...' : 'Create'}
                             </button>
                         </div>
                     </div>
@@ -173,7 +172,7 @@ console.log(communities,'communities')
                             onClick={() => setIsModalOpen(true)}
                             className="bg-[#B577F7] text-white px-4 py-2 rounded-md hover:bg-[#9B5FD9] transition-colors"
                         >
-                            Crear
+                            Create
                         </button>
                     </div>
                     

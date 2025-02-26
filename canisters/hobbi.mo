@@ -69,10 +69,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     stable var rankingHashTag: {arr: [Text]; lastUpdate: Int }= {arr = []; lastUpdate = 0};
     stable var generalFeed: Feed = {arr = []; lastUpdateFeed = 0};
     stable let personlizedFeeds = Map.new<Principal, Feed>();
-<<<<<<< HEAD
-
-=======
->>>>>>> main
     
 
     stable let causes = Map.new<Nat, Cause>();
