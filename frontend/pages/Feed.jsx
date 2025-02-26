@@ -8,7 +8,7 @@ import CustomConnectButton from "../components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
 import { Seo } from "../components/utils/seo"
 import useStore from "../store/useStore"
-import crearActorParaBucket from "../hooks/crearActorParaBucket"
+import createBucketActor from "../hooks/createBucketActor"
 import Avatar from "../components/Avatar"
 import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
@@ -59,7 +59,7 @@ export default function Feed() {
                     const newCanisterId = result.Ok.userCanisterId.toText();
                     setCanisterId(newCanisterId);
 
-                    const actor = await crearActorParaBucket(newCanisterId);
+                    const actor = await createBucketActor(newCanisterId);
                     handlePublicInfo(actor);
                 }
                 const response = await hobbi.getMyFeed({
@@ -116,7 +116,7 @@ export default function Feed() {
         3: "Game",
     }
     const handleCreatePost = async () => {
-        const actor = await crearActorParaBucket(canisterId)
+        const actor = await createBucketActor(canisterId)
 
         try {
             const hashtagRegex = /#(\w+)/g;

@@ -2,12 +2,12 @@ import { Actor, HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { idlFactory as bucket_idlFactory } from "../../src/declarations/user_no_deploy/user_no_deploy.did.js"; 
 
-const crearActorParaBucket = async (canisterId) => {
+const createBucketActor = async (canisterId) => {
   let authClient = await AuthClient.create();
   const currentIdentity = authClient.getIdentity();
 
   if (!currentIdentity) {
-    throw new Error("Identidad no disponible. Asegúrate de estar autenticado.");
+    throw new Error("Identity not available. Make sure you are authenticated.");
   }
 
   const agent = new HttpAgent({
@@ -25,4 +25,4 @@ const crearActorParaBucket = async (canisterId) => {
   return actor;
 };
 
-export default crearActorParaBucket;
+export default createBucketActor;

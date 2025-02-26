@@ -14,6 +14,7 @@ import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
+import createBucketActor from "../hooks/createBucketActor"
 
 export default function Friends() {
   const { id } = useParams()
@@ -79,7 +80,7 @@ export default function Friends() {
       setLoading(true);
 
       try {
-        const actor = await crearActorParaBucket(canisterId);
+        const actor = await createBucketActor(canisterId);
         handleFollowers(actor);
         handleFolloweds(actor)
         handlePublicInfo(actor);

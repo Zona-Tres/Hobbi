@@ -14,6 +14,7 @@ import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
+import createBucketActor from "../hooks/createBucketActor"
 
 export default function ProfileInfo() {
     const { id } = useParams()
@@ -60,7 +61,7 @@ export default function ProfileInfo() {
     const handleFollowme = async () => {
         try {
             setIsLoading(true);
-            const actor = await crearActorParaBucket(id);
+            const actor = await createBucketActor(id);
             const response = await actor.followMe();
             if (response) {
                 setIsLoading(true);
@@ -75,7 +76,7 @@ export default function ProfileInfo() {
     const handleUnFollowme = async () => {
         try {
             setIsLoading(true);
-            const actor = await crearActorParaBucket(id);
+            const actor = await createBucketActor(id);
             const response = await actor.unFollowMe();
             if (response) {
                 setIsLoading(true);
@@ -93,7 +94,7 @@ export default function ProfileInfo() {
 
             try {
 
-                const actor = await crearActorParaBucket(id);
+                const actor = await createBucketActor(id);
                 handlePublicInfo(actor);
             } catch (e) {
                 console.error(e);
@@ -118,7 +119,7 @@ export default function ProfileInfo() {
         3: "Game",
     }
     const handleCreatePost = async () => {
-        const actor = await crearActorParaBucket(canisterId)
+        const actor = await createBucketActor(canisterId)
 
         try {
             const hashtagRegex = /#(\w+)/g;
