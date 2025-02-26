@@ -11,28 +11,18 @@ mops init
 mops install
 dfx start --background --clean
 # Generate declarations
-dfx generate nft
+dfx generate hobbi
 dfx generate outcall
 dfx generate post
-dfx generate hobbi
+dfx generate user_no_deploy
+dfx generate internet_identity
 # Deploy canisters
+dfx deploy hobbi
 dfx deploy outcall
 dfx deploy post
-dfx deploy nft --argument '(
-  principal "mzmaa-q3hlw-35cz4-amqr5-uyvqn-erfwd-3gsnw-hxe2m-kal3j-tbn3e-vqe",
-  record {
-    logo = record {
-      logo_type = "NFT_logo/png";
-      data = "";
-    };
-    name = "HobbiTest";
-    symbol = "HOB";
-    maxLimit = 50;
-  }
-)'
-dfx deploy hobbi
+dfx deploy user_no_deploy
 dfx deploy internet_identity
-dfx deploy assets
+npm run dev
 ```
 
 [![Logo](https://github.com/Zona-Tres/Hobbi/assets/54418646/9ca31b21-3bcb-43ed-b12b-8278bec83c38)](https://hobbi.me)

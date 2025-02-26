@@ -22,9 +22,6 @@ export default function Connect2Hobbi() {
 					<img src={Illustration} className="max-w-none" width={2146} alt="Hero Illustration" />
 				</div>
 			</div>
-			<div className="m-4">
-				<Logo />
-			</div>
 			<div className="relative min-h-screen flex items-center justify-center flex-col">
 				<div className="flex flex-col items-center justify-center space-y-4">
 					<h1 className="h1 bg-clip-text text-transparent bg-gradient-to-r from-slate-900/60 via-slate-800 to-slate-700/60 pb-4">Conéctate para continuar</h1>

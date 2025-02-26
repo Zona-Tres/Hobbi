@@ -6,13 +6,13 @@ import { Principal } from '@dfinity/principal';
 export default function RequireAuth(){
   const location = useLocation()
   const { isConnected, principal } = useConnect()
-  const [nft] = useCanister("nft")
-  const [hasProfile, setHasProfile] = useState(localStorage.getItem(principal) ? true : false )
+  const [hobbi] = useCanister("hobbi")
+  const [hasProfile, setHasProfile] = useState( false )
 
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        const response = await nft.getTokenIdsForUserDip721(Principal.fromText(principal))
+        const response = await hobbi.signIn()
         if(response.length > 0) {
           setHasProfile(true)
         }
@@ -28,6 +28,5 @@ export default function RequireAuth(){
   if (!isConnected) {
     return <Navigate to="/connect" />
   }
-
-  return hasProfile ? <Navigate to={`/profile/${principal}`} replace/> : <Outlet />
+  return hasProfile ? <Navigate to={`/dashboard/${principal}`} replace/> : <Outlet />
 }

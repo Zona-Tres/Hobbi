@@ -518,7 +518,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
         Iter.toArray(Map.keys<Principal, Community>(communities))
     };
 
-
     public shared ({ caller }) func getPaginateCommunities(args: {page: Nat; qtyPerPage: Nat}): async Types.ResponsePaginateCommunities{
         await indexerUserCanister.getPaginateCommunitiesPreview(args)
     };
