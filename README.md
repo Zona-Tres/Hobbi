@@ -10,18 +10,15 @@ npm install
 mops init 
 mops install
 dfx start --background --clean
+
 # Generate declarations
 dfx generate hobbi
-dfx generate outcall
-dfx generate post
 dfx generate user_no_deploy
-dfx generate internet_identity
+
 # Deploy canisters
 dfx deploy hobbi
-dfx deploy outcall
-dfx deploy post
-dfx deploy user_no_deploy
 dfx deploy internet_identity
+dfx deploy assets #Para desplegar frontend
 npm run dev
 ```
 
