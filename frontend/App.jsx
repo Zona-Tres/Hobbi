@@ -5,8 +5,6 @@ import { InternetIdentity, NFID } from "@connect2ic/core/providers"
 import { Connect2ICProvider } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 
-import * as outcall from "../src/declarations/outcall"
-import * as post from "../src/declarations/post"
 import * as hobbi from "../src/declarations/hobbi"
 import { Route, Routes } from "react-router-dom"
 
@@ -48,12 +46,10 @@ function App() {
 const helmetContext = {}
 const client = createClient({
   canisters: {
-    outcall,
-    post,
     hobbi
   },
   providers: [
-    new InternetIdentity({ providerUrl: "https://identity.ic0.app/" }),
+    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=be2us-64aaa-aaaaa-qaabq-cai" }),
     new NFID(),
   ],
   globalProviderConfig: {

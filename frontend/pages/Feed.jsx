@@ -92,7 +92,7 @@ export default function Feed() {
         navigate(url)
     }
     const formatBigIntToDate = (bigIntValue) => {
-        const milliseconds = Number(bigIntValue / 1000000n);
+        const milliseconds = Number(bigIntValue / BigInt(1000000));
         const date = new Date(milliseconds);
         const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

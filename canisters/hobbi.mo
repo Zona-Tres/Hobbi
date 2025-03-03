@@ -55,12 +55,13 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     var maxEventsPerUser = 20;
     // var lastUpdateFeed = 0;
 
-    let feeUserCanisterDeploy = 200_000_000_000; // cantidad mínimo 13_846_202_568
+    let feeUserCanisterDeploy = 800_006_000_000; // cantidad mínimo 13_846_202_568
 
     stable let users = Map.new<Principal, Profile>(); 
     stable let communities = Map.new<Principal, Community>(); 
     stable let principalByCID = Map.new<UserClassCanisterId, Principal>();   //Control y verificacion de procedencia de llamadas
     stable let admins = Set.new<Principal>();
+    ignore Set.put<Principal>(admins, phash, DEPLOYER_HOBBI);
 
     
     stable let events = Map.new<UserClassCanisterId, [Event]>(); //TODO enviar este map de eventos a canister dedicado
@@ -77,6 +78,10 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     // canister de indexación para guardar previsualizaciones de usuario
     stable var indexerUserCanister: UserIndexerCanister.UserIndexerCanister = actor("aaaaa-aa");
 
+    public shared ({ caller }) func getCanisterIndexer(): async Principal {
+        Principal.fromActor(indexerUserCanister);
+    };
+
     let random = Rand.Rand();
 
   /////////////////////////////////////////////   canisters auxiliares     ////////////////////////////////////////
@@ -87,7 +92,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     func hobbiInit(): async () {
         print("Desplegando el canister indexer");
         // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
-        Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+        Prim.cyclesAdd(feeUserCanisterDeploy); // 0.17.0 dfx version
         indexerUserCanister := await UserIndexerCanister.UserIndexerCanister();
         await ManagerCanister.addController(Principal.fromActor(indexerUserCanister), DEPLOYER_HOBBI);
         print("Canister indexer desplegado en " # Principal.toText(Principal.fromActor(indexerUserCanister)))
@@ -489,7 +494,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     indexer_canister = Principal.fromActor(indexerUserCanister);
                 };
                 // Prim.cyclesAdd<system>(200_000_000_000); // 0.24.1 dfx version
-                Prim.cyclesAdd(200_000_000_000); // 0.17.0 dfx version
+                Prim.cyclesAdd(feeUserCanisterDeploy); // 0.17.0 dfx version
                 let community = await Community.Community(params);
                 let communityPID = Principal.fromActor(community);
                 ignore Map.put<Principal, Community>(communities, phash, communityPID, community);

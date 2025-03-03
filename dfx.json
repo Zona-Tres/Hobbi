@@ -16,15 +16,6 @@
       "main": "canisters/index/user_indexer.mo",
       "type": "motoko"
     },
-    "outcall": {
-      "main": "canisters/outcall/main.mo",
-      "type": "motoko"
-    },
-    "post": {
-      "main": "canisters/post/main.mo",
-      "type": "motoko"
-    },
-    
     "icrc1_ledger_canister": {
       "type": "custom",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/233c1ee2ef68c1c8800b8151b2b9f38e17b8440a/rs/ledger_suite/icrc1/ledger/ledger.did",
@@ -39,9 +30,8 @@
 
     "internet_identity": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-10-25/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-10-25/internet_identity_dev.wasm.gz",
-      "init_arg": "(opt record { captcha_config = opt record { max_unsolved_captchas= 50:nat64; captcha_trigger = variant {Static = variant {CaptchaDisabled}}}})",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2023-09-08/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2023-09-08/internet_identity_dev.wasm.gz",
       "remote": {
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
@@ -51,9 +41,7 @@
     },
     "assets": {
       "dependencies": [
-        "internet_identity",
-        "outcall",
-        "post"
+        "internet_identity"
       ],
       "frontend": {
         "entrypoint": "dist/index.html"
@@ -80,6 +68,5 @@
       ],
       "type": "persistent"
     }   
-  },
-  "dfx": "0.17.0"
+  }
 }
