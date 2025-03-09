@@ -1,7 +1,7 @@
 #!/bin/bash
 dfx identity new 0000TestUser0
 dfx identity use 0000TestUser0
-dfx deploy hobbi
+dfx deploy --with-cycles 80TC hobbi
 
 # Usuario Peter Capusoto
 dfx identity new 0000TestUser1
