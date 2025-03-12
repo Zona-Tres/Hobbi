@@ -100,8 +100,12 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
-    public query func isUserActorClass(p: CanisterID):async Bool {
+    func _isUserActorClass(p: Principal): Bool {
         Map.has<UserClassCanisterId, Principal>(principalByCID, phash, p);
+    };
+
+    public query func isUserActorClass(p: CanisterID):async Bool {
+        _isUserActorClass(p);
     };
 
     func isUser(p: Principal): Bool{
@@ -366,7 +370,8 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     };
  
     public shared query ({ caller }) func getUserCanisterId(u: Principal): async ?Principal {
-        assert(isAdmin(caller) or Map.has<Principal, Profile>(users, phash, u));
+        // assert(isAdmin(caller) or Map.has<Principal, Profile>(users, phash, u));
+        assert(isAdmin(caller) or _isUserActorClass(caller));
         getUserCanisterIdByPrincipal(u)
     };
 
