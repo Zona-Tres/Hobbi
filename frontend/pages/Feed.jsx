@@ -124,7 +124,7 @@ export default function Feed() {
         3: "Game",
     }
 
-    const handleImageUpload = async (event) => {
+    const handleImageUpload = (event) => {
         const file = event.target.files[0]
         if (!file) return
       
@@ -133,15 +133,15 @@ export default function Feed() {
       
         try {
           // Comprimir para vista previa (0.1MB, 200px)
-          const previewBlob = await imageCompression(file, {
-            maxSizeMB: 0.1,
+          const previewBlob = imageCompression(file, {
+            maxSizeMB: 500,
             maxWidthOrHeight: 200,
             useWebWorker: true,
           })
       
           // Comprimir versión completa (1MB, 1000px)
-          const fullSizeBlob = await imageCompression(file, {
-            maxSizeMB: 1,
+          const fullSizeBlob = imageCompression(file, {
+            maxSizeMB: 1000,
             maxWidthOrHeight: 1000,
             useWebWorker: true,
           })
@@ -151,8 +151,8 @@ export default function Feed() {
           setImagePreview(previewUrl)
       
           // Convertir a Uint8Array
-          const previewArray = new Uint8Array(await previewBlob.arrayBuffer())
-          const fullSizeArray = new Uint8Array(await fullSizeBlob.arrayBuffer())
+          const previewArray = new Uint8Array(previewBlob.arrayBuffer())
+          const fullSizeArray = new Uint8Array(fullSizeBlob.arrayBuffer())
       
           // Guardar datos en estados
           setUploadedImageData({
@@ -168,7 +168,6 @@ export default function Feed() {
 
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
-        console.log("creando post")
 
         try {
             const hashtagRegex = /#(\w+)/g;
@@ -191,13 +190,11 @@ export default function Feed() {
                 image_url: media? [media.image]: [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
-            console.log(json)
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
                 qtyPerPage: 10,
                 page: 0,
             })
-            console.log(responsePost)
             setMedia(null)
             setTextArea("")
             setPostList(responsePost.arr)
@@ -205,7 +202,7 @@ export default function Feed() {
             console.error(e)
         }
     }
-console.log(postList,'postList')
+
     return (
         <>
             <Seo
