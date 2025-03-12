@@ -378,6 +378,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
     public shared ({ caller }) func createPost(init: PostDataInit):async  PostID {
         assert(isOwner(caller));
         let date = Time.now();
+        print("Creando post");
         let metadata: Types.PostMetadata = { init with date; progress = #Started };
         lastPostID += 1;
         let newPost: Post = {
@@ -406,6 +407,7 @@ shared ({ caller }) actor class User (init: GlobalTypes.DeployUserCanister) = th
         };
         
         ignore HOBBI_CANISTER.putEvent(#NewPost(newPostEvent));
+        print("Post creado" # debug_show(lastPostID));
         lastPostID;     
     };
 

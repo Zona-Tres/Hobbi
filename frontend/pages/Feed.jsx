@@ -14,6 +14,7 @@ import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
+import imageCompression from "browser-image-compression"
 
 export default function Feed() {
     const { id } = useParams()
@@ -34,6 +35,13 @@ export default function Feed() {
     const [selected, setSelected] = useState(1)
     const [selectedTheme, setSelectedTheme] = useState(1)
     const [textArea, setTextArea] = useState("")
+    const [image, setImage] = useState(null)
+    const [imagePreview, setImagePreview] = useState(null)
+    const [uploadedImageData, setUploadedImageData] = useState({
+        preview: null,
+        full: null,
+      })
+
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getMyInfo()
@@ -115,8 +123,52 @@ export default function Feed() {
         2: "Tv",
         3: "Game",
     }
+
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0]
+        if (!file) return
+      
+        // Limpiar media si existía
+        setMedia(null)
+      
+        try {
+          // Comprimir para vista previa (0.1MB, 200px)
+          const previewBlob = await imageCompression(file, {
+            maxSizeMB: 0.1,
+            maxWidthOrHeight: 200,
+            useWebWorker: true,
+          })
+      
+          // Comprimir versión completa (1MB, 1000px)
+          const fullSizeBlob = await imageCompression(file, {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1000,
+            useWebWorker: true,
+          })
+      
+          // Generar URL para vista previa
+          const previewUrl = URL.createObjectURL(previewBlob)
+          setImagePreview(previewUrl)
+      
+          // Convertir a Uint8Array
+          const previewArray = new Uint8Array(await previewBlob.arrayBuffer())
+          const fullSizeArray = new Uint8Array(await fullSizeBlob.arrayBuffer())
+      
+          // Guardar datos en estados
+          setUploadedImageData({
+            preview: previewArray,
+            full: fullSizeArray,
+          })
+          setImage(fullSizeArray)
+      
+        } catch (error) {
+          console.error("Error procesando imagen:", error)
+        }
+    }
+
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
+        console.log("creando post")
 
         try {
             const hashtagRegex = /#(\w+)/g;
@@ -127,24 +179,25 @@ export default function Feed() {
             while ((match = hashtagRegex.exec(textArea)) !== null) {
                 hashtags.push(match[1]);
             }
-
             cleanedText = textArea.replace(hashtagRegex, "").trim();
 
             const json = {
                 access: { Public: null },
-                title: media?.title,
+                title: media? title: "",
                 body: cleanedText,
-                image: [],
-                imagePreview: [],
+                image: uploadedImageData.full ? [uploadedImageData.full] : [],
+                imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
                 hashTags: hashtags,
-                image_url: [media?.image],
+                image_url: media? [media.image]: [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
+            console.log(json)
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
                 qtyPerPage: 10,
                 page: 0,
             })
+            console.log(responsePost)
             setMedia(null)
             setTextArea("")
             setPostList(responsePost.arr)
@@ -266,6 +319,19 @@ console.log(postList,'postList')
 
                         <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
                             <Avatar avatarData={myinfo.avatar} size="small" />
+                            <label className="ml-2 p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+                                <input 
+                                    type="file" 
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e)} 
+                                />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="20" viewBox="0 0 32 18" fill="#8E8E8E">
+                                    <rect x="1" y="1" width="30" height="20" rx="3" ry="3" fill="rgb(250 180 255)"/>
+                                    <circle cx="22" cy="8" r="2.5" fill="#20aa80"/>
+                                    <path d="M5 14h22l-5-6-4 4-3-3-6 5z" fill="#20aa80"/>
+                                </svg>
+                            </label>
 
                             <input
                                 type="text"
@@ -331,6 +397,7 @@ console.log(postList,'postList')
                                     )}
                                 </div>
                                 <img className="mt-3 rounded-md" src={item.image_url[0]} width="100px" />
+                                <img className="mt-3 rounded-md" src={item.image} width="100px" />
                             </div>
                         ))}
                     <CustomConnectButton />
