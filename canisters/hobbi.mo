@@ -370,7 +370,6 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     };
  
     public shared query ({ caller }) func getUserCanisterId(u: Principal): async ?Principal {
-        // assert(isAdmin(caller) or Map.has<Principal, Profile>(users, phash, u));
         assert(isAdmin(caller) or _isUserActorClass(caller));
         getUserCanisterIdByPrincipal(u)
     };
