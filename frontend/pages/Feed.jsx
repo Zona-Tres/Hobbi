@@ -164,11 +164,10 @@ export default function Feed() {
     };
     
     const blobToImageUrl = (imageData) => {
-        if (!imageData || !imageData.length) return null;
-        
+        if (!imageData || !imageData.length) return null;  
         const blob = new Blob([imageData], { type: "image/jpeg" });
         return URL.createObjectURL(blob);
-      };
+    };
     
 
     const handleCreatePost = async () => {
