@@ -41,7 +41,6 @@ export default function Feed() {
         preview: null,
         full: null,
       })
-
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getMyInfo()
@@ -71,8 +70,8 @@ export default function Feed() {
                     handlePublicInfo(actor);
                 }
                 const response = await hobbi.getMyFeed({
-                    qtyPerPage: 10,
-                    page: 0,
+                    qtyPerPage: 30,
+                    page: 2,
                 });
                 if (response) {
                     setPostList(response.arr)
@@ -124,47 +123,53 @@ export default function Feed() {
         3: "Game",
     }
 
-    const handleImageUpload = (event) => {
-        const file = event.target.files[0]
-        if (!file) return
-      
-        // Limpiar media si existía
-        setMedia(null)
-      
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+    
+        setMedia(null);
+    
         try {
-          // Comprimir para vista previa (0.1MB, 200px)
-          const previewBlob = imageCompression(file, {
-            maxSizeMB: 500,
-            maxWidthOrHeight: 200,
-            useWebWorker: true,
-          })
-      
-          // Comprimir versión completa (1MB, 1000px)
-          const fullSizeBlob = imageCompression(file, {
-            maxSizeMB: 1000,
-            maxWidthOrHeight: 1000,
-            useWebWorker: true,
-          })
-      
-          // Generar URL para vista previa
-          const previewUrl = URL.createObjectURL(previewBlob)
-          setImagePreview(previewUrl)
-      
-          // Convertir a Uint8Array
-          const previewArray = new Uint8Array(previewBlob.arrayBuffer())
-          const fullSizeArray = new Uint8Array(fullSizeBlob.arrayBuffer())
-      
-          // Guardar datos en estados
-          setUploadedImageData({
-            preview: previewArray,
-            full: fullSizeArray,
-          })
-          setImage(fullSizeArray)
-      
+            // Comprimir para vista previa
+            const previewBlob = await imageCompression(file, {
+                maxSizeMB: 0.3, //0.3/120 Preview
+                maxWidthOrHeight: 120,
+                useWebWorker: true,
+            });
+    
+            // Comprimir versión completa
+            const fullSizeBlob = await imageCompression(file, {
+                maxSizeMB: 1.5, // 1MB
+                maxWidthOrHeight: 1900,
+                useWebWorker: true,
+            });
+    
+            // Generar URL para vista previa
+            const previewUrl = URL.createObjectURL(previewBlob);
+            setImagePreview(previewUrl);
+    
+            // Convertir a Uint8Array
+            const previewArray = new Uint8Array(await previewBlob.arrayBuffer());
+            const fullSizeArray = new Uint8Array(await fullSizeBlob.arrayBuffer());
+    
+            setUploadedImageData({
+                preview: previewArray,
+                full: fullSizeArray,
+            });
+            setImage(fullSizeArray);
+    
         } catch (error) {
-          console.error("Error procesando imagen:", error)
+            console.error("Error procesando imagen:", error);
         }
-    }
+    };
+    
+    const blobToImageUrl = (imageData) => {
+        if (!imageData || !imageData.length) return null;
+        
+        const blob = new Blob([imageData], { type: "image/jpeg" });
+        return URL.createObjectURL(blob);
+      };
+    
 
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
@@ -220,7 +225,7 @@ export default function Feed() {
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
-                    <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
+                    {username && <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
                             <span className="text-md font-bold text-[#B577F7]">
@@ -253,7 +258,7 @@ export default function Feed() {
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </div>}
                     <Navigation />
                 </div>
 
@@ -393,8 +398,21 @@ export default function Feed() {
                                         item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
                                     )}
                                 </div>
-                                <img className="mt-3 rounded-md" src={item.image_url[0]} width="100px" />
-                                <img className="mt-3 rounded-md" src={item.image} width="100px" />
+                                {item.photoPreview?.length > 0 ? (
+                                    <img 
+                                    className="mt-3 rounded-md" 
+                                    src={blobToImageUrl(item.photoPreview[0])} 
+                                    width="100px" 
+                                    alt="Post content"
+                                    />
+                                ) : item.image_url?.length > 0 ? (
+                                    <img 
+                                    className="mt-3 rounded-md" 
+                                    src={item.image_url[0]} 
+                                    width="100px" 
+                                    alt="Media reference"
+                                    />
+                                ) : null}
                             </div>
                         ))}
                     <CustomConnectButton />
