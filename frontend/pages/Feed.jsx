@@ -211,6 +211,10 @@ export default function Feed() {
         return URL.createObjectURL(blob);
     };
     
+    const handleHashtagClick = async (tag) => {
+        let filteredPosts = await hobbi.getPostByHashTag(tag)
+        setPostList(filteredPosts)
+    }
 
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
@@ -263,10 +267,10 @@ export default function Feed() {
 
             <div className="flex w-full bg-[#070A10] max-h-full min-h-screen">
                 <div className="flex flex-col w-[300px] h-full border border-[#0E1425]">
-                <CustomConnectButton />
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
+                    <CustomConnectButton />
                     {username && <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
@@ -363,17 +367,17 @@ export default function Feed() {
 
                         <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
                             <Avatar avatarData={myinfo.avatar} size="small" />
-                            <label className="ml-2 p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+                            <label className="ml-2 p-2 rounded-full hover:bg-gray-100 cursor-pointer hover:opacity-80 transition-transform duration-200">
                                 <input 
                                     type="file" 
                                     className="hidden"
                                     accept="image/*"
                                     onChange={(e) => handleImageUpload(e)} 
                                 />
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="20" viewBox="0 0 32 18" fill="#8E8E8E">
-                                    <rect x="1" y="1" width="30" height="20" rx="3" ry="3" fill="rgb(250 180 255)"/>
-                                    <circle cx="22" cy="8" r="2.5" fill="#20aa80"/>
-                                    <path d="M5 14h22l-5-6-4 4-3-3-6 5z" fill="#20aa80"/>
+                                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa"/>
+                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff"/> 
+                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff"/>
                                 </svg>
                             </label>
 
@@ -410,7 +414,12 @@ export default function Feed() {
                     </span>
                     <div className="flex gap-3 mt-3 ml-3">
                         {hashtagRankingList.length > 0 && (
-                            hashtagRankingList.map((tag, index) => <Hashtag key={index} name={tag} />)
+                            hashtagRankingList.map((tag, index) => 
+                            <div 
+                                className= "flex px-3 h-5 rounded-2xl max-w-fit text-[10px] text-[#FDFCFF] font-normal bg-[#4F239E] items-center justify-center"
+                                key={index} 
+                                name={tag} 
+                                onClick={() => handleHashtagClick(tag)}> {tag} </div>)
                         )}
                     </div>
                     {postList.length > 0 &&
@@ -418,7 +427,8 @@ export default function Feed() {
                             <div
                                 key={index}
                                 ref={index === postList.length - 1 ? lastPostRef : null}
-                                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full"
+                                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
+                                hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
                             >
                                 <div className="flex justify-between">
                                     <span
