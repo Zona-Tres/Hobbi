@@ -263,6 +263,7 @@ export default function Feed() {
 
             <div className="flex w-full bg-[#070A10] max-h-full min-h-screen">
                 <div className="flex flex-col w-[300px] h-full border border-[#0E1425]">
+                <CustomConnectButton />
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
@@ -301,7 +302,6 @@ export default function Feed() {
                         </div>
                     </div>}
                     <Navigation />
-                <CustomConnectButton />
                 </div>
 
                 <div className="flex flex-col py-16 px-8">
