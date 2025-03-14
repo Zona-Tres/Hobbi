@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useCallback } from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -40,7 +40,11 @@ export default function Feed() {
     const [uploadedImageData, setUploadedImageData] = useState({
         preview: null,
         full: null,
-      })
+    })
+    const [currentPage, setCurrentPage] = useState(0);
+    const [hasNext, setHasNext] = useState(false);
+    const observer = useRef();
+    
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getMyInfo()
@@ -70,11 +74,13 @@ export default function Feed() {
                     handlePublicInfo(actor);
                 }
                 const response = await hobbi.getMyFeed({
-                    qtyPerPage: 30,
-                    page: 2,
+                    qtyPerPage: 25,
+                    page: currentPage,
                 });
                 if (response) {
                     setPostList(response.arr)
+                    setHasNext(response.hasNext);
+                    setCurrentPage(0);
                 }
                 const hashtagRanking = await hobbi.getRankingHashTags();
                 if (hashtagRanking) {
@@ -93,6 +99,42 @@ export default function Feed() {
             firstLoad.current = false
         }
     }, [hobbi, setCanisterId, setUsername, username, canisterId])
+
+    const loadMorePosts = async () => {
+        console.log("solicitando mas post")
+        if (!hasNext || loading) return;
+        setLoading(true);
+        try {
+          const nextPage = currentPage + 1;
+          const response = await hobbi.getMyFeed({
+            qtyPerPage: 25,
+            page: nextPage,
+          });
+          if (response) {
+            setPostList(prev => [...prev, ...response.arr]);
+            setHasNext(response.hasNext);
+            setCurrentPage(nextPage);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+    };
+
+    const lastPostRef = useCallback(
+        (node) => {
+          if (loading) return;
+          if (observer.current) observer.current.disconnect();
+          observer.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasNext) {
+              loadMorePosts();
+            }
+          });
+          if (node) observer.current.observe(node);
+        },
+        [loading, hasNext]
+    );
 
     const handleClick = (url, index) => {
         setSelected(index)
@@ -206,7 +248,7 @@ export default function Feed() {
             console.error(e)
         }
     }
-
+    
     return (
         <>
             <Seo
@@ -259,6 +301,7 @@ export default function Feed() {
                         </div>
                     </div>}
                     <Navigation />
+                <CustomConnectButton />
                 </div>
 
                 <div className="flex flex-col py-16 px-8">
@@ -374,6 +417,7 @@ export default function Feed() {
                         postList.map((item, index) => (
                             <div
                                 key={index}
+                                ref={index === postList.length - 1 ? lastPostRef : null}
                                 className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full"
                             >
                                 <div className="flex justify-between">
@@ -414,7 +458,6 @@ export default function Feed() {
                                 ) : null}
                             </div>
                         ))}
-                    <CustomConnectButton />
                 </div>
             </div>
         </>
