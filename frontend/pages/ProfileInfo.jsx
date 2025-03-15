@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useCallback} from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -39,14 +39,54 @@ export default function ProfileInfo() {
     const [selectedTheme, setSelectedTheme] = useState(1)
     const [textArea, setTextArea] = useState("")
     const [isLoading, setIsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [hasNext, setHasNext] = useState(false);
+
+    const observer = useRef();
+    const loadMorePosts = async () => {
+        console.log("solicitando mas post")
+        if (!hasNext || loading) return;
+        setLoading(true);
+        try {
+            const nextPage = currentPage + 1;
+            const response = await hobbi.getMyFeed({
+                qtyPerPage: 25,
+                page: nextPage,
+            });
+            if (response) {
+                setPostList(prev => [...prev, ...response.arr]);
+                setHasNext(response.hasNext);
+                setCurrentPage(nextPage);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const lastPostRef = useCallback(
+        (node) => {
+            if (loading) return;
+            if (observer.current) observer.current.disconnect();
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && hasNext) {
+                    loadMorePosts();
+                }
+            });
+            if (node) observer.current.observe(node);
+        },
+        [loading, hasNext]
+    );
+
     const handlePublicInfo = async (actor) => {
         try {
             setIsLoading(true);
             const response = await actor.getPublicInfo()
             if (response) {
                 const responsePost = await actor.getPaginatePost({
-                    qtyPerPage: 10,
-                    page: 0,
+                    qtyPerPage: 25,
+                    page: currentPage,
                 })
                 setPostList(responsePost.arr)
                 setMyInfo(response.Ok)
@@ -171,6 +211,7 @@ export default function ProfileInfo() {
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
+                    <CustomConnectButton />
                     <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
@@ -264,6 +305,7 @@ export default function ProfileInfo() {
                         postList.map((item, index) => (
                             <div
                                 key={index}
+                                ref={index === postList.length - 1 ? lastPostRef : null}
                                 className="flex  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4"
                             >
                                 <img className="rounded-lg object-cover" src={item.image_url[0]} width="70px" />
@@ -282,7 +324,6 @@ export default function ProfileInfo() {
                                 </div>
                             </div>
                         ))}
-                    <CustomConnectButton />
                 </div>
             </div>
         </>
