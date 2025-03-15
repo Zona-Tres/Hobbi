@@ -486,6 +486,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
     public shared ({ caller }) func createCommunity({name: Text; description: Text; logo: Blob}): async {#Ok: Principal; #Err: Text} {
+        print("creando comunidad");
         switch (Map.get<Principal, Profile>(users, phash, caller)) {
             case null {return #Err("Caller is not User")};
             case ( ?user ) {

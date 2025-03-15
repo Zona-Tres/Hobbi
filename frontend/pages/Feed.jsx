@@ -43,8 +43,9 @@ export default function Feed() {
     })
     const [currentPage, setCurrentPage] = useState(0);
     const [hasNext, setHasNext] = useState(false);
+    const [selectedHashtag, setSelectedHashtag] = useState(null);
     const observer = useRef();
-    
+
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getMyInfo()
@@ -105,33 +106,33 @@ export default function Feed() {
         if (!hasNext || loading) return;
         setLoading(true);
         try {
-          const nextPage = currentPage + 1;
-          const response = await hobbi.getMyFeed({
-            qtyPerPage: 25,
-            page: nextPage,
-          });
-          if (response) {
-            setPostList(prev => [...prev, ...response.arr]);
-            setHasNext(response.hasNext);
-            setCurrentPage(nextPage);
-          }
+            const nextPage = currentPage + 1;
+            const response = await hobbi.getMyFeed({
+                qtyPerPage: 25,
+                page: nextPage,
+            });
+            if (response) {
+                setPostList(prev => [...prev, ...response.arr]);
+                setHasNext(response.hasNext);
+                setCurrentPage(nextPage);
+            }
         } catch (e) {
-          console.error(e);
+            console.error(e);
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
     };
 
     const lastPostRef = useCallback(
         (node) => {
-          if (loading) return;
-          if (observer.current) observer.current.disconnect();
-          observer.current = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && hasNext) {
-              loadMorePosts();
-            }
-          });
-          if (node) observer.current.observe(node);
+            if (loading) return;
+            if (observer.current) observer.current.disconnect();
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && hasNext) {
+                    loadMorePosts();
+                }
+            });
+            if (node) observer.current.observe(node);
         },
         [loading, hasNext]
     );
@@ -165,55 +166,68 @@ export default function Feed() {
         3: "Game",
     }
 
-    const handleImageUpload = async (event) => {
+    const handleImageUpload =  (event) => {
         const file = event.target.files[0];
         if (!file) return;
-    
+
         setMedia(null);
-    
+
         try {
             // Comprimir para vista previa
-            const previewBlob = await imageCompression(file, {
+            const previewBlob =  imageCompression(file, {
                 maxSizeMB: 0.3, //0.3/120 Preview
                 maxWidthOrHeight: 120,
                 useWebWorker: true,
             });
-    
+
             // Comprimir versión completa
-            const fullSizeBlob = await imageCompression(file, {
+            const fullSizeBlob =  imageCompression(file, {
                 maxSizeMB: 1.5, // 1MB
                 maxWidthOrHeight: 1900,
                 useWebWorker: true,
             });
-    
+
             // Generar URL para vista previa
             const previewUrl = URL.createObjectURL(previewBlob);
             setImagePreview(previewUrl);
-    
+
             // Convertir a Uint8Array
-            const previewArray = new Uint8Array(await previewBlob.arrayBuffer());
-            const fullSizeArray = new Uint8Array(await fullSizeBlob.arrayBuffer());
-    
+            const previewArray = new Uint8Array( previewBlob.arrayBuffer());
+            const fullSizeArray = new Uint8Array( fullSizeBlob.arrayBuffer());
+
             setUploadedImageData({
                 preview: previewArray,
                 full: fullSizeArray,
             });
             setImage(fullSizeArray);
-    
+
         } catch (error) {
             console.error("Error procesando imagen:", error);
         }
     };
-    
+
     const blobToImageUrl = (imageData) => {
-        if (!imageData || !imageData.length) return null;  
+        if (!imageData || !imageData.length) return null;
         const blob = new Blob([imageData], { type: "image/jpeg" });
         return URL.createObjectURL(blob);
     };
-    
+
     const handleHashtagClick = async (tag) => {
-        let filteredPosts = await hobbi.getPostByHashTag(tag)
-        setPostList(filteredPosts)
+        if (selectedHashtag === tag) {
+            setSelectedHashtag(null);
+            setCurrentPage(0);
+            setHasNext(true);
+            const response = await hobbi.getMyFeed({
+                qtyPerPage: 25,
+                page: 0,
+            });
+            setPostList(response.arr);  
+        } else {
+            setSelectedHashtag(tag);
+            setHasNext(false);
+            let filteredPosts = await hobbi.getPostByHashTag(tag);
+            setPostList(filteredPosts);
+        }
     }
 
     const handleCreatePost = async () => {
@@ -232,12 +246,12 @@ export default function Feed() {
 
             const json = {
                 access: { Public: null },
-                title: media? title: "",
+                title: media ? title : "",
                 body: cleanedText,
                 image: uploadedImageData.full ? [uploadedImageData.full] : [],
                 imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
                 hashTags: hashtags,
-                image_url: media? [media.image]: [],
+                image_url: media ? [media.image] : [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
             const response = await actor.createPost(json)
@@ -252,7 +266,7 @@ export default function Feed() {
             console.error(e)
         }
     }
-    
+
     return (
         <>
             <Seo
@@ -368,16 +382,16 @@ export default function Feed() {
                         <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
                             <Avatar avatarData={myinfo.avatar} size="small" />
                             <label className="ml-2 p-2 rounded-full hover:bg-gray-100 cursor-pointer hover:opacity-80 transition-transform duration-200">
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     className="hidden"
                                     accept="image/*"
-                                    onChange={(e) => handleImageUpload(e)} 
+                                    onChange={(e) => handleImageUpload(e)}
                                 />
                                 <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa"/>
-                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff"/> 
-                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff"/>
+                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
+                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
+                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
                                 </svg>
                             </label>
 
@@ -414,12 +428,15 @@ export default function Feed() {
                     </span>
                     <div className="flex gap-3 mt-3 ml-3">
                         {hashtagRankingList.length > 0 && (
-                            hashtagRankingList.map((tag, index) => 
-                            <div 
-                                className= "flex px-3 h-5 rounded-2xl max-w-fit text-[10px] text-[#FDFCFF] font-normal bg-[#4F239E] items-center justify-center"
-                                key={index} 
-                                name={tag} 
-                                onClick={() => handleHashtagClick(tag)}> {tag} </div>)
+                            hashtagRankingList.map((tag, index) =>
+                                <div
+                                    className={`flex px-3 h-5 rounded-2xl max-w-fit text-[10px] font-normal items-center justify-center cursor-pointer 
+                                    ${selectedHashtag === tag ? 'bg-green-500' : 'bg-[#4F239E]'} 
+                                    ${selectedHashtag === tag ? 'text-white' : 'text-[#FDFCFF]'}`}
+                                    key={index}
+                                    name={tag}
+                                    onClick={() => handleHashtagClick(tag)}> {tag} 
+                                </div>)
                         )}
                     </div>
                     {postList.length > 0 &&
@@ -452,18 +469,18 @@ export default function Feed() {
                                     )}
                                 </div>
                                 {item.photoPreview?.length > 0 ? (
-                                    <img 
-                                    className="mt-3 rounded-md" 
-                                    src={blobToImageUrl(item.photoPreview[0])} 
-                                    width="100px" 
-                                    alt="Post content"
+                                    <img
+                                        className="mt-3 rounded-md"
+                                        src={blobToImageUrl(item.photoPreview[0])}
+                                        width="100px"
+                                        alt="Post content"
                                     />
                                 ) : item.image_url?.length > 0 ? (
-                                    <img 
-                                    className="mt-3 rounded-md" 
-                                    src={item.image_url[0]} 
-                                    width="100px" 
-                                    alt="Media reference"
+                                    <img
+                                        className="mt-3 rounded-md"
+                                        src={item.image_url[0]}
+                                        width="100px"
+                                        alt="Media reference"
                                     />
                                 ) : null}
                             </div>
