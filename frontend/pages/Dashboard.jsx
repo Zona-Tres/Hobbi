@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useCallback } from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -14,10 +14,13 @@ import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
+import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
+import { formatBigIntToDate } from "../utils/utils"
 
 export default function Dashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const observer = useRef();
 
   const setCanisterId = useStore((state) => state.setCanisterId)
   const setUsername = useStore((state) => state.setUsername)
@@ -38,6 +41,12 @@ export default function Dashboard() {
   const [bucketActor, setBucketActor] = useState(null)
   const [selectedTheme, setSelectedTheme] = useState(1)
   const [textArea, setTextArea] = useState("")
+  const [uploadedImageData, setUploadedImageData] = useState({
+    preview: null,
+    full: null,
+  })
+  const [hasNext, setHasNext] = useState(false);
+
   const handlePublicInfo = async (actor) => {
     try {
       const response = await actor.getMyInfo()
@@ -83,6 +92,29 @@ export default function Dashboard() {
     }
   }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
+  const loadMorePosts = async () => {
+    console.log("solicitando mas post")
+    console.log(myinfo)
+    if (!hasNext || loading) return;
+    setLoading(true);
+    try {
+      const nextPage = currentPage + 1;
+      const response = await hobbi.getMyFeed({
+        qtyPerPage: 25,
+        page: nextPage,
+      });
+      if (response) {
+        setPostList(prev => [...prev, ...response.arr]);
+        setHasNext(response.hasNext);
+        setCurrentPage(nextPage);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleClick = (url, index) => {
     setSelected(index)
     navigate(url)
@@ -92,9 +124,35 @@ export default function Dashboard() {
     2: "Tv",
     3: "Game",
   }
+  const lastPostRef = useCallback(
+    (node) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNext) {
+          loadMorePosts();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasNext]
+  );
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setMedia(null);
+    try {
+      const imagePreview = await compressAndConvertImage(file, 8);
+      const imageFull = await compressAndConvertImage(file, 600);
+      setUploadedImageData({ preview: imagePreview, full: imageFull });
+    } catch (error) {
+      console.error("Error processing image:", error);
+    }
+  };
+
   const handleCreatePost = async () => {
     const actor = await createBucketActor(canisterId)
-
     try {
       const hashtagRegex = /#(\w+)/g;
       const hashtags = [];
@@ -104,25 +162,23 @@ export default function Dashboard() {
       while ((match = hashtagRegex.exec(textArea)) !== null) {
         hashtags.push(match[1]);
       }
-
       cleanedText = textArea.replace(hashtagRegex, "").trim();
 
       const json = {
         access: { Public: null },
-        title: media?.title,
+        title: media ? title : "",
         body: cleanedText,
-        image: [],
-        imagePreview: [],
+        image: uploadedImageData.full ? [uploadedImageData.full] : [],
+        imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
         hashTags: hashtags,
-        image_url: [media?.image],
+        image_url: media ? [media.image] : [],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
       const response = await actor.createPost(json)
       const responsePost = await actor.getPaginatePost({
-        qtyPerPage: 10,
+        qtyPerPage: 25,
         page: 0,
       })
-      debugger
       setMedia(null)
       setTextArea("")
       setPostList(responsePost.arr)
@@ -147,6 +203,7 @@ export default function Dashboard() {
           <div className="h-[86px] flex items-center justify-start pl-10">
             <LogoDark />
           </div>
+          <CustomConnectButton />
           <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
             <div className="flex justify-start gap-4 items-center">
               <Avatar avatarData={myinfo.avatar} />
@@ -173,7 +230,7 @@ export default function Dashboard() {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-bold text-[#E1C9FB]">
-                {Number(myinfo.postQty)}
+                  {Number(myinfo.postQty)}
                 </span>
                 <span className="text-[10px] font-normal text-[#E1C9FB]">
                   Post
@@ -245,7 +302,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-[70%] mt-5 ml-3">
+          <div className="flex flex-col min-h-20 gap-6 py-4 items-center bg-[#B577F7] rounded-2xl px-3 w-full mt-5 ml-3">
             <SearchDialog
               isOpened={true}
               setMedia={setMedia}
@@ -266,8 +323,22 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
             <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
               <Avatar avatarData={myinfo.avatar} size="small" />
+              <label className="ml-2 p-2 rounded-full hover:bg-gray-100 cursor-pointer hover:opacity-80 transition-transform duration-200">
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e)}
+                />
+                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
+                  <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
+                  <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
+                </svg>
+              </label>
 
               <input
                 type="text"
@@ -301,25 +372,48 @@ export default function Dashboard() {
             postList.map((item, index) => (
               <div
                 key={index}
-                className="flex  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4"
+                ref={index === postList.length - 1 ? lastPostRef : null}
+                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
+                                          hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
               >
-                <img src={item.image_url[0]} width="40px" />
-                <div className="flex flex-col gap-2 pl-3">
-                  <span className="text-sm font-bold text-[#FDFCFF]">
-                    {item.title}
+                <div className="flex justify-between">
+                  <span
+                    onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
+                    className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
+                  >
+                    @{item.userName}
                   </span>
-                  <span className="text-sm font-medium text-[#FDFCFF]">
-                    {item.body}
-                  </span>
-                  <div className="flex gap-3 ">
-                    {item.hashTags.length > 0 && (
-                      item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                    )}
-                  </div>
+                  <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
                 </div>
+
+                <span className="text-sm font-bold text-[#FDFCFF]">
+                  {item.title}
+                </span>
+                <span className="text-sm font-medium text-[#FDFCFF]">
+                  {item.body}
+                </span>
+                <div className="flex gap-3 mt-2">
+                  {item.hashTags.length > 1 && (
+                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
+                  )}
+                </div>
+                {item.photoPreview?.length > 0 ? (
+                  <img
+                    className="mt-3 rounded-md"
+                    src={blobToImageUrl(item.photoPreview[0])}
+                    width="100px"
+                    alt="Post content"
+                  />
+                ) : item.image_url?.length > 0 ? (
+                  <img
+                    className="mt-3 rounded-md"
+                    src={item.image_url[0]}
+                    width="100px"
+                    alt="Media reference"
+                  />
+                ) : null}
               </div>
             ))}
-          <CustomConnectButton />
         </div>
       </div>
     </>

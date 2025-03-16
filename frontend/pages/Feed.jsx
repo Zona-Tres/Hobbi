@@ -15,6 +15,8 @@ import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import imageCompression from "browser-image-compression"
+import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
+import { formatBigIntToDate } from "../utils/utils"
 
 export default function Feed() {
     const { id } = useParams()
@@ -103,6 +105,7 @@ export default function Feed() {
 
     const loadMorePosts = async () => {
         console.log("solicitando mas post")
+        console.log(myinfo)
         if (!hasNext || loading) return;
         setLoading(true);
         try {
@@ -141,24 +144,6 @@ export default function Feed() {
         setSelected(index)
         navigate(url)
     }
-    const formatBigIntToDate = (bigIntValue) => {
-        const milliseconds = Number(bigIntValue / BigInt(1000000));
-        const date = new Date(milliseconds);
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        const dayOfWeek = daysOfWeek[date.getDay()];
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = months[date.getMonth()];
-        const year = date.getFullYear();
-        const timeFormatted = date.toLocaleTimeString('es-MX', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-        });
-
-        return `${dayOfWeek}, ${day} ${month} ${year} | ${timeFormatted}`;
-    }
 
     const mediaTypeMap = {
         1: "Book",
@@ -166,51 +151,19 @@ export default function Feed() {
         3: "Game",
     }
 
-    const handleImageUpload =  (event) => {
+    const handleImageUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
-        setMedia(null);
-
+        setMedia(null); 
         try {
-            // Comprimir para vista previa
-            const previewBlob =  imageCompression(file, {
-                maxSizeMB: 0.3, //0.3/120 Preview
-                maxWidthOrHeight: 120,
-                useWebWorker: true,
-            });
-
-            // Comprimir versión completa
-            const fullSizeBlob =  imageCompression(file, {
-                maxSizeMB: 1.5, // 1MB
-                maxWidthOrHeight: 1900,
-                useWebWorker: true,
-            });
-
-            // Generar URL para vista previa
-            const previewUrl = URL.createObjectURL(previewBlob);
-            setImagePreview(previewUrl);
-
-            // Convertir a Uint8Array
-            const previewArray = new Uint8Array( previewBlob.arrayBuffer());
-            const fullSizeArray = new Uint8Array( fullSizeBlob.arrayBuffer());
-
-            setUploadedImageData({
-                preview: previewArray,
-                full: fullSizeArray,
-            });
-            setImage(fullSizeArray);
-
+            const imagePreview = await compressAndConvertImage(file, 8); 
+            const imageFull = await compressAndConvertImage(file, 600); 
+            setUploadedImageData({ preview: imagePreview, full: imageFull });
         } catch (error) {
-            console.error("Error procesando imagen:", error);
+            console.error("Error processing image:", error);
         }
     };
 
-    const blobToImageUrl = (imageData) => {
-        if (!imageData || !imageData.length) return null;
-        const blob = new Blob([imageData], { type: "image/jpeg" });
-        return URL.createObjectURL(blob);
-    };
 
     const handleHashtagClick = async (tag) => {
         if (selectedHashtag === tag) {
@@ -232,7 +185,6 @@ export default function Feed() {
 
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
-
         try {
             const hashtagRegex = /#(\w+)/g;
             const hashtags = [];
@@ -256,7 +208,7 @@ export default function Feed() {
             }
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
-                qtyPerPage: 10,
+                qtyPerPage: 25,
                 page: 0,
             })
             setMedia(null)

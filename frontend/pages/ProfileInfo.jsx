@@ -15,6 +15,8 @@ import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import createBucketActor from "../hooks/createBucketActor"
 import { Principal as _principal } from "@dfinity/principal"
+import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
+
 
 export default function ProfileInfo() {
     const { id } = useParams()
@@ -91,7 +93,7 @@ export default function ProfileInfo() {
             const response = await actor.getPublicInfo()
             if (response) {
                 const responsePost = await actor.getPaginatePost({
-                    qtyPerPage: 10,
+                    qtyPerPage: 25,
                     page: currentPage,
                 })
                 setPostList(responsePost.arr)
@@ -159,7 +161,7 @@ export default function ProfileInfo() {
             setIsCommentLoading(true);
 
             const user = await createBucketActor(id)
-            await user.commentPost(selectedPostId, newComment);            
+            await user.commentPost(selectedPostId, newComment);
             const updatedPost = await user.readPost(selectedPostId);
 
             setSelectedPostDetails(updatedPost);
@@ -178,9 +180,6 @@ export default function ProfileInfo() {
     const handleDislikeComments = async (commentId) => {
         console.log("Comments Reactions non implemented yet")
     }
-
-    
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -211,43 +210,7 @@ export default function ProfileInfo() {
         2: "Tv",
         3: "Game",
     }
-    const handleCreatePost = async () => {
-        const actor = await createBucketActor(canisterId)
 
-        try {
-            const hashtagRegex = /#(\w+)/g;
-            const hashtags = [];
-            let match;
-            let cleanedText = textArea;
-
-            while ((match = hashtagRegex.exec(textArea)) !== null) {
-                hashtags.push(match[1]);
-            }
-
-            cleanedText = textArea.replace(hashtagRegex, "").trim();
-
-            const json = {
-                access: { Public: null },
-                title: media?.title,
-                body: cleanedText,
-                image: [],
-                imagePreview: [],
-                hashTags: hashtags,
-                image_url: [media?.image],
-                media_type: { [mediaTypeMap[selectedTheme]]: null },
-            }
-            const response = await actor.createPost(json)
-            const responsePost = await actor.getPaginatePost({
-                qtyPerPage: 10,
-                page: 0,
-            })
-            setMedia(null)
-            setTextArea("")
-            setPostList(responsePost.arr)
-        } catch (e) {
-            console.error(e)
-        }
-    }
     return (
         <>
             <Seo
@@ -305,7 +268,11 @@ export default function ProfileInfo() {
 
                 <div className="flex flex-col py-24 px-8">
                     <div className="h-[214px] rounded-3xl w-full">
-                        <img src={portada} alt="Portada" />
+                        {/* <img src={portada} alt="Portada" /> */}
+                        {myinfo.coverImage?.length > 0 ?
+                            (<img src={blobToImageUrl(myinfo.coverImage[0])} alt="Portada" />) :
+                            <img src={portada} alt="Portada" />
+                        }
                     </div>
                     <div className="flex pt-7 pl-3 h-24">
                         <div className="relative -top-14">
@@ -363,7 +330,21 @@ export default function ProfileInfo() {
                                 className="flex bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 cursor-pointer"
                                 onClick={() => handlePostClick(item.postId)}
                             >
-                                <img className="rounded-lg object-cover" src={item.image_url[0]} width="70px" />
+                                {item.photoPreview?.length > 0 ? (
+                                    <img
+                                        className="mt-3 rounded-md"
+                                        src={blobToImageUrl(item.photoPreview[0])}
+                                        width="100px"
+                                        alt="Post content"
+                                    />
+                                ) : item.image_url?.length > 0 ? (
+                                    <img
+                                        className="mt-3 rounded-md"
+                                        src={item.image_url[0]}
+                                        width="100px"
+                                        alt="Media reference"
+                                    />
+                                ) : null}
                                 <div className="flex flex-col gap-2 pl-3">
                                     <span className="text-sm font-bold text-[#FDFCFF]">
                                         {item.title}
@@ -403,19 +384,19 @@ export default function ProfileInfo() {
                         {/* Contenido del post */}
                         <div className="mb-4">
                             {selectedPostDetails?.Ok.image?.length > 0 ? (
-                                    <img
-                                        className="mt-3 rounded-md"
-                                        src={blobToImageUrl(selectedPostDetails.Ok.image[0])}
-                                        width="100px"
-                                        alt="Post content"
-                                    />
-                                ) : selectedPostDetails.image_url?.length > 0 ? (
-                                    <img
-                                        className="mt-3 rounded-md"
-                                        src={item.image_url[0]}
-                                        width="100px"
-                                        alt="Media reference"
-                                    />
+                                <img
+                                    className="mt-3 rounded-md"
+                                    src={blobToImageUrl(selectedPostDetails.Ok.image[0])}
+                                    width="100px"
+                                    alt="Post content"
+                                />
+                            ) : selectedPostDetails.image_url?.length > 0 ? (
+                                <img
+                                    className="mt-3 rounded-md"
+                                    src={item.image_url[0]}
+                                    width="100px"
+                                    alt="Media reference"
+                                />
                             ) : null}
                             <p className="text-white mb-4">{selectedPostDetails?.Ok.metadata.body}</p>
                             {/* <div className="flex gap-2 flex-wrap mb-4">
@@ -430,7 +411,7 @@ export default function ProfileInfo() {
 
                                 {/* Lista de comentarios */}
                                 <div className="space-y-4 mb-6">
-                                    {Array.isArray(selectedPostDetails?.Ok?.comments) 
+                                    {Array.isArray(selectedPostDetails?.Ok?.comments)
                                         ? selectedPostDetails.Ok.comments.map((comment) => (
                                             <div key={comment.commentId} className="bg-[#0D1117] border border-[#161B22] p-4 rounded-lg shadow-md">
                                                 {/* Header: Autor + Fecha */}
@@ -458,14 +439,14 @@ export default function ProfileInfo() {
 
                                                 {/* Botones de Like y Dislike */}
                                                 <div className="flex gap-4">
-                                                    <button 
+                                                    <button
                                                         className="text-green-400 hover:text-green-500 flex items-center gap-1"
                                                         onClick={() => handleLikeComments(comment.commentId)}
                                                     >
                                                         👍 Like
                                                     </button>
 
-                                                    <button 
+                                                    <button
                                                         className="text-red-400 hover:text-red-500 flex items-center gap-1"
                                                         onClick={() => handleDislikeComments(comment.commentId)}
                                                     >

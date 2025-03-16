@@ -5,7 +5,9 @@ import { Seo } from "../components/utils/seo"
 import useStore from "../store/useStore"
 import Avatar from "../components/Avatar"
 import Navigation from "../components/Navigation"
-import imageCompression from "browser-image-compression"
+import CustomConnectButton from "../components/ui/CustomConnectButton"
+// import imageCompression from "browser-image-compression"
+import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
 
 export default function Communities() {
     const myinfo = useStore((state) => state.myinfo)
@@ -37,59 +39,10 @@ export default function Communities() {
         }
     }
 
-    const handleLogoUpload = (event) => {
+    const handleLogoUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-    
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-    
-                const maxWidth = 300; 
-                const maxHeight = 300; 
-    
-                let width = img.width;
-                let height = img.height;
-    
-                if (width > maxWidth || height > maxHeight) {
-                    const aspectRatio = width / height;
-                    if (width > height) {
-                        width = maxWidth;
-                        height = maxWidth / aspectRatio;
-                    } else {
-                        height = maxHeight;
-                        width = maxHeight * aspectRatio;
-                    }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-    
-                let quality = 0.7; 
-                const compressImage = () => {
-                    canvas.toBlob((blob) => {
-                        if (blob.size > 60 * 1024 && quality > 0.1) {
-                            quality -= 0.1; // Reducir calidad
-                            compressImage();
-                        } else {
-                            const reader = new FileReader();
-                            reader.readAsArrayBuffer(blob);
-                            reader.onload = () => {
-                                const uint8Array = new Uint8Array(reader.result);
-                                setLogo(uint8Array);
-                            };
-                        }
-                    }, "image/jpeg", quality);
-                };
-    
-                compressImage();
-            };
-        };
+        setLogo(await compressAndConvertImage(file, 20)) // Aproximadamente 10 KB
     };
 
     const handleCreateCommunity = async () => {
@@ -206,6 +159,7 @@ export default function Communities() {
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
+                    <CustomConnectButton />
                     <div className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
@@ -274,7 +228,7 @@ export default function Communities() {
                                 </p>
                                 <div className="mt-2">
                                     <img
-                                        src={URL.createObjectURL(new Blob([community.logo]))}
+                                        src={blobToImageUrl(community.logo)}
                                         alt="Preview"
                                         className="w-[300px] h-[200px] object-cover rounded-[10px] mx-auto"
                                     />
