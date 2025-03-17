@@ -17,6 +17,9 @@ import Navigation from "../components/Navigation"
 import imageCompression from "browser-image-compression"
 import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
 import { formatBigIntToDate } from "../utils/utils"
+import PostPreview  from "../components/PostPreview"
+import PostExpand from "../components/PostExpand"
+import { HelmetProvider } from "react-helmet-async"
 
 export default function Feed() {
     const { id } = useParams()
@@ -46,6 +49,11 @@ export default function Feed() {
     const [currentPage, setCurrentPage] = useState(0);
     const [hasNext, setHasNext] = useState(false);
     const [selectedHashtag, setSelectedHashtag] = useState(null);
+    const [selectedPostId, setSelectedPostId] = useState(null);
+    const [selectedPostDetails, setSelectedPostDetails] = useState(null);
+    const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
+    selectedPostAuthor
+    const [isPostSelected, setIsPostSelected] = useState(false);
     const observer = useRef();
 
     const handlePublicInfo = async (actor) => {
@@ -391,52 +399,37 @@ export default function Feed() {
                                 </div>)
                         )}
                     </div>
-                    {postList.length > 0 &&
-                        postList.map((item, index) => (
-                            <div
-                                key={index}
-                                ref={index === postList.length - 1 ? lastPostRef : null}
-                                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
-                                hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
-                            >
-                                <div className="flex justify-between">
-                                    <span
-                                        onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
-                                        className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
-                                    >
-                                        @{item.userName}
-                                    </span>
-                                    <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
-                                </div>
+                    {postList.length > 0  && 
+                        <div  className={`relative ${isPostSelected ? "pointer-events-none" : ""}`}> 
+                            
+                            {postList.map((post, index) => (
+                                <div
+                                    key={index}
+                                    ref={index === postList.length - 1 ? lastPostRef : null}
+                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
+                                    hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
+                                > 
+                                    <PostPreview caller = {canisterId} 
+                                        key= {index} 
+                                        post = {post} 
+                                        setSelectedPostDetails = {setSelectedPostDetails}
+                                        setSelectedPostAuthor = {setSelectedPostAuthor}
+                                    />
 
-                                <span className="text-sm font-bold text-[#FDFCFF]">
-                                    {item.title}
-                                </span>
-                                <span className="text-sm font-medium text-[#FDFCFF]">
-                                    {item.body}
-                                </span>
-                                <div className="flex gap-3 mt-2">
-                                    {item.hashTags.length > 1 && (
-                                        item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                                    )}
                                 </div>
-                                {item.photoPreview?.length > 0 ? (
-                                    <img
-                                        className="mt-3 rounded-md"
-                                        src={blobToImageUrl(item.photoPreview[0])}
-                                        width="100px"
-                                        alt="Post content"
-                                    />
-                                ) : item.image_url?.length > 0 ? (
-                                    <img
-                                        className="mt-3 rounded-md"
-                                        src={item.image_url[0]}
-                                        width="100px"
-                                        alt="Media reference"
-                                    />
-                                ) : null}
-                            </div>
-                        ))}
+                            ))}
+                        </div>  
+                    }
+
+                    {selectedPostDetails && (
+                        <PostExpand
+                            postDetails={selectedPostDetails}
+                            postAuthor ={selectedPostAuthor}
+                            onClose={() => {setSelectedPostDetails(null);
+                                setSelectedPostAuthor(null)}
+                            }
+                        />
+                    )}
                 </div>
             </div>
         </>
