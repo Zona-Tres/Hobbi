@@ -100,8 +100,12 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
 
   ////////////////////////////////////////////    Funciones privadas      /////////////////////////////////////////
 
-    public query func isUserActorClass(p: CanisterID):async Bool {
+    func _isUserActorClass(p: Principal): Bool {
         Map.has<UserClassCanisterId, Principal>(principalByCID, phash, p);
+    };
+
+    public query func isUserActorClass(p: CanisterID):async Bool {
+        _isUserActorClass(p);
     };
 
     func isUser(p: Principal): Bool{
@@ -348,25 +352,26 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
     
   ////////////////////////////////////////    Getters functions       /////////////////////////////////////////////
 
-    public shared query ({ caller }) func getMyCanisterId(): async Text{
-        let user = Map.get<Principal, Profile>(users, phash, caller);
-        switch user {
-            case null {""};
-            case (?user){
-                Principal.toText(Principal.fromActor(user.actorClass));
-            }
-        }
-    };
-
-    public shared query ({ caller }) func getUserCanisterIdByOwner(u: Principal): async ?Principal {
-        assert(isAdmin(caller));
-        let user = Map.get<Principal, Profile>(users, phash, u);
-        switch user {
+    func getUserCanisterIdByPrincipal(p: Principal): ?Principal {
+        switch (Map.get<Principal, Profile>(users, phash, p)) {
             case null { null };
             case (?user) {
                 ?Principal.fromActor(user.actorClass)
             }
         } 
+    };
+
+    public shared query ({ caller }) func getMyCanisterId(): async Text{
+        let user = getUserCanisterIdByPrincipal(caller);
+        switch user {
+            case null {""};
+            case (?cid){Principal.toText(cid)}
+        }
+    };
+ 
+    public shared query ({ caller }) func getUserCanisterId(u: Principal): async ?Principal {
+        assert(isAdmin(caller) or _isUserActorClass(caller));
+        getUserCanisterIdByPrincipal(u)
     };
 
     public shared query ({ caller }) func gerUserCanisterIdsForUpdate(): async [Principal] {
