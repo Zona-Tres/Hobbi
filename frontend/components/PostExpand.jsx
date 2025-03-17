@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { blobToImageUrl } from "../utils/imageManager";
 import createBucketActor from "../hooks/createBucketActor"
 
-const PostExpand = ({ postDetails, postAuthor, onClose }) => {
+const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
     const [newComment, setNewComment] = useState("");
     const [isCommentLoading, setIsCommentLoading] = useState(false);
     const [postData, setPostData] = useState(postDetails);
@@ -27,6 +27,25 @@ const PostExpand = ({ postDetails, postAuthor, onClose }) => {
         console.log("Comments Reactions non implemented yet")
     }
 
+    const handleReaction = async (reaction) => {
+        // TODO colorear la reaccion que ya se haya efectuado
+        // sendReaction({postId: PostID; canisterId: Principal; reaction: Reaction}
+        const user = await createBucketActor(caller);
+        
+        const resutl = await user.sendReaction(
+            {
+                postId: postData.id,
+                canisterId: postAuthor, 
+                reaction: reaction
+            }
+        )
+        const author = await createBucketActor(postAuthor)
+        const updatedPost = await author.readPost(postData.id);
+        console.log(updatedPost)
+        if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
+        console.log(resutl)
+    }
+
     const handleCommentSubmit = async () => {
         if (!newComment.trim() || !postData.id) return;
 
@@ -35,8 +54,8 @@ const PostExpand = ({ postDetails, postAuthor, onClose }) => {
             const user = await createBucketActor(postAuthor);
             await user.commentPost(postData.id, newComment);
             const updatedPost = await user.readPost(postData.id);
-            if(updatedPost.Ok) {setPostData(updatedPost.Ok)}
-            
+            if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
+
             setNewComment("");
         } catch (e) {
             console.error("Error submitting comment:", e);
@@ -72,6 +91,21 @@ const PostExpand = ({ postDetails, postAuthor, onClose }) => {
 
 
                 <p className="text-white mb-4">{postData.metadata.body}</p>
+                <div className="flex gap-4">
+                    <button
+                        className="text-green-400 hover:text-green-500 flex items-center gap-1"
+                        onClick={() => handleReaction({Like: null})}
+                    >
+                        👍 {postData.likes.toString()}
+                    </button>
+
+                    <button
+                        className="text-red-400 hover:text-red-500 flex items-center gap-1"
+                        onClick={() => handleReaction({Dislike: null})}
+                    >
+                        👎 {postData.disLikes.toString()}
+                    </button>
+                </div>
 
                 {/* Comentarios */}
                 <div className="border-t border-[#B577F7] pt-4">

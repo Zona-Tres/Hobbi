@@ -113,7 +113,6 @@ export default function Feed() {
 
     const loadMorePosts = async () => {
         console.log("solicitando mas post")
-        console.log(myinfo)
         if (!hasNext || loading) return;
         setLoading(true);
         try {
@@ -423,6 +422,7 @@ export default function Feed() {
 
                     {selectedPostDetails && (
                         <PostExpand
+                            caller = {canisterId}
                             postDetails={selectedPostDetails}
                             postAuthor ={selectedPostAuthor}
                             onClose={() => {setSelectedPostDetails(null);
