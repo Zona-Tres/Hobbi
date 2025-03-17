@@ -8,3 +8,7 @@ src/declarations
 .deps
 .mops
 .env
+
+# Environment variables
+.env.local
+.env.*.local

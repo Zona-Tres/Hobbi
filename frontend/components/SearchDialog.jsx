@@ -1,13 +1,15 @@
-import { useCanister } from '@connect2ic/react';
 import { nanoid } from 'nanoid';
-import React, { useRef, useState, useEffect } from 'react';
-import { FaBookOpen, FaSearch } from 'react-icons/fa';
+import React, { useRef, useState } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import _ from 'lodash'; 
+
+const TMDB_API_KEY = "07c722be608351326cd7820c8e4a6551";
+const TMDB_TOKEN = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwN2M3MjJiZTYwODM1MTMyNmNkNzgyMGM4ZTRhNjU1MSIsInN1YiI6IjY1NzEzYjkyZGZlMzFkMDBlMGRhNDkxZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.6TkvC97Gbfl8tzXA3Krv44GzHkE8BkovbGKaY_jcVIA";
+const RAWG_API_KEY = "c542e67aec3a4340908f9de9e86038af";
 
 function SearchDialog(params) {
   const ref = useRef(null);
-  const [outcall] = useCanister("outcall");
-  const { isOpened, onClose, setMedia,mediaType, selectedTheme } = params;
+  const { isOpened, onClose, setMedia, mediaType, selectedTheme } = params;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState([]);
@@ -25,63 +27,84 @@ function SearchDialog(params) {
     }, 500); 
   };
 
+  const searchBook = async (query) => {
+    const url = `https://openlibrary.org/search.json?q=${query}&_spellcheck_count=0&limit=10&fields=key,cover_i,title,subtitle,author_name,name&mode=everything`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if(data.docs.length > 0) {
+      return data.docs.map((element) => ({
+        title: element.title || "Unknown",
+        sub: element.author_name?.[0] || "Unknown",
+        image: element.cover_i ? `https://covers.openlibrary.org/b/id/${element.cover_i}-M.jpg` : null
+      }));
+    }
+    return [];
+  };
+
+  const searchTv = async (query) => {
+    const url = `https://api.themoviedb.org/3/search/multi?query=${query}&include_adult=false&language=en-US&page=1`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': import.meta.env.VITE_TMDB_TOKEN
+      }
+    });
+    const data = await response.json();
+    
+    if(data.results.length > 0) {
+      return data.results.map((element) => ({
+        title: element.title || element.name || "Unknown",
+        sub: element.release_date || element.first_air_date || "TBR",
+        image: element.poster_path ? `https://image.tmdb.org/t/p/w500${element.poster_path}` : element.backdrop_path ? `https://image.tmdb.org/t/p/w500${element.backdrop_path}` : null
+      }));
+    }
+    return [];
+  };
+
+  const searchGame = async (query) => {
+    const url = `https://rawg.io/api/search?search=${query}&page_size=10&page=1&key=${import.meta.env.VITE_RAWG_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if(data.results.length > 0) {
+      return data.results.map((element) => ({
+        title: element.name || "Unknown",
+        sub: element.released || "TBR",
+        image: element.background_image || null
+      }));
+    }
+    return [];
+  };
+
   const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
     setLoading(true);
     setMessage("Results will be shown here");
     setSearchResult([]);
     
     try {
+      const query = encodeURIComponent(searchQuery.trim());
+      let results = [];
+
       switch(mediaType) {
-        case 1: { // Libros
-          
-          const list = await outcall.searchBook(searchQuery.trim().split(' '));
-          
-          const parsedList = JSON.parse(list);
-
-          if(parsedList.docs.length > 0) {
-            const simplifiedList = parsedList.docs.map((element) => ({
-              title: element.title || "Unknown",
-              sub: element.author_name[0] || "Unknown",
-              image: `https://covers.openlibrary.org/b/id/${element.cover_i}-M.jpg` || null
-            }));
-            setSearchResult(simplifiedList);
-          }
+        case 1: // Libros
+          results = await searchBook(query);
           break;
-        }
-        case 2: { // TV Shows
-          const list = await outcall.searchTv(searchQuery.trim().split(' '));
-          const parsedList = JSON.parse(list);
-
-          if(parsedList.results.length > 0) {
-            const simplifiedList = parsedList.results.map((element) => ({
-              title: element.title || element.name || "Unknown",
-              sub: element.release_date || element.first_air_date || "TBR",
-              image: element.poster_path ? `https://image.tmdb.org/t/p/w500${element.poster_path}` : `https://image.tmdb.org/t/p/w500${element.backdrop_path}` || null
-            }));
-            setSearchResult(simplifiedList);
-          }
+        case 2: // TV Shows
+          results = await searchTv(query);
           break;
-        }
-        case 3: { // Videojuegos
-          const list = await outcall.searchGame(searchQuery.trim().split(' '));
-          const parsedList = JSON.parse(list);
-
-          if(parsedList.results.length > 0) {
-            const simplifiedList = parsedList.results.map((element) => ({
-              title: element.name || "Unknown",
-              sub: element.released || "TBR",
-              image: element.background_image || null
-            }));
-            setSearchResult(simplifiedList);
-          }
+        case 3: // Videojuegos
+          results = await searchGame(query);
           break;
-        } 
       }
       
-      if(searchResult.length === 0) {
+      setSearchResult(results);
+      if(results.length === 0) {
         setMessage("Your search did not bring any results :( Try refining it!");
       }
     } catch (e) {
+      console.error(e);
       setMessage("There was an error. Try again later!");
     } finally {
       setLoading(false);
