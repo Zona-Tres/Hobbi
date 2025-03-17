@@ -437,7 +437,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                         generalFeed.arr,
                         func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
                     );
-                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias, qtyPerPage)  
+                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias -1,  qtyPerPage)  
                 };           
             };
             case _ {
