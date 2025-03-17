@@ -39,9 +39,11 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
                 reaction: reaction
             }
         )
+        // La siguiente llamada puede evitarse si desde el frontend se puede leer la reaccion actual del usuario en relacion
+        // al post y efectuar los cambios necesarios en la vista de acuerdo a las subsiguietes acciones... ej quitar like o cambiar
+        // Una reaccion por otra. 
         const author = await createBucketActor(postAuthor)
         const updatedPost = await author.readPost(postData.id);
-        console.log(updatedPost)
         if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
         console.log(resutl)
     }
