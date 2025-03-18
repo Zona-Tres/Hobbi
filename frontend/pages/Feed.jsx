@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useCallback } from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -14,6 +14,12 @@ import SearchAndPost from "../components/SearchAndPost"
 import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
+import imageCompression from "browser-image-compression"
+import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
+import { formatBigIntToDate } from "../utils/utils"
+import PostPreview  from "../components/PostPreview"
+import PostExpand from "../components/PostExpand"
+import { HelmetProvider } from "react-helmet-async"
 
 export default function Feed() {
     const { id } = useParams()
@@ -25,6 +31,7 @@ export default function Feed() {
     const canisterId = useStore((state) => state.canisterId)
     const username = useStore((state) => state.username)
     const myinfo = useStore((state) => state.myinfo)
+    
     const [hobbi] = useCanister("hobbi")
     const [media, setMedia] = useState(null)
     const firstLoad = useRef(true)
@@ -34,6 +41,22 @@ export default function Feed() {
     const [selected, setSelected] = useState(1)
     const [selectedTheme, setSelectedTheme] = useState(1)
     const [textArea, setTextArea] = useState("")
+    const [image, setImage] = useState(null)
+    const [imagePreview, setImagePreview] = useState(null)
+    const [uploadedImageData, setUploadedImageData] = useState({
+        preview: null,
+        full: null,
+    })
+    const [currentPage, setCurrentPage] = useState(0);
+    const [hasNext, setHasNext] = useState(false);
+    const [selectedHashtag, setSelectedHashtag] = useState(null);
+    const [selectedPostId, setSelectedPostId] = useState(null);
+    const [selectedPostDetails, setSelectedPostDetails] = useState(null);
+    const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
+    selectedPostAuthor
+    const [isPostSelected, setIsPostSelected] = useState(false);
+    const observer = useRef();
+
     const handlePublicInfo = async (actor) => {
         try {
             const response = await actor.getMyInfo()
@@ -63,11 +86,13 @@ export default function Feed() {
                     handlePublicInfo(actor);
                 }
                 const response = await hobbi.getMyFeed({
-                    qtyPerPage: 10,
-                    page: 0,
+                    qtyPerPage: 25,
+                    page: currentPage,
                 });
                 if (response) {
                     setPostList(response.arr)
+                    setHasNext(response.hasNext);
+                    setCurrentPage(0);
                 }
                 const hashtagRanking = await hobbi.getRankingHashTags();
                 if (hashtagRanking) {
@@ -87,27 +112,45 @@ export default function Feed() {
         }
     }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
+    const loadMorePosts = async () => {
+        console.log("solicitando mas post. Pagina Nro ", currentPage + 1)
+        if (!hasNext || loading) return;
+        setLoading(true);
+        try {
+            const nextPage = currentPage + 1;
+            const response = await hobbi.getMyFeed({
+                qtyPerPage: 25,
+                page: nextPage,
+            });
+            if (response) {
+                setPostList(prev => [...prev, ...response.arr]);
+                setHasNext(response.hasNext);
+                setCurrentPage(nextPage);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const lastPostRef = useCallback(
+        (node) => {
+            if (loading) return;
+            if (observer.current) observer.current.disconnect();
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && hasNext) {
+                    loadMorePosts();
+                }
+            });
+            if (node) observer.current.observe(node);
+        },
+        [loading, hasNext]
+    );
+
     const handleClick = (url, index) => {
         setSelected(index)
         navigate(url)
-    }
-    const formatBigIntToDate = (bigIntValue) => {
-        const milliseconds = Number(bigIntValue / BigInt(1000000));
-        const date = new Date(milliseconds);
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        const dayOfWeek = daysOfWeek[date.getDay()];
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = months[date.getMonth()];
-        const year = date.getFullYear();
-        const timeFormatted = date.toLocaleTimeString('es-MX', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-        });
-
-        return `${dayOfWeek}, ${day} ${month} ${year} | ${timeFormatted}`;
     }
 
     const mediaTypeMap = {
@@ -115,9 +158,41 @@ export default function Feed() {
         2: "Tv",
         3: "Game",
     }
+
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setMedia(null); 
+        try {
+            const imagePreview = await compressAndConvertImage(file, 8); 
+            const imageFull = await compressAndConvertImage(file, 600); 
+            setUploadedImageData({ preview: imagePreview, full: imageFull });
+        } catch (error) {
+            console.error("Error processing image:", error);
+        }
+    };
+
+
+    const handleHashtagClick = async (tag) => {
+        if (selectedHashtag === tag) {
+            setSelectedHashtag(null);
+            setCurrentPage(0);
+            setHasNext(true);
+            const response = await hobbi.getMyFeed({
+                qtyPerPage: 25,
+                page: 0,
+            });
+            setPostList(response.arr);  
+        } else {
+            setSelectedHashtag(tag);
+            setHasNext(false);
+            let filteredPosts = await hobbi.getPostByHashTag(tag);
+            setPostList(filteredPosts);
+        }
+    }
+
     const handleCreatePost = async () => {
         const actor = await createBucketActor(canisterId)
-
         try {
             const hashtagRegex = /#(\w+)/g;
             const hashtags = [];
@@ -127,22 +202,21 @@ export default function Feed() {
             while ((match = hashtagRegex.exec(textArea)) !== null) {
                 hashtags.push(match[1]);
             }
-
             cleanedText = textArea.replace(hashtagRegex, "").trim();
 
             const json = {
                 access: { Public: null },
-                title: media?.title,
+                title: media ? title : "",
                 body: cleanedText,
-                image: [],
-                imagePreview: [],
+                image: uploadedImageData.full ? [uploadedImageData.full] : [],
+                imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
                 hashTags: hashtags,
-                image_url: [media?.image],
+                image_url: media ? [media.image] : [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
-                qtyPerPage: 10,
+                qtyPerPage: 25,
                 page: 0,
             })
             setMedia(null)
@@ -152,7 +226,7 @@ export default function Feed() {
             console.error(e)
         }
     }
-console.log(postList,'postList')
+
     return (
         <>
             <Seo
@@ -170,7 +244,8 @@ console.log(postList,'postList')
                     <div className="h-[86px] flex items-center justify-start pl-10">
                         <LogoDark />
                     </div>
-                    <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
+                    <CustomConnectButton />
+                    {myinfo.name && <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
                             <span className="text-md font-bold text-[#B577F7]">
@@ -203,7 +278,7 @@ console.log(postList,'postList')
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </div>}
                     <Navigation />
                 </div>
 
@@ -266,6 +341,19 @@ console.log(postList,'postList')
 
                         <div className="flex items-center bg-[#FDFCFF] rounded-lg px-2 py-1 h-12  w-full">
                             <Avatar avatarData={myinfo.avatar} size="small" />
+                            <label className="ml-2 p-2 rounded-full hover:bg-gray-100 cursor-pointer hover:opacity-80 transition-transform duration-200">
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e)}
+                                />
+                                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
+                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
+                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
+                                </svg>
+                            </label>
 
                             <input
                                 type="text"
@@ -300,40 +388,49 @@ console.log(postList,'postList')
                     </span>
                     <div className="flex gap-3 mt-3 ml-3">
                         {hashtagRankingList.length > 0 && (
-                            hashtagRankingList.map((tag, index) => <Hashtag key={index} name={tag} />)
+                            hashtagRankingList.map((tag, index) =>
+                                <div
+                                    className={`flex px-3 h-5 rounded-2xl max-w-fit text-[10px] font-normal items-center justify-center cursor-pointer 
+                                    ${selectedHashtag === tag ? 'bg-green-500' : 'bg-[#4F239E]'} 
+                                    ${selectedHashtag === tag ? 'text-white' : 'text-[#FDFCFF]'}`}
+                                    key={index}
+                                    name={tag}
+                                    onClick={() => handleHashtagClick(tag)}> {tag} 
+                                </div>)
                         )}
                     </div>
-                    {postList.length > 0 &&
-                        postList.map((item, index) => (
-                            <div
-                                key={index}
-                                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full"
-                            >
-                                <div className="flex justify-between">
-                                    <span
-                                        onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
-                                        className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
-                                    >
-                                        @{item.userName}
-                                    </span>
-                                    <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
-                                </div>
+                    {postList.length > 0  && 
+                        <div  className={`relative ${isPostSelected ? "pointer-events-none" : ""}`}> 
+                            
+                            {postList.map((post, index) => (
+                                <div
+                                    key={index}
+                                    ref={index === postList.length - 1 ? lastPostRef : null}
+                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
+                                    hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
+                                > 
+                                    <PostPreview caller = {canisterId} 
+                                        key= {index} 
+                                        post = {post} 
+                                        setSelectedPostDetails = {setSelectedPostDetails}
+                                        setSelectedPostAuthor = {setSelectedPostAuthor}
+                                    />
 
-                                <span className="text-sm font-bold text-[#FDFCFF]">
-                                    {item.title}
-                                </span>
-                                <span className="text-sm font-medium text-[#FDFCFF]">
-                                    {item.body}
-                                </span>
-                                <div className="flex gap-3 mt-2">
-                                    {item.hashTags.length > 1 && (
-                                        item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                                    )}
                                 </div>
-                                <img className="mt-3 rounded-md" src={item.image_url[0]} width="100px" />
-                            </div>
-                        ))}
-                    <CustomConnectButton />
+                            ))}
+                        </div>  
+                    }
+
+                    {selectedPostDetails && (
+                        <PostExpand
+                            caller = {canisterId}
+                            postDetails={selectedPostDetails}
+                            postAuthor ={selectedPostAuthor}
+                            onClose={() => {setSelectedPostDetails(null);
+                                setSelectedPostAuthor(null)}
+                            }
+                        />
+                    )}
                 </div>
             </div>
         </>

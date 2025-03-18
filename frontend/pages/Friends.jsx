@@ -15,6 +15,7 @@ import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import createBucketActor from "../hooks/createBucketActor"
 
+
 export default function Friends() {
   const { id } = useParams()
   const navigate = useNavigate()

@@ -1,10 +1,9 @@
 import React, { useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { useCanister, useConnect } from "@connect2ic/react"
-import { Principal } from "@dfinity/principal"
 import Cropper from "react-easy-crop"
-import imageCompression from "browser-image-compression"
 import { FiZoomIn, FiRotateCcw } from "react-icons/fi"
+import { compressAndConvertImage } from "../utils/imageManager"
 import {
   FaUser,
   FaBookOpen,
@@ -20,7 +19,6 @@ import {
   getRotatedImage,
   readFileToUrl,
   getCroppedImg,
-  urlToUint8Array,
   arrayBufferToImgSrc,
 } from "../utils/image"
 import Particles from "../components/Particles"
@@ -96,6 +94,7 @@ function CreateProfile() {
         rotation,
       )
       setCroppedImage(croppedImage)
+      console.log("Tipo de croppedImage:", croppedImage, typeof croppedImage);
       setFile(null)
     } catch (e) {
       console.error(e)
@@ -133,41 +132,17 @@ function CreateProfile() {
     setIsLoading(true)
 
     try {
-      let imageBlob = null
-
-      // Comprobamos que croppedImage sea un Uint8Array
-      let uint8Array = null
-      if (ArrayBuffer.isView(croppedImage)) {
-        uint8Array = croppedImage // Si ya es un Uint8Array, lo usamos
-      } else if (Array.isArray(croppedImage)) {
-        uint8Array = new Uint8Array(croppedImage) // Convertimos el array regular en un Uint8Array
-      } else {
-        console.error("croppedImage is not a valid type")
-        return // Salimos si el tipo no es válido
-      }
-
-      // Convertir el Uint8Array en un Blob
-      imageBlob = uint8ArrayToBlob(uint8Array, "image/jpeg")
-
-      // Comprimir la imagen
-      const compressedImageBlob = await imageCompression(imageBlob, {
-        maxSizeMB: 0.5,
-        maxWidthOrHeight: 500,
-        useWebWorker: true,
-        initialQuality: 1,
-      })
-
-      // Convertir el Blob comprimido en un Uint8Array
-      const arrayBuffer = await compressedImageBlob.arrayBuffer()
-      const croppedImageArray = new Uint8Array(arrayBuffer)
+      
+      const thumbnail = await compressAndConvertImage(croppedImage, 10)
+      const avatar = await compressAndConvertImage(croppedImage, 500)
 
       // Preparar los datos del perfil
       const profileData = {
         bio: data.bio,
         name: data.username,
-        thumbnail: [], // Si no tienes un thumbnail, lo puedes dejar vacío como en el ejemplo anterior
+        thumbnail: [thumbnail],
         email: [],
-        avatar: [croppedImageArray], // Aquí estamos enviando un array que contiene el Uint8Array
+        avatar: [avatar], // Aquí estamos enviando un array que contiene el Uint8Array
       }
 
       // Enviar los datos del perfil

@@ -432,7 +432,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
                     with hasNext = true};
                 } else {
-                    let bias = myRawFeed.arr.size()/qtyPerPage;
+                    let bias = if(myRawFeed.arr.size() == 0) {0} else {myRawFeed.arr.size()/qtyPerPage + 1};
                     let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
                         generalFeed.arr,
                         func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
@@ -486,6 +486,7 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
   ///////////////////////////////////////   Communities management   //////////////////////////////////////////////
 
     public shared ({ caller }) func createCommunity({name: Text; description: Text; logo: Blob}): async {#Ok: Principal; #Err: Text} {
+        print("creando comunidad");
         switch (Map.get<Principal, Profile>(users, phash, caller)) {
             case null {return #Err("Caller is not User")};
             case ( ?user ) {
