@@ -31,6 +31,7 @@ export default function Feed() {
     const canisterId = useStore((state) => state.canisterId)
     const username = useStore((state) => state.username)
     const myinfo = useStore((state) => state.myinfo)
+    
     const [hobbi] = useCanister("hobbi")
     const [media, setMedia] = useState(null)
     const firstLoad = useRef(true)
@@ -112,7 +113,7 @@ export default function Feed() {
     }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
     const loadMorePosts = async () => {
-        console.log("solicitando mas post")
+        console.log("solicitando mas post. Pagina Nro ", currentPage + 1)
         if (!hasNext || loading) return;
         setLoading(true);
         try {
@@ -244,7 +245,7 @@ export default function Feed() {
                         <LogoDark />
                     </div>
                     <CustomConnectButton />
-                    {username && <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
+                    {myinfo.name && <div onClick={() => window.location.href = `/myprofile`} className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer">
                         <div className="flex justify-start gap-4 items-center">
                             <Avatar avatarData={myinfo.avatar} />
                             <span className="text-md font-bold text-[#B577F7]">

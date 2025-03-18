@@ -1,11 +1,13 @@
 import React, { useState } from "react"
 import { blobToImageUrl } from "../utils/imageManager";
 import createBucketActor from "../hooks/createBucketActor"
+import useStore from "../store/useStore"
 
 const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
     const [newComment, setNewComment] = useState("");
     const [isCommentLoading, setIsCommentLoading] = useState(false);
     const [postData, setPostData] = useState(postDetails);
+    const infoUser = useStore((state) => state.myinfo)
 
     const getImageSrc = () => {
         if (postData.metadata.image?.length > 0) {
@@ -45,7 +47,6 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
             const author = await createBucketActor(postAuthor)
             const updatedPost = await author.readPost(postData.id);
             if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
-            console.log(resutl)
 
         } catch {
             console.log("Error en llamada al backend")
@@ -153,17 +154,17 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
                         <input
                             type="text"
                             value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Write a comment..."
+                            onChange={(e) => infoUser.name? setNewComment(e.target.value): alert("Connect")}
+                            placeholder={infoUser.name? "Write a comment..." : "Login to comment "}
                             className="flex-1 bg-[#070A10] text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#B577F7]"
                         />
-                        <button
+                        {infoUser.name && <button
                             onClick={handleCommentSubmit}
                             disabled={isCommentLoading}
                             className="bg-[#B577F7] text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50"
                         >
                             {isCommentLoading ? "Loading..." : "Send"}
-                        </button>
+                        </button>}
                     </div>
                 </div>
             </div>

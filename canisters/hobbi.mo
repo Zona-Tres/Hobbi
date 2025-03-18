@@ -432,12 +432,12 @@ shared ({caller = DEPLOYER_HOBBI}) actor class Hobbi() = Hobbi  {
                     {getPaginateElements<PostPreview>(myRawFeed.arr, page, qtyPerPage)
                     with hasNext = true};
                 } else {
-                    let bias = myRawFeed.arr.size()/qtyPerPage;
+                    let bias = if(myRawFeed.arr.size() == 0) {0} else {myRawFeed.arr.size()/qtyPerPage + 1};
                     let generalFeedWithoutFollowedsContent = Array.filter<PostPreview>(
                         generalFeed.arr,
                         func x = not Set.has<UserClassCanisterId>(followedsSet, phash, x.autor)
                     );
-                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias - 1, qtyPerPage)  
+                    getPaginateElements<PostPreview>(generalFeedWithoutFollowedsContent, page - bias, qtyPerPage)  
                 };           
             };
             case _ {
