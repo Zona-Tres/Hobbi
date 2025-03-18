@@ -31,21 +31,25 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
         // TODO colorear la reaccion que ya se haya efectuado
         // sendReaction({postId: PostID; canisterId: Principal; reaction: Reaction}
         const user = await createBucketActor(caller);
-        
-        const resutl = await user.sendReaction(
-            {
-                postId: postData.id,
-                canisterId: postAuthor, 
-                reaction: reaction
-            }
-        )
-        // La siguiente llamada puede evitarse si desde el frontend se puede leer la reaccion actual del usuario en relacion
-        // al post y efectuar los cambios necesarios en la vista de acuerdo a las subsiguietes acciones... ej quitar like o cambiar
-        // Una reaccion por otra. 
-        const author = await createBucketActor(postAuthor)
-        const updatedPost = await author.readPost(postData.id);
-        if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
-        console.log(resutl)
+        try {
+            const resutl = await user.sendReaction(
+                {
+                    postId: postData.id,
+                    canisterId: postAuthor, 
+                    reaction: reaction
+                }
+            )
+            // La siguiente llamada puede evitarse si desde el frontend se puede leer la reaccion actual del usuario en relacion
+            // al post y efectuar los cambios necesarios en la vista de acuerdo a las subsiguietes acciones... ej quitar like o cambiar
+            // Una reaccion por otra. 
+            const author = await createBucketActor(postAuthor)
+            const updatedPost = await author.readPost(postData.id);
+            if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
+            console.log(resutl)
+
+        } catch {
+            console.log("Error en llamada al backend")
+        }
     }
 
     const handleCommentSubmit = async () => {
