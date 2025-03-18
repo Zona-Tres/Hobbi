@@ -26,18 +26,13 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
     const imageSrc = getImageSrc();
 
     const handlePostClick = async (postId) => {
-        if (isLoading || selectedPostId) return;
+        if (isLoading) return;
         try {
             setIsLoading(true);
-            console.log(postId)
-            console.log(author)
             setSelectedPostAuthor(author)
             const user = await createBucketActor(author)
             const response = await user.readPost(postId);
-
             setSelectedPostDetails(response.Ok ? response.Ok : null);
-
-            setSelectedPostId(postId);
         } catch (e) {
             console.error("Error fetching post details:", e);
         } finally {
