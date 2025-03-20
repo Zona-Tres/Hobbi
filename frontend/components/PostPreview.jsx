@@ -5,10 +5,10 @@ import { blobToImageUrl } from "../utils/imageManager";
 import { formatBigIntToDate } from "../utils/utils";
 
 const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAuthor }) => {
-    const [selectedPostId, setSelectedPostId] = useState(null);
+    // const [selectedPostId, setSelectedPostId] = useState(null);
     // const [selectedPostDetails, setSelectedPostDetails] = useState(null);
-    const [newComment, setNewComment] = useState("");
-    const [isCommentLoading, setIsCommentLoading] = useState(false);
+    // const [newComment, setNewComment] = useState("");
+    // const [isCommentLoading, setIsCommentLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const author = post.autor
@@ -84,14 +84,14 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
             <div className="flex gap-4">
                 <div
                     className="text-green-400 hover:text-green-500 flex items-center gap-1"
-                    
+
                 >
                     👍 {post.likes.toString()}
                 </div>
 
                 <div
                     className="text-red-400 hover:text-red-500 flex items-center gap-1"
-                    
+
                 >
                     👎 {post.disLikes.toString()}
                 </div>

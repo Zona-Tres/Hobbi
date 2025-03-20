@@ -1,9 +1,12 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useStore from "../store/useStore"
+
 
 export default function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
+  const myinfo = useStore((state) => state.myinfo)
 
   const handleClick = (path) => {
     navigate(path);
@@ -70,17 +73,18 @@ export default function Navigation() {
 
   return (
     <div className="flex flex-col gap-4 ml-5 mt-8">
-      {menuItems.map((item) => (
-        <div
-          key={item.path + item.name}
-          className="flex gap-4 hover:cursor-pointer"
-          onClick={() => handleClick(item.path)}
+      {menuItems.map((item) => {
+        if (item.path === "/friends" && myinfo.name === undefined) return null
+        return (<div
+        key={item.path + item.name}
+        className="flex gap-4 hover:cursor-pointer"
+        onClick={() => handleClick(item.path)}
         >
           <div
             className={`flex items-center justify-center h-6 w-6 rounded-md ${
               location.pathname === item.path ? "bg-[#B577F7]" : "bg-[#0E1425]"
-            }`}
-          >
+              }`}
+              >
             <svg
               width="24"
               height="24"
@@ -89,22 +93,23 @@ export default function Navigation() {
               xmlns="http://www.w3.org/2000/svg"
               className={`w-5 h-5 ${
                 location.pathname === item.path ? "text-white" : "text-[#505CE6]"
-              }`}
-            >
+                }`}
+                >
               {item.icon}
             </svg>
           </div>
           <span
             className={`text-base font-bold ${
               location.pathname === item.path
-                ? "text-[#B577F7]"
-                : "text-[#505CE6]"
-            }`}
-          >
+              ? "text-[#B577F7]"
+              : "text-[#505CE6]"
+              }`}
+              >
             {item.name}
           </span>
-        </div>
-      ))}
-    </div>
-  );
+        </div>)
+      }
+      )}
+      </div>
+    );
 } 
