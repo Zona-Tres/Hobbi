@@ -136,7 +136,7 @@ export default function Feed() {
 
     const lastPostRef = useCallback(
         (node) => {
-            if (loading) return;
+            if (loading || !hasNext) return;
             if (observer.current) observer.current.disconnect();
             observer.current = new IntersectionObserver((entries) => {
                 if (entries[0].isIntersecting && hasNext) {
@@ -405,7 +405,7 @@ export default function Feed() {
                             {postList.map((post, index) => (
                                 <div
                                     key={index}
-                                    ref={index === postList.length - 1 ? lastPostRef : null}
+                                    ref={index === postList.length - 5 ? lastPostRef : null}
                                     className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
                                     hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
                                 > 
