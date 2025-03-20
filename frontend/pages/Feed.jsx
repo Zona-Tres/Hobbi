@@ -414,7 +414,7 @@ export default function Feed() {
                             {postList.map((post, index) => (
                                 <div
                                     key={index}
-                                    ref={index === postList.length - 1 ? lastPostRef : null}
+                                    ref={index === postList.length - 5 ? lastPostRef : null}
                                     className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
                                 > 
                                     <PostPreview caller = {canisterId} 
