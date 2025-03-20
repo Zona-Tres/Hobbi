@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { toast } from 'react-toastify'
 import { blobToImageUrl } from "../utils/imageManager";
 import createBucketActor from "../hooks/createBucketActor"
 import useStore from "../store/useStore"
@@ -49,7 +50,7 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
             if (updatedPost.Ok) { setPostData(updatedPost.Ok) }
 
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while processing your reaction");
         }
     }
 
@@ -65,7 +66,7 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
 
             setNewComment("");
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while posting your comment");
         } finally {
             setIsCommentLoading(false);
         }

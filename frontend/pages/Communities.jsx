@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react"
+import { toast } from 'react-toastify'
 import { useCanister } from "@connect2ic/react"
 import LogoDark from "../components/ui/LogoDark"
 import { Seo } from "../components/utils/seo"
@@ -52,7 +53,8 @@ export default function Communities() {
             } else {
                 setCommunities([])
             }
-        } catch (error) {
+        } catch {
+            toast.error("An error occurred while loading communities");
             setCommunities([])
         } finally {
             setLoading(false)
@@ -75,16 +77,14 @@ export default function Communities() {
                 name: data.name,
                 description: data.description
             })
-            debugger
             if (result.Ok) {
                 await fetchCommunities()
                 setIsModalOpen(false)
                 reset()
                 setLogoPreview(null)
             }
-        } catch (e) {
-            debugger
-            // Error silencioso
+        } catch {
+            toast.error("An error occurred while creating the community");
         } finally {
             setLoading(false)
         }

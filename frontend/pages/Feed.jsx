@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
+import { toast } from 'react-toastify'
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -64,7 +65,7 @@ export default function Feed() {
                 setMyInfo(response)
             }
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while loading user information");
         }
     }
     useEffect(() => {
@@ -100,7 +101,7 @@ export default function Feed() {
                 }
 
             } catch {
-                // Error silencioso
+                toast.error("An error occurred while loading the feed");
             } finally {
                 setLoading(false);
             }
@@ -127,7 +128,7 @@ export default function Feed() {
                 setCurrentPage(nextPage);
             }
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while loading more posts");
         } finally {
             setLoading(false);
         }
@@ -167,7 +168,7 @@ export default function Feed() {
             const imageFull = await compressAndConvertImage(file, 600); 
             setUploadedImageData({ preview: imagePreview, full: imageFull });
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while processing the image");
         }
     };
 
@@ -222,7 +223,7 @@ export default function Feed() {
             setTextArea("")
             setPostList(responsePost.arr)
         } catch {
-            // Error silencioso
+            toast.error("An error occurred while creating the post");
         }
     }
 

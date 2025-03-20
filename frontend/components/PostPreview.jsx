@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
+import { toast } from 'react-toastify'
 import createBucketActor from "../hooks/createBucketActor"
 import Hashtag from "./hashtag";
 import { blobToImageUrl } from "../utils/imageManager";
@@ -33,8 +34,8 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
             const user = await createBucketActor(author)
             const response = await user.readPost(postId);
             setSelectedPostDetails(response.Ok ? response.Ok : null);
-        } catch (e) {
-            console.error("Error fetching post details:", e);
+        } catch {
+            toast.error("An error occurred while loading the post");
         } finally {
             setIsLoading(false);
         }
