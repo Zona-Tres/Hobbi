@@ -58,8 +58,8 @@ export default function Dashboard() {
         setPostList(responsePost.arr)
         setMyInfo(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   useEffect(() => {
@@ -79,8 +79,8 @@ export default function Dashboard() {
           const actor = await createBucketActor(newCanisterId);
           handlePublicInfo(actor);
         }
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Error silencioso
       } finally {
         setLoading(false);
       }
@@ -93,8 +93,6 @@ export default function Dashboard() {
   }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
   const loadMorePosts = async () => {
-    console.log("solicitando mas post")
-    console.log(myinfo)
     if (!hasNext || loading) return;
     setLoading(true);
     try {
@@ -108,8 +106,8 @@ export default function Dashboard() {
         setHasNext(response.hasNext);
         setCurrentPage(nextPage);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Error silencioso
     } finally {
       setLoading(false);
     }
@@ -146,8 +144,8 @@ export default function Dashboard() {
       const imagePreview = await compressAndConvertImage(file, 8);
       const imageFull = await compressAndConvertImage(file, 600);
       setUploadedImageData({ preview: imagePreview, full: imageFull });
-    } catch (error) {
-      console.error("Error processing image:", error);
+    } catch {
+      // Error silencioso
     }
   };
 
@@ -182,8 +180,8 @@ export default function Dashboard() {
       setMedia(null)
       setTextArea("")
       setPostList(responsePost.arr)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   return (

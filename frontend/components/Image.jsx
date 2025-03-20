@@ -30,7 +30,7 @@ const ImageSection = () => {
           const newFile = await resizeImage(firstFile, ImageMaxWidth)
           setFile(newFile)
         } catch (error) {
-          console.error(error)
+          // Error silencioso
         }
       }
     }

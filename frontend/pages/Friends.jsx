@@ -50,8 +50,8 @@ export default function Friends() {
       if (response) {
         setFollowers(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handleFolloweds = async (actor) => {
@@ -60,8 +60,8 @@ export default function Friends() {
       if (response) {
         setFolloweds(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handlePublicInfo = async (actor) => {
@@ -70,8 +70,8 @@ export default function Friends() {
       if (response) {
         setMyInfo(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
 
@@ -84,8 +84,8 @@ export default function Friends() {
         handleFollowers(actor);
         handleFolloweds(actor)
         handlePublicInfo(actor);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Error silencioso
       } finally {
         setLoading(false);
       }

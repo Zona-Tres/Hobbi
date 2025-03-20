@@ -63,8 +63,8 @@ export default function Feed() {
             if (response) {
                 setMyInfo(response)
             }
-        } catch (e) {
-            console.error(e)
+        } catch {
+            // Error silencioso
         }
     }
     useEffect(() => {
@@ -99,8 +99,8 @@ export default function Feed() {
                     setHashtagRankingList(hashtagRanking)
                 }
 
-            } catch (e) {
-                console.error(e);
+            } catch {
+                // Error silencioso
             } finally {
                 setLoading(false);
             }
@@ -113,7 +113,6 @@ export default function Feed() {
     }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
     const loadMorePosts = async () => {
-        console.log("solicitando mas post. Pagina Nro ", currentPage + 1)
         if (!hasNext || loading) return;
         setLoading(true);
         try {
@@ -127,8 +126,8 @@ export default function Feed() {
                 setHasNext(response.hasNext);
                 setCurrentPage(nextPage);
             }
-        } catch (e) {
-            console.error(e);
+        } catch {
+            // Error silencioso
         } finally {
             setLoading(false);
         }
@@ -167,8 +166,8 @@ export default function Feed() {
             const imagePreview = await compressAndConvertImage(file, 8); 
             const imageFull = await compressAndConvertImage(file, 600); 
             setUploadedImageData({ preview: imagePreview, full: imageFull });
-        } catch (error) {
-            console.error("Error processing image:", error);
+        } catch {
+            // Error silencioso
         }
     };
 
@@ -222,8 +221,8 @@ export default function Feed() {
             setMedia(null)
             setTextArea("")
             setPostList(responsePost.arr)
-        } catch (e) {
-            console.error(e)
+        } catch {
+            // Error silencioso
         }
     }
 
@@ -348,10 +347,19 @@ export default function Feed() {
                                     accept="image/*"
                                     onChange={(e) => handleImageUpload(e)}
                                 />
-                                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
-                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
-                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    strokeWidth="1.5" 
+                                    stroke="currentColor" 
+                                    className="w-6 h-6"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" 
+                                    />
                                 </svg>
                             </label>
 
@@ -391,7 +399,7 @@ export default function Feed() {
                             hashtagRankingList.map((tag, index) =>
                                 <div
                                     className={`flex px-3 h-5 rounded-2xl max-w-fit text-[10px] font-normal items-center justify-center cursor-pointer 
-                                    ${selectedHashtag === tag ? 'bg-green-500' : 'bg-[#4F239E]'} 
+                                    ${selectedHashtag === tag ? 'bg-[#B577F7]' : 'bg-[#4F239E]'} 
                                     ${selectedHashtag === tag ? 'text-white' : 'text-[#FDFCFF]'}`}
                                     key={index}
                                     name={tag}
@@ -406,8 +414,7 @@ export default function Feed() {
                                 <div
                                     key={index}
                                     ref={index === postList.length - 1 ? lastPostRef : null}
-                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
-                                    hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
+                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
                                 > 
                                     <PostPreview caller = {canisterId} 
                                         key= {index} 
@@ -435,4 +442,5 @@ export default function Feed() {
             </div>
         </>
     )
+
 }

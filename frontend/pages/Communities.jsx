@@ -6,18 +6,39 @@ import useStore from "../store/useStore"
 import Avatar from "../components/Avatar"
 import Navigation from "../components/Navigation"
 import CustomConnectButton from "../components/ui/CustomConnectButton"
-// import imageCompression from "browser-image-compression"
-import { compressAndConvertImage , blobToImageUrl} from "../utils/imageManager"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
+
+const communitySchema = z.object({
+    name: z.string().min(1, "Community name is required"),
+    description: z.string().min(1, "Community description is required"),
+    logo: z.any()
+})
 
 export default function Communities() {
     const myinfo = useStore((state) => state.myinfo)
     const [hobbi] = useCanister("hobbi")
     const [communities, setCommunities] = useState([])
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [communityName, setCommunityName] = useState("")
-    const [communityDescription, setCommunityDescription] = useState("")
     const [loading, setLoading] = useState(false)
-    const [logo, setLogo] = useState([])
+    const [logoPreview, setLogoPreview] = useState(null)
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        reset
+    } = useForm({
+        resolver: zodResolver(communitySchema),
+        defaultValues: {
+            name: "",
+            description: "",
+            logo: []
+        }
+    })
 
     const fetchCommunities = async () => {
         try {
@@ -32,7 +53,6 @@ export default function Communities() {
                 setCommunities([])
             }
         } catch (error) {
-            console.error("Error fetching communities:", error)
             setCommunities([])
         } finally {
             setLoading(false)
@@ -42,36 +62,38 @@ export default function Communities() {
     const handleLogoUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-        setLogo(await compressAndConvertImage(file, 20)) // Aproximadamente 10 KB
+        const compressedLogo = await compressAndConvertImage(file, 20)
+        setValue('logo', compressedLogo)
+        setLogoPreview(compressedLogo)
     };
 
-    const handleCreateCommunity = async () => {
-        if (!communityName || !communityDescription) return;
-        
+    const onSubmit = async (data) => {
         try {
             setLoading(true)
             const result = await hobbi.createCommunity({
-                logo: logo,
-                name: communityName, 
-                description: communityDescription
+                logo: data.logo,
+                name: data.name,
+                description: data.description
             })
-            
+            debugger
             if (result.Ok) {
-                await fetchCommunities() // Refresh the communities list
+                await fetchCommunities()
+                setIsModalOpen(false)
+                reset()
+                setLogoPreview(null)
             }
         } catch (e) {
-            console.error(e)
+            debugger
+            // Error silencioso
         } finally {
             setLoading(false)
-            setCommunityName("")
-            setCommunityDescription("")
-            setIsModalOpen(false)
         }
     }
 
     useEffect(() => {
         fetchCommunities()
     }, [hobbi])
+    console.log(communities, 'communities')
     return (
         <>
             <Seo
@@ -82,27 +104,29 @@ export default function Communities() {
                 rel={"https://hobbi.me/communities"}
             />
 
-
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-[#0E1425] rounded-lg p-6 w-96">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-[#FDFCFF]">Crear Comunidad</h2>
-                            <button 
-                                onClick={() => setIsModalOpen(false)}
+                            <h2 className="text-xl font-bold text-[#FDFCFF]">Create Community</h2>
+                            <button
+                                onClick={() => {
+                                    setIsModalOpen(false)
+                                    reset()
+                                    setLogoPreview(null)
+                                }}
                                 className="text-[#B577F7] hover:text-[#9B5FD9]"
-                                >
+                            >
                                 ✕
                             </button>
                         </div>
-                        <div className="space-y-4">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <div>
-
-                                {logo.length > 0 && (
+                                {logoPreview && (
                                     <div className="mt-2">
                                         <img
-                                            src={URL.createObjectURL(new Blob([logo]))}
+                                            src={URL.createObjectURL(new Blob([logoPreview]))}
                                             alt="Preview"
                                             className="w-[300px] h-[200px] object-cover rounded-[10px] mx-auto"
                                         />
@@ -116,40 +140,56 @@ export default function Communities() {
                                     accept="image/*"
                                     onChange={handleLogoUpload}
                                     className="w-full px-3 py-2 bg-[#1A2137] text-[#FDFCFF] rounded-md focus:outline-none focus:ring-2 focus:ring-[#B577F7]"
-                                    />
+                                />
                                 <label className="block text-sm font-medium text-[#E1C9FB] mb-1">
-                                    Nombre
+                                    Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
-                                    value={communityName}
-                                    onChange={(e) => setCommunityName(e.target.value)}
+                                    {...register("name")}
                                     className="w-full px-3 py-2 bg-[#1A2137] text-[#FDFCFF] rounded-md focus:outline-none focus:ring-2 focus:ring-[#B577F7]"
-                                    placeholder="Nombre de la comunidad"
-                                    />
+                                    placeholder="Community name"
+                                />
+                                {errors.name && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[#E1C9FB] mb-1">
-                                    Descripción
+                                    Description <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
-                                    value={communityDescription}
-                                    onChange={(e) => setCommunityDescription(e.target.value)}
+                                    {...register("description")}
                                     className="w-full px-3 py-2 bg-[#1A2137] text-[#FDFCFF] rounded-md focus:outline-none focus:ring-2 focus:ring-[#B577F7]"
-                                    placeholder="Descripción de la comunidad"
-                                    />
+                                    placeholder="Community description"
+                                />
+                                {errors.description && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                                )}
                             </div>
-                            <button
-                                onClick={handleCreateCommunity}
-                                disabled={loading || !communityName || !communityDescription}
-                                className={`w-full bg-[#B577F7] text-white px-4 py-2 rounded-md hover:bg-[#9B5FD9] transition-colors mt-4 ${
-                                    (loading || !communityName || !communityDescription) ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                            >
-                                {loading ? 'Creating...' : 'Create'}
-                            </button>
-                        </div>
+                            <div className="flex gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsModalOpen(false)
+                                        reset()
+                                        setLogoPreview(null)
+                                    }}
+                                    className="w-1/2 bg-[#1A2137] text-white px-4 py-2 rounded-md hover:bg-[#242e4a] transition-colors mt-4"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className={`w-1/2 bg-[#B577F7] text-white px-4 py-2 rounded-md hover:bg-[#9B5FD9] transition-colors mt-4 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    {loading ? 'Creating...' : 'Create'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
@@ -199,53 +239,53 @@ export default function Communities() {
 
                 <div className="flex flex-col py-16 px-8 w-full">
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-2xl font-bold text-[#FDFCFF]">Comunidades</h1>
-                        <button 
+                        <h1 className="text-2xl font-bold text-[#FDFCFF]">Communities</h1>
+                        <button
                             onClick={() => setIsModalOpen(true)}
                             className="bg-[#B577F7] text-white px-4 py-2 rounded-md hover:bg-[#9B5FD9] transition-colors"
                         >
                             Create
                         </button>
                     </div>
-                    
+
                     {loading && (
                         <div className="flex justify-center items-center py-8">
                             <div className="w-8 h-8 border-4 border-[#B577F7] border-t-transparent rounded-full animate-spin"></div>
                         </div>
                     )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    <div className="w-full flex flex-col gap-4">
                         {communities.map((community) => (
-                            <div 
+                            <div
                                 key={community.canisterId}
-                                className="bg-[#0E1425] rounded-lg p-6 hover:bg-[#1A2137] transition-colors"
-                                >
-                                <h2 className="text-xl font-bold text-[#B577F7] mb-2">
-                                    {community.name}
-                                </h2>
-                                <p className="text-[#E1C9FB] mb-4">
-                                    {community.description}
-                                </p>
-                                <div className="mt-2">
+                                className="bg-[#0E1425] rounded-lg p-6 hover:bg-[#1A2137] transition-colors flex w-full"
+                            >
+                                <div className="w-28 h-28">
                                     <img
                                         src={blobToImageUrl(community.logo)}
                                         alt="Preview"
-                                        className="w-[300px] h-[200px] object-cover rounded-[10px] mx-auto"
+                                        className="h-28 w-28 object-contain rounded-[10px] mx-auto"
                                     />
                                 </div>
-                                {community.hashTags && community.hashTags.length > 0 && (
-                                    <div className="flex gap-3 mb-4">
-                                        {community.hashTags.map((tag, index) => (
-                                            <span key={index} className="text-sm text-[#B577F7] bg-[#1A2137] px-2 py-1 rounded">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-[#BCBCBC]">
-                                        {String(community.membersQty).replace('n', '')} miembros
+                                <div className="flex flex-col w-full ml-3 gap-1">
+                                    <span className="text-lg font-bold text-white">
+                                        {community.name}
                                     </span>
+                                    <span className="text-sm text-[#B577F7]">
+                                        {String(community.membersQty).replace('n', '')} members
+                                    </span>
+                                    <p className="text-[#E1C9FB] mb-4 text-sm">
+                                        {community.description}
+                                    </p>
+                                    {community.hashTags && community.hashTags.length > 0 && (
+                                        <div className="flex gap-3 mb-4">
+                                            {community.hashTags.map((tag, index) => (
+                                                <span key={index} className="text-sm text-[#B577F7] bg-[#1A2137] px-2 py-1 rounded">
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
