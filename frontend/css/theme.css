@@ -1,3 +1,21 @@
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1E1E2E; /* Color de fondo de la pista */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #B577F7; /* Color de la barra */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #8D44E7; /* Color al pasar el mouse */
+}
+
 .form-input:focus,
 .form-textarea:focus,
 .form-multiselect:focus,

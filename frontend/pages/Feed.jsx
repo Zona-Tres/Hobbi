@@ -54,7 +54,6 @@ export default function Feed() {
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [selectedPostDetails, setSelectedPostDetails] = useState(null);
     const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
-    selectedPostAuthor
     const [isPostSelected, setIsPostSelected] = useState(false);
     const observer = useRef();
 
@@ -165,7 +164,7 @@ export default function Feed() {
         setMedia(null); 
         try {
             const imagePreview = await compressAndConvertImage(file, 8); 
-            const imageFull = await compressAndConvertImage(file, 600); 
+            const imageFull = await compressAndConvertImage(file, 600, 1000, 1000); 
             setUploadedImageData({ preview: imagePreview, full: imageFull });
         } catch {
             toast.error("An error occurred while processing the image");
