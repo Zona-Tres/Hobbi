@@ -236,7 +236,7 @@ export default function ProfileInfo() {
         2: "Tv",
         3: "Game",
     }
-
+console.log(postList,'postList')
     return (
         <>
             <Seo

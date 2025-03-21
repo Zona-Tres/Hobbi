@@ -286,6 +286,14 @@ export default function Communities() {
                                             ))}
                                         </div>
                                     )}
+                                    <button
+                                        onClick={() => window.location.href = `/community/${community.canisterId}`}
+                                        className="cursor-pointer h-7 w-32 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-2"
+                                    >
+                                        <span className="text-sm font-medium text-[#FDFCFF]">
+                                            View community
+                                        </span>
+                                    </button>
                                 </div>
                             </div>
                         ))}

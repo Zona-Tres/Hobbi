@@ -196,7 +196,7 @@ export default function Friends() {
                       onClick={() =>
                         (window.location.href = `/profile/${item.userCanisterId.toText()}`)
                       }
-                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                      className="cursor-pointer h-7 w-24 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
                         View profile
