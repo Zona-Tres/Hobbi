@@ -24,7 +24,7 @@ export default function CustomConnectButton() {
 				position: 'relative',
 				background: '#0F172A',
 			}} onConnect={() => {
-				navigate("/create-profile/")
+				navigate("/create-profile")
 			}} 
 			onDisconnect={() => {
 				navigate("/")
