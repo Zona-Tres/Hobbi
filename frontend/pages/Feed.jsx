@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
+import { toast } from 'react-toastify'
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
 import { arrayBufferToImgSrc } from "../utils/image"
@@ -50,11 +51,8 @@ export default function Feed() {
     const [currentPage, setCurrentPage] = useState(0);
     const [hasNext, setHasNext] = useState(false);
     const [selectedHashtag, setSelectedHashtag] = useState(null);
-    const [selectedPostId, setSelectedPostId] = useState(null);
     const [selectedPostDetails, setSelectedPostDetails] = useState(null);
     const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
-    selectedPostAuthor
-    const [isPostSelected, setIsPostSelected] = useState(false);
     const observer = useRef();
 
     const handlePublicInfo = async (actor) => {
@@ -63,8 +61,8 @@ export default function Feed() {
             if (response) {
                 setMyInfo(response)
             }
-        } catch (e) {
-            console.error(e)
+        } catch {
+            toast.error("An error occurred while loading user information");
         }
     }
     useEffect(() => {
@@ -99,8 +97,8 @@ export default function Feed() {
                     setHashtagRankingList(hashtagRanking)
                 }
 
-            } catch (e) {
-                console.error(e);
+            } catch {
+                toast.error("An error occurred while loading the feed");
             } finally {
                 setLoading(false);
             }
@@ -113,7 +111,6 @@ export default function Feed() {
     }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
     const loadMorePosts = async () => {
-        console.log("solicitando mas post. Pagina Nro ", currentPage + 1)
         if (!hasNext || loading) return;
         setLoading(true);
         try {
@@ -127,8 +124,8 @@ export default function Feed() {
                 setHasNext(response.hasNext);
                 setCurrentPage(nextPage);
             }
-        } catch (e) {
-            console.error(e);
+        } catch {
+            toast.error("An error occurred while loading more posts");
         } finally {
             setLoading(false);
         }
@@ -165,10 +162,10 @@ export default function Feed() {
         setMedia(null); 
         try {
             const imagePreview = await compressAndConvertImage(file, 8); 
-            const imageFull = await compressAndConvertImage(file, 600); 
+            const imageFull = await compressAndConvertImage(file, 600, 1000, 1000); 
             setUploadedImageData({ preview: imagePreview, full: imageFull });
-        } catch (error) {
-            console.error("Error processing image:", error);
+        } catch {
+            toast.error("An error occurred while processing the image");
         }
     };
 
@@ -203,17 +200,19 @@ export default function Feed() {
                 hashtags.push(match[1]);
             }
             cleanedText = textArea.replace(hashtagRegex, "").trim();
+            console.log(media)
 
             const json = {
                 access: { Public: null },
-                title: media ? title : "",
+                title: media?.title? title : "",
                 body: cleanedText,
                 image: uploadedImageData.full ? [uploadedImageData.full] : [],
                 imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
                 hashTags: hashtags,
-                image_url: media ? [media.image] : [],
+                image_url: media?.image? [media.image] : [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
+            console.log(json)
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
                 qtyPerPage: 25,
@@ -222,8 +221,8 @@ export default function Feed() {
             setMedia(null)
             setTextArea("")
             setPostList(responsePost.arr)
-        } catch (e) {
-            console.error(e)
+        } catch {
+            toast.error("An error occurred while creating the post");
         }
     }
 
@@ -348,10 +347,19 @@ export default function Feed() {
                                     accept="image/*"
                                     onChange={(e) => handleImageUpload(e)}
                                 />
-                                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
-                                    <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
-                                    <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    strokeWidth="1.5" 
+                                    stroke="currentColor" 
+                                    className="w-6 h-6"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" 
+                                    />
                                 </svg>
                             </label>
 
@@ -391,7 +399,7 @@ export default function Feed() {
                             hashtagRankingList.map((tag, index) =>
                                 <div
                                     className={`flex px-3 h-5 rounded-2xl max-w-fit text-[10px] font-normal items-center justify-center cursor-pointer 
-                                    ${selectedHashtag === tag ? 'bg-green-500' : 'bg-[#4F239E]'} 
+                                    ${selectedHashtag === tag ? 'bg-[#B577F7]' : 'bg-[#4F239E]'} 
                                     ${selectedHashtag === tag ? 'text-white' : 'text-[#FDFCFF]'}`}
                                     key={index}
                                     name={tag}
@@ -400,14 +408,13 @@ export default function Feed() {
                         )}
                     </div>
                     {postList.length > 0  && 
-                        <div  className={`relative ${isPostSelected ? "pointer-events-none" : ""}`}> 
+                        <div  className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}> 
                             
                             {postList.map((post, index) => (
                                 <div
                                     key={index}
-                                    ref={index === postList.length - 1 ? lastPostRef : null}
-                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
-                                    hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
+                                    ref={index === postList.length - 5 ? lastPostRef : null}
+                                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
                                 > 
                                     <PostPreview caller = {canisterId} 
                                         key= {index} 
@@ -420,7 +427,6 @@ export default function Feed() {
                             ))}
                         </div>  
                     }
-
                     {selectedPostDetails && (
                         <PostExpand
                             caller = {canisterId}
@@ -435,4 +441,5 @@ export default function Feed() {
             </div>
         </>
     )
+
 }

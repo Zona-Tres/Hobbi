@@ -50,8 +50,8 @@ export default function Friends() {
       if (response) {
         setFollowers(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handleFolloweds = async (actor) => {
@@ -60,8 +60,8 @@ export default function Friends() {
       if (response) {
         setFolloweds(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handlePublicInfo = async (actor) => {
@@ -70,8 +70,8 @@ export default function Friends() {
       if (response) {
         setMyInfo(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
 
@@ -84,8 +84,8 @@ export default function Friends() {
         handleFollowers(actor);
         handleFolloweds(actor)
         handlePublicInfo(actor);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Error silencioso
       } finally {
         setLoading(false);
       }
@@ -196,7 +196,7 @@ export default function Friends() {
                       onClick={() =>
                         (window.location.href = `/profile/${item.userCanisterId.toText()}`)
                       }
-                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                      className="cursor-pointer h-7 w-30 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
                         View profile
@@ -226,7 +226,7 @@ export default function Friends() {
                       onClick={() =>
                         (window.location.href = `/profile/${item.userCanisterId.toText()}`)
                       }
-                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                      className="cursor-pointer h-7 w-30 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
                         View profile

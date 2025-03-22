@@ -104,7 +104,6 @@ function SearchDialog(params) {
         setMessage("Your search did not bring any results :( Try refining it!");
       }
     } catch (e) {
-      console.error(e);
       setMessage("There was an error. Try again later!");
     } finally {
       setLoading(false);

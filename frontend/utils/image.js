@@ -261,7 +261,7 @@ export async function urlToUint8Array(url) {
     
     return uint8Array;
   } catch (error) {
-    console.error("Error in urlToUint8Array:", error);
-    throw error; // Re-throw the error for further handling
+    // Error silencioso
+    return new Uint8Array();
   }
 }

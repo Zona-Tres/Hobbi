@@ -1,4 +1,6 @@
 import React from "react"
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 import { createClient } from "@connect2ic/core"
 import { InternetIdentity, NFID } from "@connect2ic/core/providers"
@@ -63,6 +65,7 @@ export default () => (
       <SeoMarkup />
       <Connect2ICProvider client={client}>
         <App />
+        <ToastContainer position="bottom-right" />
       </Connect2ICProvider>
     </HelmetProvider>
   </ErrorBoundary>
