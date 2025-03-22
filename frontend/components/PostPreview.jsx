@@ -42,15 +42,23 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
             ref={innerRef}
         >
             <div className="flex justify-between">
-                <span
+                <div 
+                    className="flex items-center gap-2 text-sm font-medium text-[#FDFCFF] cursor-pointer"
                     onClick={(e) => {
                         e.stopPropagation();
                         window.location.href = `/profile/${post.autor.toText()}/`;
                     }}
-                    className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
                 >
+                    {post.autorPhoto.length > 0 && (
+                            <img
+                                className="rounded-full"
+                                src={blobToImageUrl(post.autorPhoto[0])}
+                                width="25px"
+                            />
+                    )}
                     @{post.userName}
-                </span>
+                   
+                </div>
                 <span className="text-sm font-medium text-[#BCBCBC]">
                     {formatBigIntToDate(post.date)}
                 </span>
