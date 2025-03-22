@@ -51,10 +51,8 @@ export default function Feed() {
     const [currentPage, setCurrentPage] = useState(0);
     const [hasNext, setHasNext] = useState(false);
     const [selectedHashtag, setSelectedHashtag] = useState(null);
-    const [selectedPostId, setSelectedPostId] = useState(null);
     const [selectedPostDetails, setSelectedPostDetails] = useState(null);
     const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
-    const [isPostSelected, setIsPostSelected] = useState(false);
     const observer = useRef();
 
     const handlePublicInfo = async (actor) => {
@@ -202,17 +200,19 @@ export default function Feed() {
                 hashtags.push(match[1]);
             }
             cleanedText = textArea.replace(hashtagRegex, "").trim();
+            console.log(media)
 
             const json = {
                 access: { Public: null },
-                title: media ? title : "",
+                title: media?.title? title : "",
                 body: cleanedText,
                 image: uploadedImageData.full ? [uploadedImageData.full] : [],
                 imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
                 hashTags: hashtags,
-                image_url: media ? [media.image] : [],
+                image_url: media?.image? [media.image] : [],
                 media_type: { [mediaTypeMap[selectedTheme]]: null },
             }
+            console.log(json)
             const response = await actor.createPost(json)
             const responsePost = await actor.getPaginatePost({
                 qtyPerPage: 25,
@@ -408,7 +408,7 @@ export default function Feed() {
                         )}
                     </div>
                     {postList.length > 0  && 
-                        <div  className={`relative ${isPostSelected ? "pointer-events-none" : ""}`}> 
+                        <div  className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}> 
                             
                             {postList.map((post, index) => (
                                 <div
@@ -427,7 +427,6 @@ export default function Feed() {
                             ))}
                         </div>  
                     }
-
                     {selectedPostDetails && (
                         <PostExpand
                             caller = {canisterId}

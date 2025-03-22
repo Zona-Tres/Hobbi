@@ -6,14 +6,10 @@ import { blobToImageUrl } from "../utils/imageManager";
 import { formatBigIntToDate } from "../utils/utils";
 
 const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAuthor }) => {
-    const [selectedPostId, setSelectedPostId] = useState(null);
-    // const [selectedPostDetails, setSelectedPostDetails] = useState(null);
-    const [newComment, setNewComment] = useState("");
-    const [isCommentLoading, setIsCommentLoading] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
-
     const author = post.autor
-
+    
     const getImageSrc = () => {
         if (post.photoPreview?.length > 0) {
             return blobToImageUrl(post.photoPreview[0]);
@@ -49,7 +45,7 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
                 <span
                     onClick={(e) => {
                         e.stopPropagation();
-                        window.location.href = `/profile/${post.autor.toText()}`;
+                        window.location.href = `/profile/${post.autor.toText()}/?author=${post.autor.toText()}`;
                     }}
                     className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
                 >

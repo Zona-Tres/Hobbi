@@ -16,6 +16,8 @@ import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
 import { formatBigIntToDate } from "../utils/utils"
+import PostPreview from "../components/PostPreview"
+import PostExpand from "../components/PostExpand"
 
 export default function Dashboard() {
   const { id } = useParams()
@@ -28,10 +30,9 @@ export default function Dashboard() {
   const canisterId = useStore((state) => state.canisterId)
   const username = useStore((state) => state.username)
   const myinfo = useStore((state) => state.myinfo)
-  const [nft] = useCanister("nft")
-  const [post] = useCanister("post")
+  
   const [hobbi] = useCanister("hobbi")
-  const { principal } = useConnect()
+
   const [media, setMedia] = useState(null)
   const [mediaType, setMediaType] = useState(1)
   const firstLoad = useRef(true)
@@ -45,6 +46,10 @@ export default function Dashboard() {
     preview: null,
     full: null,
   })
+
+  const [selectedPostDetails, setSelectedPostDetails] = useState(null);
+  const [selectedPostAuthor, setSelectedPostAuthor] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
   const [hasNext, setHasNext] = useState(false);
 
   const handlePublicInfo = async (actor) => {
@@ -52,10 +57,11 @@ export default function Dashboard() {
       const response = await actor.getMyInfo()
       if (response) {
         const responsePost = await actor.getPaginatePost({
-          qtyPerPage: 10,
-          page: 0,
+          qtyPerPage: 25,
+          page: currentPage,
         })
         setPostList(responsePost.arr)
+        setHasNext(responsePost.hasNext)
         setMyInfo(response)
       }
     } catch {
@@ -96,8 +102,9 @@ export default function Dashboard() {
     if (!hasNext || loading) return;
     setLoading(true);
     try {
+      const actor = await createBucketActor(canisterId);
       const nextPage = currentPage + 1;
-      const response = await hobbi.getMyFeed({
+      const response = await actor.getPaginatePost({
         qtyPerPage: 25,
         page: nextPage,
       });
@@ -366,52 +373,36 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          {postList.length > 0 &&
-            postList.map((item, index) => (
-              <div
-                key={index}
-                ref={index === postList.length - 1 ? lastPostRef : null}
-                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
-                                          hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
-              >
-                <div className="flex justify-between">
-                  <span
-                    onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
-                    className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
-                  >
-                    @{item.userName}
-                  </span>
-                  <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
-                </div>
 
-                <span className="text-sm font-bold text-[#FDFCFF]">
-                  {item.title}
-                </span>
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  {item.body}
-                </span>
-                <div className="flex gap-3 mt-2">
-                  {item.hashTags.length > 1 && (
-                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                  )}
+          {postList.length > 0 && (
+            <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+              {postList.slice().reverse().map((post, index) => (
+                <div
+                  key={index}
+                  ref={index === postList.length - 5 ? lastPostRef : null}
+                  className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
+                >
+                  <PostPreview caller={canisterId}
+                    key={index}
+                    post={post}
+                    setSelectedPostDetails={setSelectedPostDetails}
+                    setSelectedPostAuthor={setSelectedPostAuthor}
+                  />
                 </div>
-                {item.photoPreview?.length > 0 ? (
-                  <img
-                    className="mt-3 rounded-md"
-                    src={blobToImageUrl(item.photoPreview[0])}
-                    width="100px"
-                    alt="Post content"
-                  />
-                ) : item.image_url?.length > 0 ? (
-                  <img
-                    className="mt-3 rounded-md"
-                    src={item.image_url[0]}
-                    width="100px"
-                    alt="Media reference"
-                  />
-                ) : null}
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+          {selectedPostDetails && (
+            <PostExpand
+              caller={canisterId}
+              postDetails={selectedPostDetails}
+              postAuthor={selectedPostAuthor}
+              onClose={() => {
+                setSelectedPostDetails(null);
+                setSelectedPostAuthor(null)
+              }}
+            />
+          )}
         </div>
       </div>
     </>
