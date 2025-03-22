@@ -21,9 +21,9 @@ const ImageSection = () => {
     maxFiles: 1,
     accept: {
       "image/png": [".png"],
-      "image/jpeg": [".jpg", ".jpeg"]
+      "image/jpeg": [".jpg", ".jpeg"],
     },
-    onDrop: async acceptedFiles => {
+    onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
         try {
           const firstFile = acceptedFiles[0]
@@ -33,7 +33,7 @@ const ImageSection = () => {
           // Error silencioso
         }
       }
-    }
+    },
   })
 
   async function submitImage() {

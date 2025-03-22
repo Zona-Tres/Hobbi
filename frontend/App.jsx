@@ -1,6 +1,6 @@
 import React from "react"
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 import { createClient } from "@connect2ic/core"
 import { InternetIdentity, NFID } from "@connect2ic/core/providers"
@@ -13,8 +13,9 @@ import { Route, Routes } from "react-router-dom"
 import Feed from "./pages/Feed"
 import Home from "./pages/Home"
 import Dashboard from "./pages/Dashboard"
-import Friends from './pages/Friends'
-import Communities from './pages/Communities'
+import Friends from "./pages/Friends"
+import Communities from "./pages/Communities"
+import CommunityInfo from "./pages/CommunityInfo"
 import NotFound from "./pages/NotFound"
 import ErrorBoundary from "./pages/ErrorBoundary"
 import CreateProfile from "./pages/CreateProfile"
@@ -32,10 +33,11 @@ function App() {
       <Route path="/myprofile" element={<Dashboard />} />
       <Route path="/friends" element={<Friends />} />
       <Route path="/communities" element={<Communities />} />
+      <Route path="/community/:id" element={<CommunityInfo />} />
       <Route path="/profile/:id" element={<ProfileInfo />} />
       <Route path="/feed" element={<Feed />} />
       {/* Protected Routes */}
-      <Route element={<RequireAuth />} >
+      <Route element={<RequireAuth />}>
         <Route path="/create-profile" element={<CreateProfile />} />
       </Route>
 
@@ -48,10 +50,13 @@ function App() {
 const helmetContext = {}
 const client = createClient({
   canisters: {
-    hobbi
+    hobbi,
   },
   providers: [
-    new InternetIdentity({ providerUrl: "http://127.0.0.1:8000/?canisterId=be2us-64aaa-aaaaa-qaabq-cai" }),
+    new InternetIdentity({
+      providerUrl:
+        "http://127.0.0.1:8000/?canisterId=be2us-64aaa-aaaaa-qaabq-cai",
+    }),
     new NFID(),
   ],
   globalProviderConfig: {

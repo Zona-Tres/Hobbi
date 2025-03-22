@@ -20,7 +20,7 @@ import { formatBigIntToDate } from "../utils/utils"
 export default function Dashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const observer = useRef();
+  const observer = useRef()
 
   const setCanisterId = useStore((state) => state.setCanisterId)
   const setUsername = useStore((state) => state.setUsername)
@@ -45,7 +45,7 @@ export default function Dashboard() {
     preview: null,
     full: null,
   })
-  const [hasNext, setHasNext] = useState(false);
+  const [hasNext, setHasNext] = useState(false)
 
   const handlePublicInfo = async (actor) => {
     try {
@@ -64,27 +64,27 @@ export default function Dashboard() {
   }
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(true)
 
       try {
-        const result = await hobbi.signIn();
+        const result = await hobbi.signIn()
         if (result.Ok) {
           if (result.Ok.name !== username) {
-            setUsername(result.Ok.name);
+            setUsername(result.Ok.name)
           }
 
-          const newCanisterId = result.Ok.userCanisterId.toText();
-          setCanisterId(newCanisterId);
+          const newCanisterId = result.Ok.userCanisterId.toText()
+          setCanisterId(newCanisterId)
 
-          const actor = await createBucketActor(newCanisterId);
-          handlePublicInfo(actor);
+          const actor = await createBucketActor(newCanisterId)
+          handlePublicInfo(actor)
         }
       } catch {
         // Error silencioso
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     if (firstLoad.current) {
       fetchData()
@@ -93,25 +93,25 @@ export default function Dashboard() {
   }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
   const loadMorePosts = async () => {
-    if (!hasNext || loading) return;
-    setLoading(true);
+    if (!hasNext || loading) return
+    setLoading(true)
     try {
-      const nextPage = currentPage + 1;
+      const nextPage = currentPage + 1
       const response = await hobbi.getMyFeed({
         qtyPerPage: 25,
         page: nextPage,
-      });
+      })
       if (response) {
-        setPostList(prev => [...prev, ...response.arr]);
-        setHasNext(response.hasNext);
-        setCurrentPage(nextPage);
+        setPostList((prev) => [...prev, ...response.arr])
+        setHasNext(response.hasNext)
+        setCurrentPage(nextPage)
       }
     } catch {
       // Error silencioso
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleClick = (url, index) => {
     setSelected(index)
@@ -124,50 +124,52 @@ export default function Dashboard() {
   }
   const lastPostRef = useCallback(
     (node) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
+      if (loading) return
+      if (observer.current) observer.current.disconnect()
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasNext) {
-          loadMorePosts();
+          loadMorePosts()
         }
-      });
-      if (node) observer.current.observe(node);
+      })
+      if (node) observer.current.observe(node)
     },
-    [loading, hasNext]
-  );
+    [loading, hasNext],
+  )
 
   const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    setMedia(null);
+    const file = event.target.files[0]
+    if (!file) return
+    setMedia(null)
     try {
-      const imagePreview = await compressAndConvertImage(file, 8);
-      const imageFull = await compressAndConvertImage(file, 600);
-      setUploadedImageData({ preview: imagePreview, full: imageFull });
+      const imagePreview = await compressAndConvertImage(file, 8)
+      const imageFull = await compressAndConvertImage(file, 600)
+      setUploadedImageData({ preview: imagePreview, full: imageFull })
     } catch {
       // Error silencioso
     }
-  };
+  }
 
   const handleCreatePost = async () => {
     const actor = await createBucketActor(canisterId)
     try {
-      const hashtagRegex = /#(\w+)/g;
-      const hashtags = [];
-      let match;
-      let cleanedText = textArea;
+      const hashtagRegex = /#(\w+)/g
+      const hashtags = []
+      let match
+      let cleanedText = textArea
 
       while ((match = hashtagRegex.exec(textArea)) !== null) {
-        hashtags.push(match[1]);
+        hashtags.push(match[1])
       }
-      cleanedText = textArea.replace(hashtagRegex, "").trim();
+      cleanedText = textArea.replace(hashtagRegex, "").trim()
 
       const json = {
         access: { Public: null },
         title: media ? title : "",
         body: cleanedText,
         image: uploadedImageData.full ? [uploadedImageData.full] : [],
-        imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
+        imagePreview: uploadedImageData.preview
+          ? [uploadedImageData.preview]
+          : [],
         hashTags: hashtags,
         image_url: media ? [media.image] : [],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
@@ -273,28 +275,31 @@ export default function Dashboard() {
             <div className="flex gap-4 mt-3 ml-3">
               <div
                 onClick={() => setSelectedTheme(1)}
-                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-                  }`}
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 1
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
               >
                 Books
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
-                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-                  }`}
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 2
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
               >
                 TV Shows
               </div>
               <div
                 onClick={() => setSelectedTheme(3)}
-                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
-                  }`}
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
+                  selectedTheme === 3
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
+                }`}
               >
                 Video Games
               </div>
@@ -331,8 +336,22 @@ export default function Dashboard() {
                   accept="image/*"
                   onChange={(e) => handleImageUpload(e)}
                 />
-                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
+                <svg
+                  width="40"
+                  height="22"
+                  viewBox="0 0 32 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    x="1"
+                    y="1"
+                    width="36"
+                    height="24"
+                    rx="3"
+                    ry="3"
+                    fill="#aa60aa"
+                  />
                   <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
                   <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
                 </svg>
@@ -376,12 +395,16 @@ export default function Dashboard() {
               >
                 <div className="flex justify-between">
                   <span
-                    onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
+                    onClick={() =>
+                      (window.location.href = `/profile/${item.autor.toText()}`)
+                    }
                     className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
                   >
                     @{item.userName}
                   </span>
-                  <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
+                  <span className="text-sm font-medium text-[#BCBCBC]">
+                    {formatBigIntToDate(item.date)}
+                  </span>
                 </div>
 
                 <span className="text-sm font-bold text-[#FDFCFF]">
@@ -391,9 +414,10 @@ export default function Dashboard() {
                   {item.body}
                 </span>
                 <div className="flex gap-3 mt-2">
-                  {item.hashTags.length > 1 && (
-                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                  )}
+                  {item.hashTags.length > 1 &&
+                    item.hashTags.map((tag, index) => (
+                      <Hashtag key={index} name={tag} />
+                    ))}
                 </div>
                 {item.photoPreview?.length > 0 ? (
                   <img

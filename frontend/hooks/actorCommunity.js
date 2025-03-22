@@ -1,8 +1,8 @@
 import { Actor, HttpAgent } from "@dfinity/agent"
 import { AuthClient } from "@dfinity/auth-client"
-import { idlFactory as bucket_idlFactory } from "../../src/declarations/user_no_deploy/user_no_deploy.did.js"
+import { idlFactory as bucket_idlFactory } from "../../src/declarations/community_no_deploy/community_no_deploy.did.js"
 
-const createBucketActor = async (canisterId) => {
+const actorCommunity = async (canisterId) => {
   let authClient = await AuthClient.create()
   const currentIdentity = authClient.getIdentity()
 
@@ -25,4 +25,4 @@ const createBucketActor = async (canisterId) => {
   return actor
 }
 
-export default createBucketActor
+export default actorCommunity

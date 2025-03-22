@@ -1,13 +1,13 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 
 export default function Navigation() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const handleClick = (path) => {
-    navigate(path);
-  };
+    navigate(path)
+  }
 
   const menuItems = [
     {
@@ -66,7 +66,7 @@ export default function Navigation() {
         />
       ),
     },
-  ];
+  ]
 
   return (
     <div className="flex flex-col gap-4 ml-5 mt-8">
@@ -88,7 +88,9 @@ export default function Navigation() {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               className={`w-5 h-5 ${
-                location.pathname === item.path ? "text-white" : "text-[#505CE6]"
+                location.pathname === item.path
+                  ? "text-white"
+                  : "text-[#505CE6]"
               }`}
             >
               {item.icon}
@@ -106,5 +108,5 @@ export default function Navigation() {
         </div>
       ))}
     </div>
-  );
-} 
+  )
+}

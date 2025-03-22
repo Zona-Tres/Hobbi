@@ -21,7 +21,7 @@
       "candid": "https://raw.githubusercontent.com/dfinity/ic/233c1ee2ef68c1c8800b8151b2b9f38e17b8440a/rs/ledger_suite/icrc1/ledger/ledger.did",
       "wasm": "https://download.dfinity.systems/ic/233c1ee2ef68c1c8800b8151b2b9f38e17b8440a/canisters/ic-icrc1-ledger.wasm.gz"
     },
-    
+
     "icrc1_index_canister": {
       "type": "custom",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/a62848817cec7ae50618a87a526c85d020283fd9/rs/ledger_suite/icrc1/index-ng/index-ng.did",
@@ -40,15 +40,11 @@
       "frontend": {}
     },
     "assets": {
-      "dependencies": [
-        "internet_identity"
-      ],
+      "dependencies": ["internet_identity"],
       "frontend": {
         "entrypoint": "dist/index.html"
       },
-      "source": [
-        "dist/"
-      ],
+      "source": ["dist/"],
       "type": "assets"
     }
   },
@@ -63,10 +59,8 @@
       "type": "ephemeral"
     },
     "ic": {
-      "providers": [
-        "https://mainnet.dfinity.network"
-      ],
+      "providers": ["https://mainnet.dfinity.network"],
       "type": "persistent"
-    }   
+    }
   }
 }

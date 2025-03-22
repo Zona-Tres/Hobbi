@@ -1,25 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="//logo.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link type="text/css" rel="stylesheet" href="/frontend/index.css" />
-  <title>Hobbi.me | La plataforma social Web3</title>
-  <meta name="description" content="Reinventa la forma de socializar y se el dueño de tú información en internet." />
-</head>
-<body>
-  <noscript>Reinventa la forma de socializar y se el dueño de tú información en internet.</noscript>
-  <div id="root"></div>
-  <script type="module">
-    /**
-     * @dfinity/agent requires this. Can be removed once it's fixed
-     */
-    import { Buffer } from "buffer"
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="//logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link type="text/css" rel="stylesheet" href="/frontend/index.css" />
+    <title>Hobbi.me | La plataforma social Web3</title>
+    <meta
+      name="description"
+      content="Reinventa la forma de socializar y se el dueño de tú información en internet."
+    />
+  </head>
+  <body>
+    <noscript
+      >Reinventa la forma de socializar y se el dueño de tú información en
+      internet.</noscript
+    >
+    <div id="root"></div>
+    <script type="module">
+      /**
+       * @dfinity/agent requires this. Can be removed once it's fixed
+       */
+      import { Buffer } from "buffer"
 
-    window.global = window
-    window.Buffer = Buffer
-  </script>
-  <script type="module" src="/frontend/main.jsx"></script>
+      window.global = window
+      window.Buffer = Buffer
+    </script>
+    <script type="module" src="/frontend/main.jsx"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react"
 
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from "react-helmet-async"
 
 export const Seo = ({ title, description, type, name, rel }) => {
   return (
@@ -16,5 +16,5 @@ export const Seo = ({ title, description, type, name, rel }) => {
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
     </Helmet>
-  );
-};
+  )
+}
