@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useEffect } from 'react'
-import Image from 'next/image'
-import Particles from './particles'
+import { useEffect } from "react"
+import Image from "next/image"
+import Particles from "./particles"
 
-import Client01 from '@/public/images/lz3-logo.png'
-import Client02 from '@/public/images/icp-logo.png'
+import Client01 from "@/public/images/lz3-logo.png"
+import Client02 from "@/public/images/icp-logo.png"
 
 // Import Swiper
 // import Swiper, { Autoplay } from 'swiper'
@@ -13,7 +13,6 @@ import Client02 from '@/public/images/icp-logo.png'
 // Swiper.use([Autoplay])
 
 function Clients() {
-
   // useEffect(() => {
   //   const carousel = new Swiper('.clients-carousel', {
   //     slidesPerView: 'auto',
@@ -33,8 +32,7 @@ function Clients() {
   return (
     <section>
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-
-        { /* Particles animation */}
+        {/* Particles animation */}
         <div className="absolute inset-0 max-w-6xl mx-auto px-4 sm:px-6">
           <Particles className="absolute inset-0 -z-10" quantity={5} />
         </div>
@@ -50,4 +48,4 @@ function Clients() {
   )
 }
 
-export default Clients;
+export default Clients

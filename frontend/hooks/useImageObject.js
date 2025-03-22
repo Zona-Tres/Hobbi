@@ -2,11 +2,11 @@ import { useState, useEffect } from "react"
 import { useCanister } from "@connect2ic/react"
 import { arrayBufferToImgSrc } from "../utils/image"
 
-export const useImageObject = imageId => {
+export const useImageObject = (imageId) => {
   const [imgSrc, setImgSrc] = useState("")
   const [imgId, setImgId] = useState("")
 
-  const [image] = useCanister("image");
+  const [image] = useCanister("image")
 
   useEffect(() => {
     async function fetchImage() {
@@ -32,15 +32,15 @@ export const useImageObject = imageId => {
   }, [imageId])
 
   const loadImage = async (imageId) => {
-    const result = await image.getImageById(imageId);
+    const result = await image.getImageById(imageId)
 
     if (result.length == 0) {
-        return null
-      }
-    
-      const imageArray = result[0]
-      const imageSource = arrayBufferToImgSrc(imageArray)
-      return imageSource
+      return null
+    }
+
+    const imageArray = result[0]
+    const imageSource = arrayBufferToImgSrc(imageArray)
+    return imageSource
   }
 
   return imgSrc

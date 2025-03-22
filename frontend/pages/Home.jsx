@@ -2,13 +2,13 @@ import React, { useEffect } from "react"
 
 import AOS from "aos"
 import "aos/dist/aos.css"
-import Header from "../components/ui/Header"
-import Hero from "../components/Hero"
-import Pricing from "../components/Pricing"
-import Features from "../components/Features"
-import Features02 from "../components/Features02"
-import Cta from "../components/Cta"
-import Footer from "../components/ui/Footer"
+import Header from "/frontend/components/ui/Header"
+import Hero from "/frontend/components/Hero"
+import Pricing from "/frontend/components/Pricing"
+import Features from "/frontend/components/Features"
+import Features02 from "/frontend/components/Features02"
+import Cta from "/frontend/components/Cta"
+import Footer from "/frontend/components/ui/Footer"
 
 export default function Home() {
   useEffect(() => {

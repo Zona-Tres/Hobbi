@@ -6,13 +6,6 @@ getRankinHashTag Listo
 
 edita perfil/ cargar foto portada Listo
 
-getPaginatePosts. 
+getPaginatePosts.
 
 gestionar bloqueos y ocultamientos de usuarios. Listo
-
-
-    
-
-
-
-

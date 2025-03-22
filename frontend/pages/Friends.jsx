@@ -15,7 +15,6 @@ import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import createBucketActor from "../hooks/createBucketActor"
 
-
 export default function Friends() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -29,13 +28,13 @@ export default function Friends() {
   const canisterId = useStore((state) => state.canisterId)
   const username = useStore((state) => state.username)
   const myinfo = useStore((state) => state.myinfo)
-  const firstLoad = useRef(true);
+  const firstLoad = useRef(true)
   const [nftMetadata, setNftMetadata] = useState({})
   const [loading, setLoading] = useState(false)
   const [followers, setFollowers] = useState([])
   const [followeds, setFolloweds] = useState([])
   const [selected, setSelected] = useState(1)
-  const [activeTab, setActiveTab] = useState("followers");
+  const [activeTab, setActiveTab] = useState("followers")
   useEffect(() => {
     setLoading(true)
   }, [])
@@ -50,8 +49,8 @@ export default function Friends() {
       if (response) {
         setFollowers(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handleFolloweds = async (actor) => {
@@ -60,8 +59,8 @@ export default function Friends() {
       if (response) {
         setFolloweds(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   const handlePublicInfo = async (actor) => {
@@ -70,26 +69,26 @@ export default function Friends() {
       if (response) {
         setMyInfo(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(true)
 
       try {
-        const actor = await createBucketActor(canisterId);
-        handleFollowers(actor);
+        const actor = await createBucketActor(canisterId)
+        handleFollowers(actor)
         handleFolloweds(actor)
-        handlePublicInfo(actor);
-      } catch (e) {
-        console.error(e);
+        handlePublicInfo(actor)
+      } catch {
+        // Error silencioso
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     if (firstLoad.current) {
       fetchData()
@@ -99,7 +98,7 @@ export default function Friends() {
   return (
     <>
       <Seo
-         title={`Hobbi.me | Profile`}
+        title={`Hobbi.me | Profile`}
         description={
           "Reinvent the way you socialize and own your information on the internet."
         }
@@ -155,19 +154,21 @@ export default function Friends() {
             {/* Tabs */}
             <div className=" w-60 flex gap-5 mb-5 mt-5 bg-[#121D2F] h-14 rounded-md px-5 items-center justify-center">
               <div
-                className={`w-24 h-8 text-center cursor-pointer ${activeTab === "followers"
-                  ? "bg-[#B577F7] text-white"
-                  : "bg-[#121D2F] text-white"
-                  } rounded-md`}
+                className={`w-24 h-8 text-center cursor-pointer ${
+                  activeTab === "followers"
+                    ? "bg-[#B577F7] text-white"
+                    : "bg-[#121D2F] text-white"
+                } rounded-md`}
                 onClick={() => setActiveTab("followers")}
               >
                 Followers
               </div>
               <div
-                className={`w-24 h-8 text-center cursor-pointer ${activeTab === "followeds"
-                  ? "bg-[#B577F7] text-white"
-                  : "bg-[#121D2F] text-white"
-                  } rounded-md`}
+                className={`w-24 h-8 text-center cursor-pointer ${
+                  activeTab === "followeds"
+                    ? "bg-[#B577F7] text-white"
+                    : "bg-[#121D2F] text-white"
+                } rounded-md`}
                 onClick={() => setActiveTab("followeds")}
               >
                 Following
@@ -196,7 +197,7 @@ export default function Friends() {
                       onClick={() =>
                         (window.location.href = `/profile/${item.userCanisterId.toText()}`)
                       }
-                      className="cursor-pointer h-7 w-20 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
+                      className="cursor-pointer h-7 w-24 flex items-center justify-center rounded-[4px] bg-[#B577F7] hover:bg-[#9D5FE0] transition-colors duration-150 ease-in-out mt-4 px-2"
                     >
                       <span className="text-sm font-medium text-[#FDFCFF]">
                         View profile

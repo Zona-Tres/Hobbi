@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react"
 
 const Counter = () => {
   /*
-  * This how you use canisters throughout your app.
-  */
+   * This how you use canisters throughout your app.
+   */
   const [counter] = useCanister("another")
   const [count, setCount] = useState()
 
@@ -28,7 +28,9 @@ const Counter = () => {
   return (
     <div className="example">
       <p style={{ fontSize: "2.5em" }}>{count?.toString()}</p>
-      <button className="connect-button" onClick={increment}>+</button>
+      <button className="connect-button" onClick={increment}>
+        +
+      </button>
     </div>
   )
 }
