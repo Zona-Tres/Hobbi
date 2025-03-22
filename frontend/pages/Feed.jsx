@@ -2,29 +2,31 @@ import React, { useEffect, useRef, useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
-import { arrayBufferToImgSrc } from "../utils/image"
-import LogoDark from "../components/ui/LogoDark"
+import { arrayBufferToImgSrc } from "/frontend/utils/image"
+import LogoDark from "/frontend/components/ui/LogoDark"
 import portada from "/images/portada.svg"
-import CustomConnectButton from "../components/ui/CustomConnectButton"
-import { useNavigate, useParams } from "react-router-dom"
-import { Seo } from "../components/utils/seo"
-import useStore from "../store/useStore"
-import createBucketActor from "../hooks/createBucketActor"
-import Avatar from "../components/Avatar"
-import SearchAndPost from "../components/SearchAndPost"
-import SearchDialog from "../components/SearchDialog"
-import Hashtag from "../components/hashtag"
-import Navigation from "../components/Navigation"
+import CustomConnectButton from "/frontend/components/ui/CustomConnectButton"
+import { useNavigate, useParams, useLocation } from "react-router-dom"
+import { Seo } from "/frontend/components/utils/seo"
+import useStore from "/frontend/store/useStore"
+import createBucketActor from "/frontend/hooks/createBucketActor"
+import Avatar from "/frontend/components/Avatar"
+import SearchAndPost from "/frontend/components/SearchAndPost"
+import SearchDialog from "/frontend/components/SearchDialog"
+import Hashtag from "/frontend/components/hashtag"
+import Navigation from "/frontend/components/Navigation"
 import imageCompression from "browser-image-compression"
-import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
-import { formatBigIntToDate } from "../utils/utils"
-import PostPreview from "../components/PostPreview"
-import PostExpand from "../components/PostExpand"
+import { compressAndConvertImage, blobToImageUrl } from "/frontend/utils/imageManager"
+import { formatBigIntToDate } from "/frontend/utils/utils"
+import PostPreview from "/frontend/components/PostPreview"
+import PostExpand from "/frontend/components/PostExpand"
 import { HelmetProvider } from "react-helmet-async"
+import { withDataRefresh } from "/frontend/components/utils/withDataRefresh"
 
-export default function Feed() {
+function Feed() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const setCanisterId = useStore((state) => state.setCanisterId)
   const setUsername = useStore((state) => state.setUsername)
@@ -72,19 +74,6 @@ export default function Feed() {
       setLoading(true)
 
       try {
-        const result = await hobbi.signIn()
-
-        if (result.Ok) {
-          if (result.Ok.name !== username) {
-            setUsername(result.Ok.name)
-          }
-
-          const newCanisterId = result.Ok.userCanisterId.toText()
-          setCanisterId(newCanisterId)
-
-          const actor = await createBucketActor(newCanisterId)
-          handlePublicInfo(actor)
-        }
         const response = await hobbi.getMyFeed({
           qtyPerPage: 25,
           page: currentPage,
@@ -105,11 +94,8 @@ export default function Feed() {
       }
     }
 
-    if (firstLoad.current) {
-      fetchData()
-      firstLoad.current = false
-    }
-  }, [hobbi, setCanisterId, setUsername, username, canisterId])
+    fetchData()
+  }, [location.pathname])
 
   const loadMorePosts = async () => {
     if (!hasNext || loading) return
@@ -456,3 +442,5 @@ export default function Feed() {
     </>
   )
 }
+
+export default withDataRefresh(Feed)

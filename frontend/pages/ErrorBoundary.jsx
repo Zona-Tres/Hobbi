@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import Illustration from "/images/glow-bottom.svg"
-import Logo from "../components/ui/Logo"
+import Logo from "/frontend/components/ui/Logo"
 
 export default function ErrorBoundary({ children }) {
   const [hasError, setHasError] = useState(false)

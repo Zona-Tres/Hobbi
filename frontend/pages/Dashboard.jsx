@@ -1,23 +1,24 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
-import { arrayBufferToImgSrc } from "../utils/image"
-import LogoDark from "../components/ui/LogoDark"
+import { arrayBufferToImgSrc } from "/frontend/utils/image"
+import LogoDark from "/frontend/components/ui/LogoDark"
 import portada from "/images/portada.svg"
-import CustomConnectButton from "../components/ui/CustomConnectButton"
+import CustomConnectButton from "/frontend/components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
-import { Seo } from "../components/utils/seo"
-import useStore from "../store/useStore"
-import createBucketActor from "../hooks/createBucketActor"
-import Avatar from "../components/Avatar"
-import SearchAndPost from "../components/SearchAndPost"
-import SearchDialog from "../components/SearchDialog"
-import Hashtag from "../components/hashtag"
-import Navigation from "../components/Navigation"
-import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
-import { formatBigIntToDate } from "../utils/utils"
+import { Seo } from "/frontend/components/utils/seo"
+import useStore from "/frontend/store/useStore"
+import createBucketActor from "/frontend/hooks/createBucketActor"
+import Avatar from "/frontend/components/Avatar"
+import SearchAndPost from "/frontend/components/SearchAndPost"
+import SearchDialog from "/frontend/components/SearchDialog"
+import Hashtag from "/frontend/components/hashtag"
+import Navigation from "/frontend/components/Navigation"
+import { compressAndConvertImage, blobToImageUrl } from "/frontend/utils/imageManager"
+import { formatBigIntToDate } from "/frontend/utils/utils"
+import { withDataRefresh } from "/frontend/components/utils/withDataRefresh"
 
-export default function Dashboard() {
+export default withDataRefresh(function Dashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
   const observer = useRef()
@@ -440,4 +441,4 @@ export default function Dashboard() {
       </div>
     </>
   )
-}
+})

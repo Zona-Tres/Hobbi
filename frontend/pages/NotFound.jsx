@@ -1,7 +1,7 @@
 import React from "react"
 import Illustration from "/images/glow-bottom.svg"
-import Logo from "../components/ui/Logo"
-import { Seo } from "../components/utils/seo"
+import Logo from "/frontend/components/ui/Logo"
+import { Seo } from "/frontend/components/utils/seo"
 
 export default function NotFound() {
   return (
