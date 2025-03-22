@@ -45,7 +45,7 @@ const PostPreview = ({ innerRef, post, setSelectedPostDetails, setSelectedPostAu
                 <span
                     onClick={(e) => {
                         e.stopPropagation();
-                        window.location.href = `/profile/${post.autor.toText()}/?author=${post.autor.toText()}`;
+                        window.location.href = `/profile/${post.autor.toText()}/`;
                     }}
                     className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
                 >
