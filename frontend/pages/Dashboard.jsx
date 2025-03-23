@@ -50,7 +50,7 @@ export default withDataRefresh(function Dashboard() {
   const [hasNext, setHasNext] = useState(false)
 
   const [selectedPostDetails, setSelectedPostDetails] = useState(null)
-  const [selectedPostAuthor, setSelectedPostAuthor ] = useState(null)
+  const [selectedPostAuthor, setSelectedPostAuthor] = useState(null)
 
   const handlePublicInfo = async (actor) => {
     try {
@@ -62,7 +62,7 @@ export default withDataRefresh(function Dashboard() {
           page: currentPage,
         })
         setPostList(responsePost.arr)
-        
+
         setHasNext(responsePost.hasNext)
         setMyInfo(response)
       }
@@ -284,31 +284,28 @@ export default withDataRefresh(function Dashboard() {
             <div className="flex gap-4 mt-3 ml-3">
               <div
                 onClick={() => setSelectedTheme(1)}
-                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 1
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Books
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
-                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 2
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 TV Shows
               </div>
               <div
                 onClick={() => setSelectedTheme(3)}
-                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 3
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Video Games
               </div>
@@ -395,34 +392,35 @@ export default withDataRefresh(function Dashboard() {
             </div>
           </div>
           {postList.length > 0 && (
-                      <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
-                        {postList.slice().reverse().map((post, index) => (
-                          <div
-                            key={index}
-                            ref={index === postList.length - 5 ? lastPostRef : null}
-                            className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
-                          >
-                            <PostPreview caller={canisterId}
-                              key={index}
-                              post={post}
-                              setSelectedPostDetails={setSelectedPostDetails}
-                              setSelectedPostAuthor={setSelectedPostAuthor}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {selectedPostDetails &&
-                      <PostExpand
-                        caller={canisterId}
-                        postDetails={selectedPostDetails}
-                        postAuthor={selectedPostAuthor}
-                        onClose={() => {
-                          setSelectedPostDetails(null);
-                          setSelectedPostAuthor(null);
-                        }}
-                      />
-                    }
+            <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+              {postList.slice().reverse().map((post, index) => (
+                <div
+                  key={index}
+                  ref={index === postList.length - 5 ? lastPostRef : null}
+                  className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
+                >
+                  <PostPreview caller={canisterId}
+                    key={index}
+                    post={post}
+                    setSelectedPostDetails={setSelectedPostDetails}
+                    setSelectedPostAuthor={setSelectedPostAuthor}
+                    community={null}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {selectedPostDetails &&
+            <PostExpand
+              caller={canisterId}
+              postDetails={selectedPostDetails}
+              postAuthor={selectedPostAuthor}
+              onClose={() => {
+                setSelectedPostDetails(null);
+                setSelectedPostAuthor(null);
+              }}
+            />
+          }
         </div>
       </div>
     </>

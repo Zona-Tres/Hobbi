@@ -12,6 +12,8 @@ import Navigation from "/frontend/components/Navigation"
 import actorCommunity from "/frontend/hooks/actorCommunity"
 import { blobToImageUrl, compressAndConvertImage } from "/frontend/utils/imageManager"
 import SearchDialog from "/frontend/components/SearchDialog"
+import PostPreview from "../components/PostPreview"
+import PostExpand from "../components/PostExpand"
 
 export default function CommunityInfo() {
   const { id } = useParams()
@@ -41,6 +43,9 @@ export default function CommunityInfo() {
     preview: null,
     full: null,
   })
+
+  const [selectedPostDetails, setSelectedPostDetails] = useState(null)
+  const [selectedPostAuthor, setSelectedPostAuthor] = useState(null)
 
   const observer = useRef()
 
@@ -180,11 +185,12 @@ export default function CommunityInfo() {
       }
       const response = await actor.createPost(json)
       if (response.Ok) {
+        setCurrentPage(0)
         const responsePost = await actor.getPaginatePosts({
           qtyPerPage: 25,
-          page: 0,
+          page: currentPage,
         })
-        setPostList(responsePost.arr)
+        setPostList(responsePost.Ok?.arr)
         setMedia(null)
         setTextArea("")
         toast.success("Post created successfully!")
@@ -317,31 +323,28 @@ export default function CommunityInfo() {
             <div className="flex gap-4 mt-3 ml-3">
               <div
                 onClick={() => setSelectedTheme(1)}
-                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 1
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Books
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
-                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 2
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 TV Shows
               </div>
               <div
                 onClick={() => setSelectedTheme(3)}
-                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 3
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Video Games
               </div>
@@ -427,7 +430,37 @@ export default function CommunityInfo() {
           )}
 
           <div className="space-y-4 ml-3 mt-3">
-            {postList &&
+            {postList && (
+              <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+                {postList.slice().reverse().map((post, index) => (
+                  <div
+                    key={index}
+                    ref={index === postList.length - 5 ? lastPostRef : null}
+                    className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
+                  >
+                    <PostPreview caller={canisterId}
+                      key={index}
+                      post={post}
+                      setSelectedPostDetails={setSelectedPostDetails}
+                      setSelectedPostAuthor={setSelectedPostAuthor}
+                      community={id}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {selectedPostDetails &&
+              <PostExpand
+                caller={canisterId}
+                postDetails={selectedPostDetails}
+                postAuthor={id}
+                onClose={() => {
+                  setSelectedPostDetails(null);
+                  setSelectedPostAuthor(null);
+                }}
+              />
+            }
+            {/* {postList &&
               postList.map((post, index) => (
                 <div
                   key={index}
@@ -471,7 +504,8 @@ export default function CommunityInfo() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )
+            )} */}
           </div>
 
           {loading && (

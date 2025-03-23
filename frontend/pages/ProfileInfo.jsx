@@ -289,6 +289,7 @@ export default withDataRefresh(function ProfileInfo() {
                     post={post}
                     setSelectedPostDetails={setSelectedPostDetails}
                     setSelectedPostAuthor={setSelectedPostAuthor}
+                    community={null}
                   />
                 </div>
               ))}

@@ -10,14 +10,11 @@ const PostPreview = ({
   post,
   setSelectedPostDetails,
   setSelectedPostAuthor,
+  community,
 }) => {
-  const [selectedPostId, setSelectedPostId] = useState(null)
-  // const [selectedPostDetails, setSelectedPostDetails] = useState(null);
-  const [newComment, setNewComment] = useState("")
-  const [isCommentLoading, setIsCommentLoading] = useState(false)
+  
   const [isLoading, setIsLoading] = useState(false)
-
-  const author = post.autor
+  const canisterContainer = community? community: post.autor
 
   const getImageSrc = () => {
     if (post.photoPreview?.length > 0) {
@@ -35,8 +32,8 @@ const PostPreview = ({
     if (isLoading) return
     try {
       setIsLoading(true)
-      setSelectedPostAuthor(author)
-      const user = await createBucketActor(author)
+      setSelectedPostAuthor(canisterContainer)
+      const user = await createBucketActor(canisterContainer)
       const response = await user.readPost(postId)
       setSelectedPostDetails(response.Ok ? response.Ok : null)
     } catch {
