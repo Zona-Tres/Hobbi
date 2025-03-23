@@ -11,6 +11,9 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
   const [selectedComment, setSelectedComment] = useState(0)
   const [menuComment, setMenuComment] = useState(false)
   const infoUser = useStore((state) => state.myinfo)
+  const [isLiking, setIsLiking] = useState(false)
+  const [liked, setLiked] = useState(false)
+  const [likes, setLikes] = useState(postDetails.likes)
 
   const getImageSrc = () => {
     if (postData.metadata.image?.length > 0) {
@@ -88,6 +91,22 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
+
+  const handleLike = async () => {
+    try {
+      setIsLiking(true)
+      const actor = await createBucketActor(postAuthor)
+      const response = await actor.likePost(postDetails.id)
+      if (response) {
+        setLiked(true)
+        setLikes(likes + 1)
+      }
+    } catch (error) {
+      toast.error("An error occurred while liking the post")
+    } finally {
+      setIsLiking(false)
+    }
+  }
 
   if (!postData) return null
 
@@ -223,12 +242,7 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
                         >
                           <button
                             className="w-full text-left px-4 py-2 hover:bg-[#1E232A]"
-                            onClick={() =>
-                              console.log(
-                                "reportando comentatio id: ",
-                                selectedComment,
-                              )
-                            }
+                            onClick={() => {}}
                           >
                             Reportar
                           </button>

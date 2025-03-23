@@ -6,7 +6,7 @@ export default function Navigation() {
   const navigate = useNavigate()
 
   const handleClick = (path) => {
-    navigate(path)
+    window.location.href = path
   }
 
   const menuItems = [

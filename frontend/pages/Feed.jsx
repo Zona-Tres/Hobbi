@@ -69,33 +69,46 @@ function Feed() {
       toast.error("An error occurred while loading user information")
     }
   }
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
 
-      try {
-        const response = await hobbi.getMyFeed({
-          qtyPerPage: 25,
-          page: currentPage,
-        })
-        if (response) {
-          setPostList(response.arr)
-          setHasNext(response.hasNext)
-          setCurrentPage(0)
-        }
-        const hashtagRanking = await hobbi.getRankingHashTags()
-        if (hashtagRanking) {
-          setHashtagRankingList(hashtagRanking)
-        }
-      } catch {
-        toast.error("An error occurred while loading the feed")
-      } finally {
-        setLoading(false)
+  const fetchFeedData = async () => {
+    if (!hobbi) return;
+    
+    setLoading(true)
+    try {
+      const responseCanister = await hobbi.getMyCanisterId()
+      setCanisterId(responseCanister)
+      const actor = await createBucketActor(responseCanister)
+      await handlePublicInfo(actor)
+
+      const response = await hobbi.getMyFeed({
+        qtyPerPage: 25,
+        page: 0,
+      })
+      if (response) {
+        setPostList(response.arr)
+        setHasNext(response.hasNext)
+        setCurrentPage(0)
+      }
+      const hashtagRanking = await hobbi.getRankingHashTags()
+      if (hashtagRanking) {
+        setHashtagRankingList(hashtagRanking)
+      }
+    } catch (error) {
+      console.error('Feed fetch error:', error)
+      toast.error("An error occurred while loading the feed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (hobbi && location.pathname === '/feed') {
+        await fetchFeedData()
       }
     }
-
-    fetchData()
-  }, [location.pathname])
+    loadData()
+  }, [location.key, hobbi])
 
   const loadMorePosts = async () => {
     if (!hasNext || loading) return
@@ -133,8 +146,12 @@ function Feed() {
   )
 
   const handleClick = (url, index) => {
-    setSelected(index)
-    navigate(url)
+    if (url === '/feed') {
+      window.location.href = url
+    } else {
+      setSelected(index)
+      navigate(url)
+    }
   }
 
   const mediaTypeMap = {
@@ -232,7 +249,9 @@ function Feed() {
           <CustomConnectButton />
           {myinfo.name && (
             <div
-              onClick={() => (window.location.href = `/myprofile`)}
+              onClick={() => {
+                window.location.href = '/myprofile'
+              }}
               className="w-[266px] h-[148px] rounded-[16px] bg-[#0E1425] mt-5 ml-5 px-8 py-5 cursor-pointer"
             >
               <div className="flex justify-start gap-4 items-center">
@@ -280,31 +299,28 @@ function Feed() {
             <div className="flex gap-4 mt-3 ml-3">
               <div
                 onClick={() => setSelectedTheme(1)}
-                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 1
+                className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Books
               </div>
               <div
                 onClick={() => setSelectedTheme(2)}
-                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 2
+                className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 TV Shows
               </div>
               <div
                 onClick={() => setSelectedTheme(3)}
-                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${
-                  selectedTheme === 3
+                className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
                     ? "bg-[#4F239E] text-[#FDFCFF]"
                     : "bg-[#FDFCFF] text-[#4F239E]"
-                }`}
+                  }`}
               >
                 Video Games
               </div>

@@ -94,7 +94,6 @@ function CreateProfile() {
         rotation,
       )
       setCroppedImage(croppedImage)
-      console.log("Tipo de croppedImage:", croppedImage, typeof croppedImage)
       setFile(null)
     } catch (e) {
       console.error(e)

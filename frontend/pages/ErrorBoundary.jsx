@@ -27,7 +27,6 @@ export default function ErrorBoundary({ children }) {
 
   useEffect(() => {
     const handleUnhandledRejection = (event) => {
-      debugger
       handleError(event.reason, null)
     }
 

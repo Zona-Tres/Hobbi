@@ -14,8 +14,10 @@ import SearchDialog from "../components/SearchDialog"
 import Hashtag from "../components/hashtag"
 import Navigation from "../components/Navigation"
 import createBucketActor from "../hooks/createBucketActor"
+import { withDataRefresh } from "../components/utils/withDataRefresh"
+import { toast } from "react-toastify"
 
-export default function Friends() {
+function Friends() {
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -30,14 +32,33 @@ export default function Friends() {
   const myinfo = useStore((state) => state.myinfo)
   const firstLoad = useRef(true)
   const [nftMetadata, setNftMetadata] = useState({})
+  const [hobbi] = useCanister("hobbi")
   const [loading, setLoading] = useState(false)
   const [followers, setFollowers] = useState([])
   const [followeds, setFolloweds] = useState([])
   const [selected, setSelected] = useState(1)
   const [activeTab, setActiveTab] = useState("followers")
+
   useEffect(() => {
-    setLoading(true)
-  }, [])
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        if (hobbi && canisterId) {
+          const actor = await createBucketActor(canisterId)
+          await Promise.all([
+            handleFollowers(actor),
+            handleFolloweds(actor)
+          ])
+        }
+      } catch (error) {
+        toast.error("An error occurred while loading friends data")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [hobbi, canisterId])
 
   const handleClick = (url, index) => {
     setSelected(index)
@@ -74,27 +95,6 @@ export default function Friends() {
     }
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-
-      try {
-        const actor = await createBucketActor(canisterId)
-        handleFollowers(actor)
-        handleFolloweds(actor)
-        handlePublicInfo(actor)
-      } catch {
-        // Error silencioso
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (firstLoad.current) {
-      fetchData()
-      firstLoad.current = false
-    }
-  }, [setCanisterId, setUsername, username, canisterId])
   return (
     <>
       <Seo
@@ -250,3 +250,5 @@ export default function Friends() {
     </>
   )
 }
+
+export default withDataRefresh(Friends)

@@ -49,7 +49,6 @@ export default withDataRefresh(function ProfileInfo() {
   const observer = useRef()
 
   const loadMorePosts = async () => {
-    console.log("solicitando mas post")
     if (!hasNext || loading) return
     setLoading(true)
     try {
@@ -138,7 +137,7 @@ export default withDataRefresh(function ProfileInfo() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-
+      setCanisterId(id)
       try {
         const actor = await createBucketActor(id)
         handlePublicInfo(actor)

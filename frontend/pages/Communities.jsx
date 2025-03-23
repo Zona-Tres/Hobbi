@@ -10,7 +10,9 @@ import CustomConnectButton from "../components/ui/CustomConnectButton"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import createBucketActor from "/frontend/hooks/createBucketActor"
 import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
+import { withDataRefresh } from "../components/utils/withDataRefresh"
 
 const communitySchema = z.object({
   name: z.string().min(1, "Community name is required"),
@@ -18,8 +20,11 @@ const communitySchema = z.object({
   logo: z.any(),
 })
 
-export default function Communities() {
+function Communities() {
+  const setCanisterId = useStore((state) => state.setCanisterId)
+  const setMyInfo = useStore((state) => state.setMyInfo)
   const myinfo = useStore((state) => state.myinfo)
+  const canisterId = useStore((state) => state.canisterId)
   const [hobbi] = useCanister("hobbi")
   const [communities, setCommunities] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -40,10 +45,23 @@ export default function Communities() {
       logo: [],
     },
   })
-
+  const handlePublicInfo = async (actor) => {
+    try {
+      const response = await actor.getMyInfo()
+      if (response) {
+        setMyInfo(response)
+      }
+    } catch {
+      toast.error("An error occurred while loading user information")
+    }
+  }
   const fetchCommunities = async () => {
     try {
       setLoading(true)
+      const responseCanister = await hobbi.getMyCanisterId()
+      setCanisterId(responseCanister)
+      const actor = await createBucketActor(responseCanister)
+      await handlePublicInfo(actor)
       const response = await hobbi.getPaginateCommunities({
         qtyPerPage: 10,
         page: 0,
@@ -91,9 +109,10 @@ export default function Communities() {
   }
 
   useEffect(() => {
-    fetchCommunities()
+    if (hobbi) {
+      fetchCommunities()
+    }
   }, [hobbi])
-  console.log(communities, "communities")
   return (
     <>
       <Seo
@@ -315,3 +334,5 @@ export default function Communities() {
     </>
   )
 }
+
+export default withDataRefresh(Communities)
