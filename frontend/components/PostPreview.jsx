@@ -56,7 +56,7 @@ const PostPreview = ({
           }}
         >
           {post.autorPhoto.length > 0 && <img src={blobToImageUrl(post.autorPhoto[0])} className="h-[25px] w-[25px] rounded-full"></img>}
-          <span>
+          <span className="text-[#B8A5BD] hover:text-[#E6E0E9] transition-colors duration-300">
             @{post.userName}
           </span>
         </div>
@@ -65,8 +65,8 @@ const PostPreview = ({
         </span>
       </div>
 
-      <div className="text-sm font-bold text-[#FDFCFF]">{post.title}</div>
-      <div className="text-sm font-medium text-[#FDFCFF]">{post.body.slice(0, 100)}{post.body.length > 100 && "..."}</div>
+      <h2 className="mb-2 font-bold text-[#FDFCFF]">{post.title}</h2>
+      <p className="text-sm font-medium text-[#FDFCFF]">{post.body.slice(0, 100)}{post.body.length > 100 && "..."}</p>
 
       <div className="flex gap-3 mt-2">
         {post.hashTags?.length > 0 &&
