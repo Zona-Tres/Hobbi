@@ -49,22 +49,24 @@ const PostPreview = ({
   return (
     <div ref={innerRef}>
       <div className="flex justify-between">
-        <span
+        <div className="flex items-center gap-2 text-sm font-medium text-[#FDFCFF] cursor-pointer"
           onClick={(e) => {
             e.stopPropagation()
             window.location.href = `/profile/${post.autor.toText()}`
           }}
-          className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
         >
-          @{post.userName}
-        </span>
+          {post.autorPhoto.length > 0 && <img src={blobToImageUrl(post.autorPhoto[0])} className="h-[25px] w-[25px] rounded-full"></img>}
+          <span>
+            @{post.userName}
+          </span>
+        </div>
         <span className="text-sm font-medium text-[#BCBCBC]">
           {formatBigIntToDate(post.date)}
         </span>
       </div>
 
-      <span className="text-sm font-bold text-[#FDFCFF]">{post.title}</span>
-      <span className="text-sm font-medium text-[#FDFCFF]">{post.body}</span>
+      <div className="text-sm font-bold text-[#FDFCFF]">{post.title}</div>
+      <div className="text-sm font-medium text-[#FDFCFF]">{post.body.slice(0, 100)}{post.body.length > 100 && "..."}</div>
 
       <div className="flex gap-3 mt-2">
         {post.hashTags?.length > 0 &&
