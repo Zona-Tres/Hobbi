@@ -29,8 +29,6 @@ export default withDataRefresh(function Dashboard() {
   const canisterId = useStore((state) => state.canisterId)
   const username = useStore((state) => state.username)
   const myinfo = useStore((state) => state.myinfo)
-  const [nft] = useCanister("nft")
-  const [post] = useCanister("post")
   const [hobbi] = useCanister("hobbi")
   const { principal } = useConnect()
   const [media, setMedia] = useState(null)
@@ -48,6 +46,7 @@ export default withDataRefresh(function Dashboard() {
   })
   const [currentPage, setCurrentPage] = useState(0)
   const [hasNext, setHasNext] = useState(false)
+  const [isloading, setIsloading] = useState(false)
 
   const [selectedPostDetails, setSelectedPostDetails] = useState(null)
   const [selectedPostAuthor, setSelectedPostAuthor] = useState(null)
@@ -161,6 +160,7 @@ export default withDataRefresh(function Dashboard() {
   const handleCreatePost = async () => {
     const actor = await createBucketActor(canisterId)
     try {
+      setIsloading(true)
       const hashtagRegex = /#(\w+)/g
       const hashtags = []
       let match
@@ -193,6 +193,9 @@ export default withDataRefresh(function Dashboard() {
       setPostList(responsePost.arr)
     } catch {
       // Error silencioso
+    }
+    finally{
+      setIsloading(false)
     }
   }
   return (
@@ -373,7 +376,7 @@ export default withDataRefresh(function Dashboard() {
               {textArea !== "" && (
                 <div
                   className="ml-2 hover:cursor-pointer"
-                  onClick={() => handleCreatePost()}
+                  onClick={() => !isloading && handleCreatePost()}
                 >
                   <svg
                     width="24"

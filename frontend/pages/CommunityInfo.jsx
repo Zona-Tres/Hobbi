@@ -409,7 +409,7 @@ export default function CommunityInfo() {
                 {textArea !== "" && (
                   <div
                     className="ml-2 hover:cursor-pointer"
-                    onClick={() => handleCreatePost()}
+                    onClick={() => !isLoading && handleCreatePost()}
                   >
                     <svg
                       width="24"

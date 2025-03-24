@@ -192,6 +192,7 @@ function Feed() {
   }
 
   const handleCreatePost = async () => {
+    setLoading(true)
     const actor = await createBucketActor(canisterId)
     try {
       const hashtagRegex = /#(\w+)/g
@@ -226,6 +227,9 @@ function Feed() {
       setPostList(responsePost.arr)
     } catch {
       toast.error("An error occurred while creating the post")
+    }
+    finally{
+      setLoading(false)
     }
   }
 
@@ -383,7 +387,7 @@ function Feed() {
               {textArea !== "" && (
                 <div
                   className="ml-2 hover:cursor-pointer"
-                  onClick={() => handleCreatePost()}
+                  onClick={() => !loading && handleCreatePost()}
                 >
                   <svg
                     width="24"
