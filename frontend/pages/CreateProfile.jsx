@@ -94,7 +94,6 @@ function CreateProfile() {
         rotation,
       )
       setCroppedImage(croppedImage)
-      console.log("Tipo de croppedImage:", croppedImage, typeof croppedImage);
       setFile(null)
     } catch (e) {
       console.error(e)
@@ -132,7 +131,6 @@ function CreateProfile() {
     setIsLoading(true)
 
     try {
-      
       const thumbnail = await compressAndConvertImage(croppedImage, 10)
       const avatar = await compressAndConvertImage(croppedImage, 500)
 
@@ -148,7 +146,7 @@ function CreateProfile() {
       // Enviar los datos del perfil
       await hobbi.signUp(profileData).then((result) => {
         if (result) {
-         navigate(`/feed`) 
+          navigate(`/feed`)
         }
       })
     } catch (e) {

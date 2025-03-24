@@ -1,6 +1,6 @@
-import React from 'react'
-import LogoImg from '/images/hobbi-logo.png'
-import { Link } from 'react-router-dom'
+import React from "react"
+import LogoImg from "/images/hobbi-logo.png"
+import { Link } from "react-router-dom"
 
 export default function Logo() {
   return (

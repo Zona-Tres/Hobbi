@@ -1,26 +1,27 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
 import { useCanister, useConnect } from "@connect2ic/react"
 import { Principal } from "@dfinity/principal"
-import { arrayBufferToImgSrc } from "../utils/image"
-import LogoDark from "../components/ui/LogoDark"
+import LogoDark from "/frontend/components/ui/LogoDark"
 import portada from "/images/portada.svg"
-import CustomConnectButton from "../components/ui/CustomConnectButton"
+import CustomConnectButton from "/frontend/components/ui/CustomConnectButton"
 import { useNavigate, useParams } from "react-router-dom"
-import { Seo } from "../components/utils/seo"
-import useStore from "../store/useStore"
-import createBucketActor from "../hooks/createBucketActor"
-import Avatar from "../components/Avatar"
-import SearchAndPost from "../components/SearchAndPost"
-import SearchDialog from "../components/SearchDialog"
-import Hashtag from "../components/hashtag"
-import Navigation from "../components/Navigation"
-import { compressAndConvertImage, blobToImageUrl } from "../utils/imageManager"
-import { formatBigIntToDate } from "../utils/utils"
+import { Seo } from "/frontend/components/utils/seo"
+import useStore from "/frontend/store/useStore"
+import createBucketActor from "/frontend/hooks/createBucketActor"
+import Avatar from "/frontend/components/Avatar"
+import SearchAndPost from "/frontend/components/SearchAndPost"
+import SearchDialog from "/frontend/components/SearchDialog"
+import Hashtag from "/frontend/components/hashtag"
+import Navigation from "/frontend/components/Navigation"
+import { compressAndConvertImage, blobToImageUrl } from "/frontend/utils/imageManager"
+import { withDataRefresh } from "/frontend/components/utils/withDataRefresh"
+import PostPreview from "/frontend/components/PostPreview"
+import PostExpand from "/frontend/components/PostExpand"
 
-export default function Dashboard() {
+export default withDataRefresh(function Dashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const observer = useRef();
+  const observer = useRef()
 
   const setCanisterId = useStore((state) => state.setCanisterId)
   const setUsername = useStore((state) => state.setUsername)
@@ -28,8 +29,6 @@ export default function Dashboard() {
   const canisterId = useStore((state) => state.canisterId)
   const username = useStore((state) => state.username)
   const myinfo = useStore((state) => state.myinfo)
-  const [nft] = useCanister("nft")
-  const [post] = useCanister("post")
   const [hobbi] = useCanister("hobbi")
   const { principal } = useConnect()
   const [media, setMedia] = useState(null)
@@ -45,46 +44,54 @@ export default function Dashboard() {
     preview: null,
     full: null,
   })
-  const [hasNext, setHasNext] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0)
+  const [hasNext, setHasNext] = useState(false)
+  const [isloading, setIsloading] = useState(false)
+
+  const [selectedPostDetails, setSelectedPostDetails] = useState(null)
+  const [selectedPostAuthor, setSelectedPostAuthor] = useState(null)
 
   const handlePublicInfo = async (actor) => {
     try {
       const response = await actor.getMyInfo()
       if (response) {
+        setCurrentPage(0)
         const responsePost = await actor.getPaginatePost({
-          qtyPerPage: 10,
-          page: 0,
+          qtyPerPage: 25,
+          page: currentPage,
         })
         setPostList(responsePost.arr)
+
+        setHasNext(responsePost.hasNext)
         setMyInfo(response)
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
     }
   }
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(true)
 
       try {
-        const result = await hobbi.signIn();
+        const result = await hobbi.signIn()
         if (result.Ok) {
           if (result.Ok.name !== username) {
-            setUsername(result.Ok.name);
+            setUsername(result.Ok.name)
           }
 
-          const newCanisterId = result.Ok.userCanisterId.toText();
-          setCanisterId(newCanisterId);
+          const newCanisterId = result.Ok.userCanisterId.toText()
+          setCanisterId(newCanisterId)
 
-          const actor = await createBucketActor(newCanisterId);
-          handlePublicInfo(actor);
+          const actor = await createBucketActor(newCanisterId)
+          handlePublicInfo(actor)
         }
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Error silencioso
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     if (firstLoad.current) {
       fetchData()
@@ -93,27 +100,26 @@ export default function Dashboard() {
   }, [hobbi, setCanisterId, setUsername, username, canisterId])
 
   const loadMorePosts = async () => {
-    console.log("solicitando mas post")
-    console.log(myinfo)
-    if (!hasNext || loading) return;
-    setLoading(true);
+    if (!hasNext || loading) return
+    setLoading(true)
     try {
-      const nextPage = currentPage + 1;
-      const response = await hobbi.getMyFeed({
+      const userCanister = await createBucketActor(canisterId);
+      const nextPage = currentPage + 1
+      const response = await userCanister.getPaginatePost({
         qtyPerPage: 25,
         page: nextPage,
-      });
+      })
       if (response) {
-        setPostList(prev => [...prev, ...response.arr]);
-        setHasNext(response.hasNext);
-        setCurrentPage(nextPage);
+        setPostList((prev) => [...prev, ...response.arr])
+        setHasNext(response.hasNext)
+        setCurrentPage(nextPage)
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Error silencioso
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleClick = (url, index) => {
     setSelected(index)
@@ -126,64 +132,70 @@ export default function Dashboard() {
   }
   const lastPostRef = useCallback(
     (node) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
+      if (loading) return
+      if (observer.current) observer.current.disconnect()
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasNext) {
-          loadMorePosts();
+          loadMorePosts()
         }
-      });
-      if (node) observer.current.observe(node);
+      })
+      if (node) observer.current.observe(node)
     },
-    [loading, hasNext]
-  );
+    [loading, hasNext],
+  )
 
   const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    setMedia(null);
+    const file = event.target.files[0]
+    if (!file) return
+    setMedia(null)
     try {
-      const imagePreview = await compressAndConvertImage(file, 8);
-      const imageFull = await compressAndConvertImage(file, 600);
-      setUploadedImageData({ preview: imagePreview, full: imageFull });
-    } catch (error) {
-      console.error("Error processing image:", error);
+      const imagePreview = await compressAndConvertImage(file, 8)
+      const imageFull = await compressAndConvertImage(file, 600)
+      setUploadedImageData({ preview: imagePreview, full: imageFull })
+    } catch {
+      // Error silencioso
     }
-  };
+  }
 
   const handleCreatePost = async () => {
     const actor = await createBucketActor(canisterId)
     try {
-      const hashtagRegex = /#(\w+)/g;
-      const hashtags = [];
-      let match;
-      let cleanedText = textArea;
+      setIsloading(true)
+      const hashtagRegex = /#(\w+)/g
+      const hashtags = []
+      let match
+      let cleanedText = textArea
 
       while ((match = hashtagRegex.exec(textArea)) !== null) {
-        hashtags.push(match[1]);
+        hashtags.push(match[1])
       }
-      cleanedText = textArea.replace(hashtagRegex, "").trim();
-
+      cleanedText = textArea.replace(hashtagRegex, "").trim()
+      setTextArea("")
       const json = {
         access: { Public: null },
-        title: media ? title : "",
+        title: media ? media.title : "",
         body: cleanedText,
         image: uploadedImageData.full ? [uploadedImageData.full] : [],
-        imagePreview: uploadedImageData.preview ? [uploadedImageData.preview] : [],
+        imagePreview: uploadedImageData.preview
+        ? [uploadedImageData.preview]
+        : [],
         hashTags: hashtags,
         image_url: media ? [media.image] : [],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
+      
       const response = await actor.createPost(json)
       const responsePost = await actor.getPaginatePost({
         qtyPerPage: 25,
         page: 0,
       })
       setMedia(null)
-      setTextArea("")
       setPostList(responsePost.arr)
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Error silencioso
+    }
+    finally{
+      setIsloading(false)
     }
   }
   return (
@@ -276,8 +288,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(1)}
                 className={`flex gap-4 items-center justify-center w-20 h-7 rounded-3xl cursor-pointer ${selectedTheme === 1
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 Books
@@ -285,8 +297,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(2)}
                 className={`flex gap-4 items-center justify-center w-24 h-7 rounded-3xl cursor-pointer ${selectedTheme === 2
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 TV Shows
@@ -294,8 +306,8 @@ export default function Dashboard() {
               <div
                 onClick={() => setSelectedTheme(3)}
                 className={`flex gap-4 items-center justify-center w-28 h-7 rounded-3xl cursor-pointer ${selectedTheme === 3
-                  ? "bg-[#4F239E] text-[#FDFCFF]"
-                  : "bg-[#FDFCFF] text-[#4F239E]"
+                    ? "bg-[#4F239E] text-[#FDFCFF]"
+                    : "bg-[#FDFCFF] text-[#4F239E]"
                   }`}
               >
                 Video Games
@@ -333,14 +345,28 @@ export default function Dashboard() {
                   accept="image/*"
                   onChange={(e) => handleImageUpload(e)}
                 />
-                <svg width="40" height="22" viewBox="0 0 32 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="36" height="24" rx="3" ry="3" fill="#aa60aa" />
+                <svg
+                  width="40"
+                  height="22"
+                  viewBox="0 0 32 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    x="1"
+                    y="1"
+                    width="36"
+                    height="24"
+                    rx="3"
+                    ry="3"
+                    fill="#aa60aa"
+                  />
                   <circle cx="22" cy="6" r="3.5" fill="#ffffff" />
                   <path d="M2 22h28L21 8l-5 6-4-5-10 13z" fill="#ffffff" />
                 </svg>
               </label>
 
-              <input
+              <textArea
                 type="text"
                 value={textArea}
                 onChange={(e) => setTextArea(e.target.value)}
@@ -350,7 +376,7 @@ export default function Dashboard() {
               {textArea !== "" && (
                 <div
                   className="ml-2 hover:cursor-pointer"
-                  onClick={() => handleCreatePost()}
+                  onClick={() => !isloading && handleCreatePost()}
                 >
                   <svg
                     width="24"
@@ -368,54 +394,38 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          {postList.length > 0 &&
-            postList.map((item, index) => (
-              <div
-                key={index}
-                ref={index === postList.length - 1 ? lastPostRef : null}
-                className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-5 pt-5 pb-3 ml-3 mt-4 w-full
-                                          hover:scale-[1.02] hover:opacity-90 transition-transform duration-200"
-              >
-                <div className="flex justify-between">
-                  <span
-                    onClick={() => window.location.href = `/profile/${item.autor.toText()}`}
-                    className="text-sm font-medium text-[#FDFCFF] cursor-pointer"
-                  >
-                    @{item.userName}
-                  </span>
-                  <span className="text-sm font-medium text-[#BCBCBC]">{formatBigIntToDate(item.date)}</span>
-                </div>
-
-                <span className="text-sm font-bold text-[#FDFCFF]">
-                  {item.title}
-                </span>
-                <span className="text-sm font-medium text-[#FDFCFF]">
-                  {item.body}
-                </span>
-                <div className="flex gap-3 mt-2">
-                  {item.hashTags.length > 1 && (
-                    item.hashTags.map((tag, index) => <Hashtag key={index} name={tag} />)
-                  )}
-                </div>
-                {item.photoPreview?.length > 0 ? (
-                  <img
-                    className="mt-3 rounded-md"
-                    src={blobToImageUrl(item.photoPreview[0])}
-                    width="100px"
-                    alt="Post content"
+          {postList.length > 0 && (
+            <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+              {postList.slice().reverse().map((post, index) => (
+                <div
+                  key={index}
+                  ref={index === postList.length - 5 ? lastPostRef : null}
+                  className="flex flex-col  bg-[#0E1425] rounded-2xl w-[70%] px-8 py-4 ml-3 mt-4 w-full"
+                >
+                  <PostPreview caller={canisterId}
+                    key={index}
+                    post={post}
+                    setSelectedPostDetails={setSelectedPostDetails}
+                    setSelectedPostAuthor={setSelectedPostAuthor}
+                    community={null}
                   />
-                ) : item.image_url?.length > 0 ? (
-                  <img
-                    className="mt-3 rounded-md"
-                    src={item.image_url[0]}
-                    width="100px"
-                    alt="Media reference"
-                  />
-                ) : null}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {selectedPostDetails &&
+            <PostExpand
+              caller={canisterId}
+              postDetails={selectedPostDetails}
+              postAuthor={selectedPostAuthor}
+              onClose={() => {
+                setSelectedPostDetails(null);
+                setSelectedPostAuthor(null);
+              }}
+            />
+          }
         </div>
       </div>
     </>
   )
-}
+})

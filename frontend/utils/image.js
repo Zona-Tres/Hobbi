@@ -1,14 +1,12 @@
 import Compressor from "compressorjs"
-import imageCompression from 'browser-image-compression';
-
-
+import imageCompression from "browser-image-compression"
 
 const DefauttMaxWidth = 768
 export const ImageMaxWidth = 768
 export const ORIENTATION_TO_ANGLE = {
-  '3': 180,
-  '6': 90,
-  '8': -90,
+  3: 180,
+  6: 90,
+  8: -90,
 }
 
 export function arrayBufferToImgSrc(arrayBuffer, imgType = "jpeg") {
@@ -34,7 +32,7 @@ async function readFileToArrayBuffer(file) {
 export function readFileToUrl(file) {
   return new Promise((resolve) => {
     const reader = new FileReader()
-    reader.addEventListener('load', () => resolve(reader.result), false)
+    reader.addEventListener("load", () => resolve(reader.result), false)
     reader.readAsDataURL(file)
   })
 }
@@ -44,25 +42,29 @@ export async function fileToCanisterBinaryStoreFormat(file) {
   return Array.from(new Uint8Array(arrayBuffer))
 }
 export async function getRotatedImage(imageSrc, rotation) {
-  const image = await createImage(imageSrc);
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const rotRad = getRadianAngle(rotation);
-  
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+  const rotRad = getRadianAngle(rotation)
+
   // calculate bounding box of the rotated image
-  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(image.width, image.height, rotation);
+  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
+    image.width,
+    image.height,
+    rotation,
+  )
 
   // set canvas size to match the bounding box
-  canvas.width = bBoxWidth;
-  canvas.height = bBoxHeight;
+  canvas.width = bBoxWidth
+  canvas.height = bBoxHeight
 
   // translate canvas context to a central location to allow rotating around the center
-  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
-  ctx.rotate(rotRad);
-  ctx.drawImage(image, -image.width / 2, -image.height / 2);
+  ctx.translate(bBoxWidth / 2, bBoxHeight / 2)
+  ctx.rotate(rotRad)
+  ctx.drawImage(image, -image.width / 2, -image.height / 2)
 
   // Return the rotated image as data URL or Uint8Array
-  return canvas.toDataURL('image/jpeg');
+  return canvas.toDataURL("image/jpeg")
 }
 export const resizeImage = (file, maxWidth) => {
   return new Promise((resolve, reject) => {
@@ -83,7 +85,7 @@ export const resizeImage = (file, maxWidth) => {
             resolve(blob)
           },
           "image/jpeg",
-          0.1 // Compresión del 70%
+          0.1, // Compresión del 70%
         )
       }
     }
@@ -97,7 +99,7 @@ onDrop: async (acceptedFiles) => {
   if (acceptedFiles.length > 0) {
     try {
       const firstFile = acceptedFiles[0]
-      
+
       // Get the image orientation to apply the proper rotation
       const orientation = await getOrientation(firstFile)
       const rotation = ORIENTATION_TO_ANGLE[orientation]
@@ -119,13 +121,12 @@ onDrop: async (acceptedFiles) => {
   }
 }
 
-
 export const createImage = (url) =>
   new Promise((resolve, reject) => {
     const image = new Image()
-    image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', (error) => reject(error))
-    image.setAttribute('crossOrigin', 'anonymous') // needed to avoid cross-origin issues on CodeSandbox
+    image.addEventListener("load", () => resolve(image))
+    image.addEventListener("error", (error) => reject(error))
+    image.setAttribute("crossOrigin", "anonymous") // needed to avoid cross-origin issues on CodeSandbox
     image.src = url
   })
 
@@ -157,11 +158,11 @@ export async function getCroppedImg(
   imageSrc,
   pixelCrop,
   rotation = 0,
-  flip = { horizontal: false, vertical: false }
+  flip = { horizontal: false, vertical: false },
 ) {
   const image = await createImage(imageSrc)
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
 
   if (!ctx) {
     return null
@@ -173,7 +174,7 @@ export async function getCroppedImg(
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
     image.width,
     image.height,
-    rotation
+    rotation,
   )
 
   // set canvas size to match the bounding box
@@ -189,9 +190,9 @@ export async function getCroppedImg(
   // draw rotated image
   ctx.drawImage(image, 0, 0)
 
-  const croppedCanvas = document.createElement('canvas')
+  const croppedCanvas = document.createElement("canvas")
 
-  const croppedCtx = croppedCanvas.getContext('2d')
+  const croppedCtx = croppedCanvas.getContext("2d")
 
   if (!croppedCtx) {
     return null
@@ -211,9 +212,9 @@ export async function getCroppedImg(
     0,
     0,
     pixelCrop.width,
-    pixelCrop.height
+    pixelCrop.height,
   )
-  
+
   // As a blob
   // return new Promise((resolve, reject) => {
   //   croppedCanvas.toBlob((file) => {
@@ -225,43 +226,48 @@ export async function getCroppedImg(
   // return croppedCanvas.toDataURL('image/jpeg')
 
   // As Uint8Array
-  const dataUrl = croppedCanvas.toDataURL('image/jpeg')
-  const base64Data = dataUrl.split(',')[1]
-  const uint8Array = new Uint8Array(atob(base64Data).split('').map(char => char.charCodeAt(0)))
+  const dataUrl = croppedCanvas.toDataURL("image/jpeg")
+  const base64Data = dataUrl.split(",")[1]
+  const uint8Array = new Uint8Array(
+    atob(base64Data)
+      .split("")
+      .map((char) => char.charCodeAt(0)),
+  )
   return Array.from(uint8Array)
 }
 
 export async function urlToUint8Array(url) {
-  
   try {
-    const response = await fetch(url);
-    
+    const response = await fetch(url)
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-    }
-    
-    // Check if the content type is an image
-    const contentType = response.headers.get("Content-Type");
-    if (!contentType || !contentType.includes("image")) {
-      throw new Error("The URL does not point to an image.");
+      throw new Error(
+        `Failed to fetch: ${response.status} ${response.statusText}`,
+      )
     }
 
-    const blob = await response.blob();
+    // Check if the content type is an image
+    const contentType = response.headers.get("Content-Type")
+    if (!contentType || !contentType.includes("image")) {
+      throw new Error("The URL does not point to an image.")
+    }
+
+    const blob = await response.blob()
 
     // Compress the image
     const compressedBlob = await imageCompression(blob, {
       maxSizeMB: 1, // Limit the file size to 1MB
       maxWidthOrHeight: 800, // You can specify max width or height for resizing
-      useWebWorker: true // Use Web Workers for better performance
-    });
+      useWebWorker: true, // Use Web Workers for better performance
+    })
 
     // Convert the compressed image to Uint8Array
-    const arrayBuffer = await compressedBlob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    return uint8Array;
+    const arrayBuffer = await compressedBlob.arrayBuffer()
+    const uint8Array = new Uint8Array(arrayBuffer)
+
+    return uint8Array
   } catch (error) {
-    console.error("Error in urlToUint8Array:", error);
-    throw error; // Re-throw the error for further handling
+    // Error silencioso
+    return new Uint8Array()
   }
 }

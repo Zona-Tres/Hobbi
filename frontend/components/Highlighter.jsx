@@ -1,30 +1,26 @@
-import React, { useRef, useState, useEffect } from 'react'
-import MousePosition from './utils/mouse-position'
+import React, { useRef, useState, useEffect } from "react"
+import MousePosition from "./utils/mouse-position"
 
-function Highlighter({
-  children,
-  className = '',
-  refresh = false
-}) {
-
+function Highlighter({ children, className = "", refresh = false }) {
   const containerRef = useRef(null)
   const mousePosition = MousePosition()
   const mouse = useRef({ x: 0, y: 0 })
   const containerSize = useRef({ w: 0, h: 0 })
   const [boxes, setBoxes] = useState([])
 
-  useEffect(() => {    
-    containerRef.current && setBoxes(Array.from(containerRef.current.children).map((el) => el))
+  useEffect(() => {
+    containerRef.current &&
+      setBoxes(Array.from(containerRef.current.children).map((el) => el))
   }, [])
-  
-  useEffect(() => {    
+
+  useEffect(() => {
     initContainer()
-    window.addEventListener('resize', initContainer)
+    window.addEventListener("resize", initContainer)
 
     return () => {
-      window.removeEventListener('resize', initContainer)
+      window.removeEventListener("resize", initContainer)
     }
-  }, [setBoxes])  
+  }, [setBoxes])
 
   useEffect(() => {
     onMouseMove()
@@ -32,45 +28,52 @@ function Highlighter({
 
   useEffect(() => {
     initContainer()
-  }, [refresh])  
+  }, [refresh])
 
   const initContainer = () => {
-    if(containerRef.current) {
+    if (containerRef.current) {
       containerSize.current.w = containerRef.current.offsetWidth
       containerSize.current.h = containerRef.current.offsetHeight
     }
-  }  
-  
-  const onMouseMove = () => {    
+  }
+
+  const onMouseMove = () => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect()
       const { w, h } = containerSize.current
       const x = mousePosition.x - rect.left
       const y = mousePosition.y - rect.top
-      const inside = x < w && x > 0 && y < h && y > 0      
+      const inside = x < w && x > 0 && y < h && y > 0
       if (inside) {
         mouse.current.x = x
         mouse.current.y = y
         boxes.forEach((box) => {
-          const boxX = -(box.getBoundingClientRect().left - rect.left) + mouse.current.x
-          const boxY = -(box.getBoundingClientRect().top - rect.top) + mouse.current.y
-          box.style.setProperty('--mouse-x', `${boxX}px`)
-          box.style.setProperty('--mouse-y', `${boxY}px`)
+          const boxX =
+            -(box.getBoundingClientRect().left - rect.left) + mouse.current.x
+          const boxY =
+            -(box.getBoundingClientRect().top - rect.top) + mouse.current.y
+          box.style.setProperty("--mouse-x", `${boxX}px`)
+          box.style.setProperty("--mouse-y", `${boxY}px`)
         })
       }
     }
-  }  
+  }
 
   return (
-    <div className={className} ref={containerRef}>{children}</div>
+    <div className={className} ref={containerRef}>
+      {children}
+    </div>
   )
 }
 
-export function HighlighterItem({
-  children,
-  className = ''
-}) {
-  return <div className={`relative bg-slate-800 rounded-3xl p-px before:absolute before:w-96 before:h-96 before:-left-48 before:-top-48 before:bg-purple-500 before:rounded-full before:opacity-0 before:pointer-events-none before:transition-opacity before:duration-500 before:translate-x-[var(--mouse-x)] before:translate-y-[var(--mouse-y)] before:hover:opacity-20 before:z-30 before:blur-[100px] after:absolute after:inset-0 after:rounded-[inherit] after:opacity-0 after:transition-opacity after:duration-500 after:[background:_radial-gradient(250px_circle_at_var(--mouse-x)_var(--mouse-y),theme(colors.slate.400),transparent)] after:group-hover:opacity-100 after:z-10 overflow-hidden ${className}`}>{children}</div>
+export function HighlighterItem({ children, className = "" }) {
+  return (
+    <div
+      className={`relative bg-slate-800 rounded-3xl p-px before:absolute before:w-96 before:h-96 before:-left-48 before:-top-48 before:bg-purple-500 before:rounded-full before:opacity-0 before:pointer-events-none before:transition-opacity before:duration-500 before:translate-x-[var(--mouse-x)] before:translate-y-[var(--mouse-y)] before:hover:opacity-20 before:z-30 before:blur-[100px] after:absolute after:inset-0 after:rounded-[inherit] after:opacity-0 after:transition-opacity after:duration-500 after:[background:_radial-gradient(250px_circle_at_var(--mouse-x)_var(--mouse-y),theme(colors.slate.400),transparent)] after:group-hover:opacity-100 after:z-10 overflow-hidden ${className}`}
+    >
+      {children}
+    </div>
+  )
 }
 
-export default Highlighter;
+export default Highlighter

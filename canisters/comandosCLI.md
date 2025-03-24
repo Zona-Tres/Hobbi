@@ -1,22 +1,25 @@
 deploy canister hobbi
-```dfx deploy hobbi```
+`dfx deploy hobbi`
 signUp usuario. Args: Nombre, opcional email, bio, opcional foto, provisoriamente fee
+
 ```
 dfx canister call hobbi signUp '(record {
-    name="Usuario BBB"; 
-    email=null; 
-    bio="Biografía de Usuario BBB"; 
+    name="Usuario BBB";
+    email=null;
+    bio="Biografía de Usuario BBB";
     avatar= opt blob "11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/11/22/33/44/55/66/77/88/99/00/";
     thumbnail = opt blob "11/22/33/44";
 })'
 
 ```
+
 ver canisterId del ActorClass de Alice:
-```dfx canister call hobbi getMyUserCanisterId```
+`dfx canister call hobbi getMyUserCanisterId`
 ver info de Alice
-```dfx canister call <canisterIdDeAlice> getMyInfo```
+`dfx canister call <canisterIdDeAlice> getMyInfo`
 
 cear Post
+
 ```
 dfx canister call by6od-j4aaa-aaaaa-qaadq-cai createPost '(record {
     access = variant{Public};
@@ -32,7 +35,6 @@ dfx canister call by6od-j4aaa-aaaaa-qaadq-cai createPost '(record {
 
 ```
 
-
 //// Test ////
 dfx stop
 dfx start --clean --background
@@ -44,12 +46,10 @@ dfx identity use identidadDePrueba1
 actorClassPrueba1=$(dfx canister call hobbi signUp '(record {name="identidadDePrueba1"; email=opt "identidadDePrueba1@gmail.com"; bio="Biografía de identidadDePrueba1"; avatar=null})')
 
 dfx canister call $actorClassPrueba1 createPost '(record {
-        access = variant{Public};
-        title ="Mi primer Posteo en Hobbi. Soy Prueba1";
-        image = null;
-        image_ul = null;
-        media_type = variant {Game}
-    }
+access = variant{Public};
+title ="Mi primer Posteo en Hobbi. Soy Prueba1";
+image = null;
+image_ul = null;
+media_type = variant {Game}
+}
 )'
-
-
