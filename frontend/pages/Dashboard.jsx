@@ -170,26 +170,26 @@ export default withDataRefresh(function Dashboard() {
         hashtags.push(match[1])
       }
       cleanedText = textArea.replace(hashtagRegex, "").trim()
-
+      setTextArea("")
       const json = {
         access: { Public: null },
-        title: media ? title : "",
+        title: media ? media.title : "",
         body: cleanedText,
         image: uploadedImageData.full ? [uploadedImageData.full] : [],
         imagePreview: uploadedImageData.preview
-          ? [uploadedImageData.preview]
-          : [],
+        ? [uploadedImageData.preview]
+        : [],
         hashTags: hashtags,
         image_url: media ? [media.image] : [],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
+      
       const response = await actor.createPost(json)
       const responsePost = await actor.getPaginatePost({
         qtyPerPage: 25,
         page: 0,
       })
       setMedia(null)
-      setTextArea("")
       setPostList(responsePost.arr)
     } catch {
       // Error silencioso
@@ -366,7 +366,7 @@ export default withDataRefresh(function Dashboard() {
                 </svg>
               </label>
 
-              <input
+              <textArea
                 type="text"
                 value={textArea}
                 onChange={(e) => setTextArea(e.target.value)}

@@ -142,7 +142,12 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
           />
         )}
 
-        <p className="text-white mb-4">{postData.metadata.body}</p>
+        <p 
+          className="text-white mb-4"
+          style={{ whiteSpace: 'pre-line' }}
+        >
+          {postData.metadata.body}
+        </p>
         <div className="flex gap-4">
           <button
             className="text-[#4f239e] hover:text-[#4f239e]/80 flex items-center gap-1"

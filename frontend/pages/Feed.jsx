@@ -204,10 +204,10 @@ function Feed() {
         hashtags.push(match[1])
       }
       cleanedText = textArea.replace(hashtagRegex, "").trim()
-
+      console.log(media ? [media.image] : [])
       const json = {
         access: { Public: null },
-        title: media ? title : "",
+        title: media ? media.title : "",
         body: cleanedText,
         image: uploadedImageData.full ? [uploadedImageData.full] : [],
         imagePreview: uploadedImageData.preview
@@ -217,6 +217,8 @@ function Feed() {
         image_url: media ? [media.image] : [],
         media_type: { [mediaTypeMap[selectedTheme]]: null },
       }
+      console.log(json)
+      
       const response = await actor.createPost(json)
       const responsePost = await actor.getPaginatePost({
         qtyPerPage: 25,

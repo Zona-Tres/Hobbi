@@ -63,7 +63,12 @@ const PostPreview = ({
       </div>
 
       <h2 className="mb-2 font-bold text-[#FDFCFF]">{post.title}</h2>
-      <p className="text-sm font-medium text-[#FDFCFF]">{post.body.slice(0, 100)}{post.body.length > 100 && "..."}</p>
+      <p 
+        className="text-sm font-medium text-[#FDFCFF]"
+        style={{ whiteSpace: 'pre-line' }}
+      >
+        {post.body.slice(0, 100)}{post.body.length > 100 && "..."}
+      </p>
 
       <div className="flex gap-3 mt-2">
         {post.hashTags?.length > 0 &&
