@@ -58,12 +58,10 @@ function Communities() {
   const fetchCommunities = async () => {
     try {
       setLoading(true)
-      const responseCanister = await hobbi.getMyCanisterId()
-      setCanisterId(responseCanister)
-      const actor = await createBucketActor(responseCanister)
+      const actor = await createBucketActor(canisterId)
       await handlePublicInfo(actor)
       const response = await hobbi.getPaginateCommunities({
-        qtyPerPage: 10,
+        qtyPerPage: 25,
         page: 0,
       })
       if (response && response.Ok) {
@@ -102,6 +100,7 @@ function Communities() {
         setLogoPreview(null)
       }
     } catch {
+      
       toast.error("An error occurred while creating the community")
     } finally {
       setLoading(false)

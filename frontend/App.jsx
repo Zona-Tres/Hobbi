@@ -70,7 +70,7 @@ export default () => (
       <SeoMarkup />
       <Connect2ICProvider client={client}>
         <App />
-        <ToastContainer position="bottom-right" />
+        {/* <ToastContainer position="bottom-right" /> */}
       </Connect2ICProvider>
     </HelmetProvider>
   </ErrorBoundary>
