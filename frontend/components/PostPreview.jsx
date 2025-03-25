@@ -32,9 +32,9 @@ const PostPreview = ({
     if (isLoading) return
     try {
       setIsLoading(true)
-      setSelectedPostAuthor(canisterContainer)
       const user = await createBucketActor(canisterContainer)
       const response = await user.readPost(postId)
+      setSelectedPostAuthor(canisterContainer)
       setSelectedPostDetails(response.Ok ? response.Ok : null)
     } catch {
       toast.error("An error occurred while loading the post")

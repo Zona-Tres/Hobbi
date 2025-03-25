@@ -276,7 +276,7 @@ export default withDataRefresh(function ProfileInfo() {
             {myinfo.bio}
           </span>
           {postList.length > 0 && (
-            <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+            <div className={`relative ${selectedPostAuthor ? "blur-sm opacity-50  pointer-events-none" : ""}`}>
               {postList.slice().reverse().map((post, index) => (
                 <div
                   key={index}

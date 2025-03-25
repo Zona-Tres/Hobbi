@@ -24,9 +24,9 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
     }
     return null
   }
-
+  
   const imageSrc = getImageSrc()
-
+  
   const handleLikeComments = async (commentId) => {
     // Reacciones no implementadas aún
   }
@@ -137,7 +137,12 @@ const PostExpand = ({ caller, postDetails, postAuthor, onClose }) => {
           <img
             className="mt-3 mb-3 rounded-md"
             src={imageSrc}
-            width="800px"
+            style={{
+              width: "100%",
+              maxHeight: "70vh",
+              height: "auto",
+              objectFit: "contain"
+            }}
             alt={postDetails.photoPreview ? "Post content" : "Media reference"}
           />
         )}

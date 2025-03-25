@@ -431,7 +431,7 @@ export default function CommunityInfo() {
 
           <div className="space-y-4 ml-3 mt-3">
             {postList && (
-              <div className={`relative ${selectedPostAuthor ? "pointer-events-none" : ""}`}>
+              <div className={`relative ${selectedPostAuthor ? "blur-sm opacity-50 pointer-events-none" : ""}`}>
                 {postList.slice().reverse().map((post, index) => (
                   <div
                     key={index}
@@ -460,52 +460,6 @@ export default function CommunityInfo() {
                 }}
               />
             }
-            {/* {postList &&
-              postList.map((post, index) => (
-                <div
-                  key={index}
-                  ref={index === postList.length - 5 ? lastPostRef : null}
-                  className="bg-[#0E1425] rounded-lg p-6"
-                >
-                  <div className="flex gap-3">
-                    {post.photoPreview?.length > 0 ? (
-                      <img
-                        className="mt-3 rounded-md"
-                        src={blobToImageUrl(post.photoPreview[0])}
-                        width="100px"
-                        alt="Post content"
-                      />
-                    ) : post.image_url?.length > 0 ? (
-                      <img
-                        className="mt-3 rounded-md"
-                        src={post.image_url[0]}
-                        width="100px"
-                        alt="Media reference"
-                      />
-                    ) : null}
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-bold text-[#FDFCFF]">
-                        {post.title}
-                      </span>
-                      <span className="text-sm font-medium text-[#FDFCFF]">
-                        {post.body}
-                      </span>
-                      <div className="flex gap-2">
-                        {post.hashTags &&
-                          post.hashTags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="text-sm text-[#B577F7] bg-[#1A2137] px-2 py-1 rounded"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            )} */}
           </div>
 
           {loading && (
