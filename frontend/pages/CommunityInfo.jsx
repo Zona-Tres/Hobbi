@@ -230,7 +230,7 @@ export default function CommunityInfo() {
         rel="https://hobbi.me/community"
       />
 
-      <div className="flex w-full bg-[#070A10] h-screen">
+      <div className="flex w-full bg-[#070A10] min-h-screen h-full">
         <div className="flex flex-col w-[300px] h-full border border-[#0E1425]">
           <div className="h-[86px] flex items-center justify-start pl-10">
             <LogoDark />
