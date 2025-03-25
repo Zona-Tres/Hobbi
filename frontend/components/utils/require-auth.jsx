@@ -29,5 +29,5 @@ export default function RequireAuth() {
   if (!isConnected) {
     return <Navigate to="/connect" />
   }
-  return hasProfile ? <Navigate to={`/feed/`} replace /> : <Outlet />
+  return hasProfile ? <Navigate to={`/feed`} replace /> : <Outlet />
 }
